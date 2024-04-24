@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="x5-fullscreen" content="true">
+<meta name="full-screen" content="yes">
+<meta name="theme-color" content="#317EFB" />
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
+<meta name="description" content="背景最近面试有被问到，不考虑资源限制，一台主机可以建立多少个TCP连接，这里的资源限制除了内存，CPU还有一些其他资源，比如打开的文件描述符等。这里主要学习一下资源限制相关的系统知识，具体每个进程有哪些资源限制，为什么需要他们，相关的系统调用，如何限制进程使用的资源。 ulimitulimit 是一个系统内置指令（bash-builtins） Bash-builtins 有哪些? (bash,">
+<meta property="og:type" content="article">
+<meta property="og:title" content="系统资源限制">
+<meta property="og:url" content="http://example.com/2024/04/25/%E7%B3%BB%E7%BB%9F%E8%B5%84%E6%BA%90%E9%99%90%E5%88%B6/index.html">
+<meta property="og:site_name" content="Cat YuanBao">
+<meta property="og:description" content="背景最近面试有被问到，不考虑资源限制，一台主机可以建立多少个TCP连接，这里的资源限制除了内存，CPU还有一些其他资源，比如打开的文件描述符等。这里主要学习一下资源限制相关的系统知识，具体每个进程有哪些资源限制，为什么需要他们，相关的系统调用，如何限制进程使用的资源。 ulimitulimit 是一个系统内置指令（bash-builtins） Bash-builtins 有哪些? (bash,">
+<meta property="og:locale">
+<meta property="article:published_time" content="2024-04-24T21:34:08.000Z">
+<meta property="article:modified_time" content="2024-04-24T21:34:45.276Z">
+<meta property="article:author" content="橘猫元宝">
+<meta property="article:tag" content="cat">
+<meta name="twitter:card" content="summary">
+
+    <meta name="keywords" content="cat">
+
+
+<title >系统资源限制</title>
+
+<!-- Favicon -->
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='16x16' ></link>
+
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='32x32' ></link>
+
+
+
+
+<!-- Plugin -->
+
+
+
+
+    
+<link rel="stylesheet" href="/css/plugins/bootstrap.row.css">
+
+    
+<link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.css">
+
+    
+    
+
+
+
+
+<!-- Icon -->
+
+    
+<link rel="stylesheet" href="/css/plugins/font-awesome.min.css">
+
+
+
+
+<!-- Variable -->
+<script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-04-25 05:34:45"};</script>
+
+<!-- Theme mode css -->
+<link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
+<script>
+    let defaultMode = ASYNC_CONFIG.theme.default !=='auto' ?  ASYNC_CONFIG.theme.default : (window.matchMedia("(prefers-color-scheme: light)").matches ? 'style-light' : 'style-dark')
+    let catchMode = localStorage.getItem('theme-mode') || defaultMode;
+    let type = catchMode === 'style-dark' ? 'add' : 'remove';
+    document.documentElement.classList[type]('dark')
+</script>
+
+<!-- CDN -->
+
+
+    
+    
+
+
+
+<!-- Site Analytics -->
+ 
+<meta name="generator" content="Hexo 7.0.0"><link rel="stylesheet" href="/css/prism.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+<body>
+
+  <!-- app wrapper -->
+  <div class="trm-app-frame">
+
+    <!-- page preloader -->
+    <div class="trm-preloader">
+    <div class="trm-holder">
+        <div class="preloader">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+    <!-- page preloader end -->
+
+    <!-- change mode preloader -->
+    <div class="trm-mode-swich-animation-frame">
+    <div class="trm-mode-swich-animation">
+        <i class="i-sun"><i class="iconfont far fa-sun"></i></i>
+        <div class="trm-horizon"></div>
+        <i class="i-moon"><i class="iconfont far fa-moon"></i></i>
+    </div>
+</div>
+    <!-- change mode preloader end -->
+
+      <!-- scroll container -->
+      <div id="trm-dynamic-content" class="trm-swup-animation">
+        <div id="trm-scroll-container" class="trm-scroll-container" style="opacity: 0">
+            <!-- top bar -->
+            <header class="trm-top-bar">
+	<div class="container">
+		<div class="trm-left-side">
+			<!-- logo -->
+<a href="/" class="trm-logo-frame trm-anima-link">
+    
+        <img alt="logo" src="/img/favicon.svg">
+    
+    
+        <div class="trm-logo-text">
+            元宝<span>橘猫</span>
+        </div>
+    
+</a>
+<!-- logo end -->
+		</div>
+		<div class="trm-right-side">
+			<!-- menu -->
+<div class="trm-menu">
+    <nav>
+        <ul>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/" target="">
+                    首页
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/archives/" target="">
+                    归档
+                </a>
+                
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+<!-- menu end -->
+			
+    <!-- mode switcher place -->
+    <div class="trm-mode-switcher-place">
+        <div class="trm-mode-switcher">
+            <i class="iconfont far fa-sun"></i>
+            <input class="tgl tgl-light" id="trm-swich" type="checkbox">
+            <label class="trm-swich" for="trm-swich"></label>
+            <i class="iconfont far fa-moon"></i>
+        </div>
+    </div>
+    <!-- mode switcher place end -->
+
+			
+		</div>
+		<div class="trm-menu-btn">
+			<span></span>
+		</div>
+	</div>
+</header>
+            <!-- top bar end -->
+
+            <!-- body -->
+            
+<div class="trm-content-start">
+    <!-- banner -->
+    <div class="trm-banner">
+    
+    <!-- banner cover -->
+    <img style="object-position:top;object-fit:cover;" alt="banner" class="trm-banner-cover" src="/img/banner.png">
+    <!-- banner cover end -->
+    
+
+    <!-- banner content -->
+    <div class="trm-banner-content trm-overlay">
+        <div class="container">
+            <div class="row">
+                
+                <div class="col-lg-4"></div>
+                
+                <div class="col-lg-8">
+
+                    <!-- banner title -->
+                    <div class="trm-banner-text ">
+                        <div class="trm-label trm-mb-20">
+                            NEWS LETTER
+                        </div>
+                        <h1 class="trm-mb-30 trm-hsmb-font">
+                            系统资源限制
+                        </h1>
+
+                        
+                            <ul class="trm-breadcrumbs trm-label">
+                                <li>
+                                    <a href="/" class="trm-anima-link">Home</a>
+                                </li>
+                                <li>
+                                    <span>
+                                        2024
+                                    </span>
+                                </li>
+                            </ul>
+                        
+                    </div>
+                    <!-- banner title end -->
+
+                    <!-- scroll hint -->
+                    <span id="scroll-triger" class="trm-scroll-hint-frame">
+                        <div class="trm-scroll-hint"></div>
+                        <span class="trm-label">Scroll down</span>
+                    </span>
+                    <!-- scroll hint end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- banner content end -->
+</div>
+    <!-- banner end -->
+    <div class="container">
+        <div class="row">
+            
+                <div class="trm-page-sidebar col-lg-4 hidden-sm">
+                    <!-- main card -->
+                    <div class="trm-main-card-frame trm-sidebar">
+    <div class="trm-main-card"> 
+        <!-- card header -->
+<div class="trm-mc-header">
+    <div class="trm-avatar-frame trm-mb-20">
+        <img alt="Avatar" class="trm-avatar" src="/img/cat.jpg">
+    </div>
+    <h5 class="trm-name trm-mb-15">
+        橘猫元宝
+    </h5>
+    
+</div>
+<!-- card header end -->
+        <!-- sidebar social -->
+
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<div class="trm-social">
+    
+        <a href="https://github.com" title="Github" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-github"></i>
+        </a>
+    
+</div>
+
+<!-- sidebar social end -->
+        <!-- info -->
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<ul class="trm-table trm-mb-20">
+    
+        <li>
+            <div class="trm-label">
+                Residence:
+            </div>
+            <div class="trm-label trm-label-light">
+                Mars
+            </div>
+        </li>
+    
+</ul>
+<!-- info end -->
+
+        
+    </div>
+</div>
+                    <!-- main card end -->
+                </div>
+            
+            <div class="trm-page-content col-lg-8">
+                <div id="trm-content" class="trm-content">
+                    <div class="trm-post-info row hidden-sm">
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-calendar-alt trm-icon"></i><br>
+            04/25
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-clock trm-icon"></i><br>
+            05:34
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div id="post-author" class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-user trm-icon"></i><br>
+            橘猫元宝
+        </div>
+    </div>
+</div>
+<div class="trm-card ">
+    <article id="article-container" class="trm-publication">
+    <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>最近面试有被问到，不考虑资源限制，一台主机可以建立多少个TCP连接，这里的资源限制除了内存，CPU还有一些其他资源，比如打开的文件描述符等。这里主要学习一下资源限制相关的系统知识，具体每个进程有哪些资源限制，为什么需要他们，相关的系统调用，如何限制进程使用的资源。</p>
+<h3 id="ulimit"><a href="#ulimit" class="headerlink" title="ulimit"></a>ulimit</h3><p>ulimit 是一个系统内置指令（bash-builtins）</p>
+<p>Bash-builtins 有哪些? (bash,  :,  .,  [, alias, bg, bind, break, builtin, caller, cd, command, compgen, complete, compopt,<br>       continue, declare, dirs, disown, echo, enable, eval, exec, exit, export, false,  fc,  fg,  getopts,<br>       hash, help, history, jobs, kill, let, local, logout, mapfile, popd, printf, pushd, pwd, read, read‐<br>       only, return, set, shift, shopt, source, suspend, test, times, trap, true, type,  typeset,  ulimit,<br>       umask, unalias, unset, wait - bash built-in commands)</p>
+<p>ulimit 命令直接修改的是单个shell进程。比如 ulimit -f 50 </p>
+<p>这里可以限制文件的大小，但是仅仅是针对的单个shell进程，对其他的shell进程并不影响。</p>
+<h4 id="Resource-types（限制的资源类型）"><a href="#Resource-types（限制的资源类型）" class="headerlink" title="Resource types（限制的资源类型）"></a>Resource types（限制的资源类型）</h4><p>使用 ulimit -a 查看所有资源，常用的主要有 file size, file descriptors(fd)其他等。</p>
+<pre><code>$ ulimit -a
+-t: cpu time (seconds)              unlimited
+-f: file size (blocks)              50
+-d: data seg size (kbytes)          unlimited
+-s: stack size (kbytes)             8192
+-c: core file size (blocks)         0
+-m: resident set size (kbytes)      unlimited
+-u: processes                       14481
+-n: file descriptors                1024
+-l: locked-in-memory size (kbytes)  8192
+-v: address space (kbytes)          unlimited
+-x: file locks                      unlimited
+-i: pending signals                 14481
+-q: bytes in POSIX msg queues       819200
+-e: max nice                        0
+-r: max rt priority                 0
+-N 15:                              unlimited
+</code></pre>
+<h4 id="Hard-and-soft-limits"><a href="#Hard-and-soft-limits" class="headerlink" title="Hard and soft limits"></a>Hard and soft limits</h4><p>有什么区别？</p>
+<p>The hard limit is the true maximum; as a regular user, it’s impossible to exceed this<br>limit. What if a process attempts this? Simple: it gets killed by the OS.</p>
+<p>The soft limit, on the other hand, can be breached: in the case of some resource limits,<br>the process (that exceeds the soft limit) will be sent a signal by the kernel.</p>
+<p>获取系统的Hard限制和Soft限制方法(-aS soft )</p>
+<pre><code>$ ulimit -aS 
+-t: cpu time (seconds)              unlimited
+-f: file size (blocks)              unlimited
+-d: data seg size (kbytes)          unlimited
+-s: stack size (kbytes)             8192
+-c: core file size (blocks)         0
+-m: resident set size (kbytes)      unlimited
+-u: processes                       14481
+-n: file descriptors                1024
+-l: locked-in-memory size (kbytes)  8192
+-v: address space (kbytes)          unlimited
+-x: file locks                      unlimited
+-i: pending signals                 14481
+-q: bytes in POSIX msg queues       819200
+-e: max nice                        0
+-r: max rt priority                 0
+-N 15:                              unlimited
+
+
+$ ulimit -aH
+-t: cpu time (seconds)              unlimited
+-f: file size (blocks)              unlimited
+-d: data seg size (kbytes)          unlimited
+-s: stack size (kbytes)             unlimited
+-c: core file size (blocks)         unlimited
+-m: resident set size (kbytes)      unlimited
+-u: processes                       14481
+-n: file descriptors                524288
+-l: locked-in-memory size (kbytes)  8192
+-v: address space (kbytes)          unlimited
+-x: file locks                      unlimited
+-i: pending signals                 14481
+-q: bytes in POSIX msg queues       819200
+-e: max nice                        0
+-r: max rt priority                 0
+-N 15:                              unlimited
+</code></pre>
+<h4 id="prlimit"><a href="#prlimit" class="headerlink" title="prlimit"></a>prlimit</h4><p>既是系统调用也是一个Linux命令！</p>
+<p>获取某个进程的系统资源限制情况：</p>
+<p>$ prlimit –pid 53078<br>RESOURCE   DESCRIPTION                             SOFT      HARD UNITS<br>AS         address space limit                unlimited unlimited bytes<br>CORE       max core file size                         0 unlimited bytes<br>CPU        CPU time                           unlimited unlimited seconds<br>DATA       max data size                      unlimited unlimited bytes<br>FSIZE      max file size                      unlimited unlimited bytes<br>LOCKS      max number of file locks held      unlimited unlimited locks<br>MEMLOCK    max locked-in-memory address space   8388608   8388608 bytes<br>MSGQUEUE   max bytes in POSIX mqueues            819200    819200 bytes<br>NICE       max nice prio allowed to raise             0         0<br>NOFILE     max number of open files                1024    524288 files<br>NPROC      max number of processes                14481     14481 processes<br>RSS        max resident set size              unlimited unlimited bytes<br>RTPRIO     max real-time priority                     0         0<br>RTTIME     timeout for real-time tasks        unlimited unlimited microsecs<br>SIGPENDING max number of pending signals          14481     14481 signals<br>STACK      max stack size                       8388608 unlimited bytes</p>
+<p>限制一个进程的资源</p>
+<pre><code>prlimit --pid=2917 --fsize=2048000 --stack=12582912
+</code></pre>
+<p>限制一个Python进程的文件打开个数：</p>
+<pre><code>$ prlimit --pid=53078 -n=5 
+</code></pre>
+<p>在对应的进程里面打开多个文件，一般进程会默认打开三个fd(stdin, stdout, stderr)，那么新打开3个文件，就会报错了:</p>
+<pre><code>&gt;&gt;&gt; fd1 = open(&#39;/tmp/lock.c&#39;)
+&gt;&gt;&gt; fd2 = open(&#39;/tmp/lock.c&#39;)
+&gt;&gt;&gt; fd3 = open(&#39;/tmp/lock.c&#39;)
+Traceback (most recent call last):
+  File &quot;&lt;stdin&gt;&quot;, line 1, in &lt;module&gt;
+OSError: [Errno 24] Too many open files: &#39;/tmp/lock.c&#39;
+</code></pre>
+<p>从proc查看单个进程的limit：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ <span class="token function">cat</span> /proc/82804/limits
+Limit                     Soft Limit           Hard Limit           Units     
+Max cpu <span class="token function">time</span>              unlimited            unlimited            seconds   
+Max <span class="token function">file</span> size             unlimited            unlimited            bytes     
+Max data size             unlimited            unlimited            bytes     
+Max stack size            8388608              unlimited            bytes     
+Max core <span class="token function">file</span> size        0                    unlimited            bytes     
+Max resident <span class="token keyword">set</span>          unlimited            unlimited            bytes     
+Max processes             14481                14481                processes 
+Max <span class="token function">open</span> files            1024                 524288               files     
+Max locked memory         8388608              8388608              bytes     
+Max address space         unlimited            unlimited            bytes     
+Max <span class="token function">file</span> locks            unlimited            unlimited            locks     
+Max pending signals       14481                14481                signals   
+Max msgqueue size         819200               819200               bytes     
+Max <span class="token function">nice</span> priority         0                    0                    
+Max realtime priority     0                    0                    
+Max realtime <span class="token function">timeout</span>      unlimited            unlimited            us   
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="show-limit-打印hard-limit-soft-limit"><a href="#show-limit-打印hard-limit-soft-limit" class="headerlink" title="show_limit 打印hard limit soft limit"></a>show_limit 打印hard limit soft limit</h4><pre class="line-numbers language-C"><code class="language-C">#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+
+#define ARRAY_LEN(arr) (sizeof((arr))/sizeof((arr)[0]))
+
+static void query_rlimits(void) {
+        unsigned i;
+        struct rlimit rlim;
+        struct rlimpair {
+                int rlim;
+                char *name;
+        };
+        struct rlimpair rlimpair_arr[] = {
+                {RLIMIT_CORE, "RLIMIT_CORE"},
+                {RLIMIT_DATA, "RLIMIT_DATA"},
+                {RLIMIT_NICE, "RLIMIT_NICE"},
+                {RLIMIT_FSIZE, "RLIMIT_FSIZE"},
+                {RLIMIT_SIGPENDING, "RLIMIT_SIGPENDING"},
+                {RLIMIT_MEMLOCK, "RLIMIT_MEMLOCK"},
+                {RLIMIT_NOFILE, "RLIMIT_NOFILE"},
+                {RLIMIT_MSGQUEUE, "RLIMIT_MSGQUEUE"},
+                {RLIMIT_RTTIME, "RLIMIT_RTTIME"},
+                {RLIMIT_STACK, "RLIMIT_STACK"},
+                {RLIMIT_CPU, "RLIMIT_CPU"},
+                {RLIMIT_NPROC, "RLIMIT_NPROC"},
+                {RLIMIT_AS, "RLIMIT_AS"},
+                {RLIMIT_LOCKS, "RLIMIT_LOCKS"},
+        };
+        char tmp1[16], tmp2[16];
+
+        printf("RESOURCE LIMIT                 SOFT              HARD\n");
+        for (i = 0; i < ARRAY_LEN(rlimpair_arr); i++) {
+                if (prlimit(0, rlimpair_arr[i].rlim, 0, &rlim) == -1) {
+                            fprintf(stderr, "prlimit error\n");
+                            exit(1);
+        }
+
+                snprintf(tmp1, 16, "%ld", rlim.rlim_cur);
+                snprintf(tmp2, 16, "%ld", rlim.rlim_max);
+                printf("%-18s:  %16s  %16s\n",
+                       rlimpair_arr[i].name,
+                       (rlim.rlim_cur == -1UL ? "unlimited" : tmp1),
+                       (rlim.rlim_max == -1UL ? "unlimited" : tmp2)
+                    );
+        }
+}
+
+int main(void) {
+    query_rlimits();
+    return 0;
+}
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ ./a.out 
+RESOURCE LIMIT                 SOFT              HARD
+RLIMIT_CORE       <span class="token keyword">:</span>                 0         unlimited
+RLIMIT_DATA       <span class="token keyword">:</span>         unlimited         unlimited
+RLIMIT_NICE       <span class="token keyword">:</span>                 0                 0
+RLIMIT_FSIZE      <span class="token keyword">:</span>         unlimited         unlimited
+RLIMIT_SIGPENDING <span class="token keyword">:</span>             14481             14481
+RLIMIT_MEMLOCK    <span class="token keyword">:</span>           8388608           8388608
+RLIMIT_NOFILE     <span class="token keyword">:</span>              1024            524288
+RLIMIT_MSGQUEUE   <span class="token keyword">:</span>            819200            819200
+RLIMIT_RTTIME     <span class="token keyword">:</span>         unlimited         unlimited
+RLIMIT_STACK      <span class="token keyword">:</span>           8388608         unlimited
+RLIMIT_CPU        <span class="token keyword">:</span>         unlimited         unlimited
+RLIMIT_NPROC      <span class="token keyword">:</span>             14481             14481
+RLIMIT_AS         <span class="token keyword">:</span>         unlimited         unlimited
+RLIMIT_LOCKS      <span class="token keyword">:</span>         unlimited         unlimited
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="rlimit-primes程序了解如何使用system-call-限制CPU"><a href="#rlimit-primes程序了解如何使用system-call-限制CPU" class="headerlink" title="rlimit_primes程序了解如何使用system call 限制CPU"></a>rlimit_primes程序了解如何使用system call 限制CPU</h4><pre class="line-numbers language-C"><code class="language-C">#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+
+#define MAX    10000000         // 10 million limit
+#define WARP    16
+
+void compute_prime_gen(int limit) {
+    int i, j, num = 2;
+    int is_prime;
+    printf(" 2, 3 ");
+    for (i = 4; i <= limit; i++) {
+        is_prime = 1;
+        for (j = 2; j < limit / 2; j++) {
+            if ((i != j) && (i % j == 0)) {
+                is_prime = 0;
+                break;
+            }
+        }
+
+        if (is_prime) {
+            num++;
+            printf("%6d", i);
+            if (num % WARP == 0) {
+                printf("\n");
+            }
+        }
+    }
+}
+
+
+void setup_cpu_rlimit(int cpulimit) {
+    struct rlimit rlim_new, rlim_old;
+    if (cpulimit == -1) {
+        rlim_new.rlim_cur = rlim_new.rlim_max = RLIM_INFINITY;
+    } else {
+        rlim_new.rlim_cur = rlim_new.rlim_max = (rlim_t)cpulimit;
+    }
+
+    if (prlimit(0, RLIMIT_CPU, &rlim_new, &rlim_old) == -1) {
+        fprintf(stderr, "prlimit error!\n");
+        exit(2);
+    }
+
+    printf("CPU rlimit [soft,hard] new: [%ld:%ld]s : old [%ld:%ld]s (-1 = unlimited)\n",
+           rlim_new.rlim_cur, rlim_new.rlim_max, rlim_old.rlim_cur, rlim_old.rlim_max);
+}
+
+
+int main(int argc, char* argv[]) {
+    
+    int limit, nsec;
+    if (argc < 3) {
+        fprintf(stderr, "Usage: %s limit-to-primes cpu-time\n", argv[0]);
+        exit(1);
+    }
+
+    limit = atoi(argv[1]);
+    if (limit <= 4 || limit > MAX) {
+        fprintf(stderr, "number: %s up to limit!\n",
+        argv[1]);
+        exit(1);
+    }
+
+    nsec = atoi(argv[2]);
+    if (nsec == 0) {
+        nsec = 1;
+    }
+
+    if (nsec != -2) {
+        setup_cpu_rlimit(nsec);
+    }
+
+    compute_prime_gen(limit);
+
+    return 0;
+}
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行实例：</p>
+<pre class="line-numbers language-bash"><code class="language-bash"> 53003 53017 53047 53051 53069 53077 53087 53089 53093 53101 53113 53117 53129 53147 53149 53161
+ 53171 53173 53189 53197 53201 53231 53233 53239 53267 53269 53279 53281 53299 53309 53323 53327
+ 53353 53359 53377 53381 53401 53407 53411 53419 53437 53441 53453 53479 53503 53507 53527 53549
+ 53551 53569 53591 53593 53597 53609 53611 53617 53623 53629 53633 53639 53653 53657 53681 53693
+ 53699 53717 53719 53731 53759 53773 53777 53783 53791 53813 53819 53831 53849 53857 53861 53881
+ 53887 53891 53897 53899 53917 53923 53927 53939 53951 53959 53987 53993 54001 54011 54013 54037
+ 54049 54059 54083 54091 54101 54121 54133 54139 54151 54163 54167 54181 54193 54217 54251 54269
+<span class="token punctuation">[</span>1<span class="token punctuation">]</span>    79874 killed     ./a.out 100000 1
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>会发送一个信号，kill掉进程。</p>
+<h3 id="练习"><a href="#练习" class="headerlink" title="练习"></a>练习</h3><p>写一个程序，触发系统coredump，修改limit值，避免产生core文件。</p>
+<p>先做必要配置：</p>
+<pre class="line-numbers language-bash"><code class="language-bash"><span class="token keyword">echo</span> <span class="token string">"1"</span> <span class="token operator">></span> /proc/sys/kernel/core_uses_pid  <span class="token comment" spellcheck="true"># 使得core文件包含pid信息</span>
+<span class="token function">cd</span> /proc/sys/kernel/
+<span class="token keyword">echo</span> <span class="token string">"/tmp/core-%e-%p-%t"</span> <span class="token operator">></span> core_pattern <span class="token comment" spellcheck="true"># 修改格式，保存在/tmp目录下</span>
+
+<span class="token function">ulimit</span> -c unlimited  <span class="token comment" spellcheck="true"># 改为不限制core文件大小</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行以下代码：</p>
+<pre class="line-numbers language-C"><code class="language-C">#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+void func(char* ptr) {
+    strcpy(ptr, "hello world bug");
+}
+
+int main() {
+    // 分配一块内存
+    char* ptr = (char*)malloc(20);
+    if (ptr == NULL) {
+        printf("内存分配失败。\n");
+        return 1;
+    }
+
+    // 调用函数，在空指针上执行写操作，导致段错误
+    func(ptr);
+
+    // 释放动态分配的内存
+    free(ptr);
+
+    return 0;
+}
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-bash"><code class="language-bash">$ gdb ./a.out /tmp/core-a.out-137201-1713949146 
+GNU gdb <span class="token punctuation">(</span>GDB<span class="token punctuation">)</span> Rocky Linux 10.2-11.el9
+Copyright <span class="token punctuation">(</span>C<span class="token punctuation">)</span> 2021 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <span class="token operator">&lt;</span>http://gnu.org/licenses/gpl.html<span class="token operator">></span>
+This is <span class="token function">free</span> software: you are <span class="token function">free</span> to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+Type <span class="token string">"show copying"</span> and <span class="token string">"show warranty"</span> <span class="token keyword">for</span> details.
+This GDB was configured as <span class="token string">"x86_64-redhat-linux-gnu"</span><span class="token keyword">.</span>
+Type <span class="token string">"show configuration"</span> <span class="token keyword">for</span> configuration details.
+For bug reporting instructions, please see:
+<span class="token operator">&lt;</span>https://www.gnu.org/software/gdb/bugs/<span class="token operator">></span>.
+Find the GDB manual and other documentation resources online at:
+    <span class="token operator">&lt;</span>http://www.gnu.org/software/gdb/documentation/<span class="token operator">></span>.
+
+For help, <span class="token function">type</span> <span class="token string">"help"</span><span class="token keyword">.</span>
+Type <span class="token string">"apropos word"</span> to search <span class="token keyword">for</span> commands related to <span class="token string">"word"</span><span class="token punctuation">..</span>.
+Reading symbols from ./a.out<span class="token punctuation">..</span>.
+<span class="token punctuation">[</span>New LWP 137201<span class="token punctuation">]</span>
+<span class="token punctuation">[</span>Thread debugging using libthread_db enabled<span class="token punctuation">]</span>
+Using host libthread_db library <span class="token string">"/lib64/libthread_db.so.1"</span><span class="token keyword">.</span>
+Core was generated by `./a.out'.
+Program terminated with signal SIGSEGV, Segmentation fault.
+<span class="token comment" spellcheck="true">#0  0x0000000000401126 in func (ptr=0x0) at core.c:6</span>
+6           strcpy<span class="token punctuation">(</span>ptr, <span class="token string">"hello world bug"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+Missing separate debuginfos, use: dnf debuginfo-install glibc-2.34-83.el9.7.x86_64
+gdb-peda$ bt
+<span class="token comment" spellcheck="true">#0  0x0000000000401126 in func (ptr=0x0) at core.c:6</span>
+<span class="token comment" spellcheck="true">#1  0x000000000040114c in main () at core.c:14</span>
+<span class="token comment" spellcheck="true">#2  0x00007f087ce3feb0 in __libc_start_call_main () from /lib64/libc.so.6</span>
+<span class="token comment" spellcheck="true">#3  0x00007f087ce3ff60 in __libc_start_main_impl () from /lib64/libc.so.6</span>
+<span class="token comment" spellcheck="true">#4  0x0000000000401045 in _start ()</span>
+gdb-peda$ f0
+Undefined command: <span class="token string">"f0"</span><span class="token keyword">.</span>  Try <span class="token string">"help"</span><span class="token keyword">.</span>
+gdb-peda$ f 0
+<span class="token comment" spellcheck="true">#0  0x0000000000401126 in func (ptr=0x0) at core.c:6</span>
+6           strcpy<span class="token punctuation">(</span>ptr, <span class="token string">"hello world bug"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+gdb-peda$ p ptr
+<span class="token variable">$1</span> <span class="token operator">=</span> 0x0
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里可以看到第6行的问题。触发得到一个 Program terminated with signal SIGSEGV, Segmentation fault. 信号。</p>
+<p>ulimit -c 0  配置不产生core dump文件</p>
+<pre><code>（1）使用ulimit -c命令可查看core文件的生成开关。若结果为0，则表示关闭了此功能，不会生成core文件。 
+（2）使用ulimit -c filesize命令，可以限制core文件的大小（filesize的单位为kbyte）。例如使用ulimit -c 1000将会把core文件限制为1000KB。如果生成的信息超过此大小，将会被裁剪，最终生成一个不完整的core文件，在调试此core文件的时候，gdb会提示错误。
+（3）使用ulimit -c unlimited，则表示core文件的大小不受限制。 
+（4）可以将ulimit -c unlimited写入到.bashrc中。 
+</code></pre>
+<p>如果不需要崩溃时候生成core文件 ，可以把ulimit -c 0 写入到.bashrc中。</p>
+
+</article>
+    
+    
+
+</div>
+<div class="trm-post-next-prev row">
+    <div class="col-lg-12">
+        <!-- title -->
+        <h5 class="trm-title-with-divider">
+            其他文章
+            <span data-number="02"></span>
+        </h5>
+    </div>
+    
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2023/12/30/http-headers%E5%91%BD%E5%90%8D%E8%A7%84%E8%8C%83/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" #.">
+                    未分类
+                </a>
+            </div>
+            <h5>
+                <a href="/2023/12/30/http-headers%E5%91%BD%E5%90%8D%E8%A7%84%E8%8C%83/" class="trm-anima-link">
+                    http-headers命名规范
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>23/12/30</li>
+                <li>21:48</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+</div>
+
+    
+
+
+
+                    <div class="trm-divider footer-divider"></div>
+
+                    <!-- footer -->
+                    <footer class="trm-scroll-animation">
+
+    
+
+    
+
+    
+        <div class="trm-footer-item">
+            <span>
+                由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v7.0.0
+            </span>
+            <span class="footer-separator" data-separator=" | "></span>
+            <span> 
+                主题 - 
+                <a rel="noopener" href='https://github.com/MaLuns/hexo-theme-async' target='_blank'>Async</a>
+                v2.1.8
+            </span>
+        </div>
+      
+
+     
+
+     
+</footer>
+ 
+                    <!-- footer end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- body end -->
+
+            
+
+            
+<div class="trm-fixed-container">
+    
+    
+        <div class="trm-fixed-btn" data-title="阅读模式" onclick="asyncFun.switchReadMode()">
+            <i class="iconfont fas fa-book-reader"></i>
+        </div>
+    
+    
+    <div id="trm-back-top" class="trm-fixed-btn" data-title="回到顶部">
+        <i class="iconfont fas fa-arrow-up"></i>
+    </div>
+</div>
+        </div>
+      </div>
+      <!-- scroll container end -->
+  </div>
+  <!-- app wrapper end -->
+
+  
+  <!-- Plugin -->
+
+
+
+
+    
+    
+<script src="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+
+    
+
+    
+
+    
+
+    <!-- 数学公式 -->
+    
+
+    <!-- 评论插件 -->
+    
+        
+
+        
+    
+
+
+
+<!-- CDN -->
+
+
+    
+
+    
+
+    
+
+
+
+
+    <!-- Service Worker -->
+    
+    <!-- baidu push -->
+    
+
+
+<script id="async-script" src="/js/main.js?v=2.1.8"></script>
+
+</body>
+
+</html>
