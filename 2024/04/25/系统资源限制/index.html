@@ -15,7 +15,7 @@
 <meta property="og:description" content="背景最近面试有被问到，不考虑资源限制，一台主机可以建立多少个TCP连接，这里的资源限制除了内存，CPU还有一些其他资源，比如打开的文件描述符等。这里主要学习一下资源限制相关的系统知识，具体每个进程有哪些资源限制，为什么需要他们，相关的系统调用，如何限制进程使用的资源。 ulimitulimit 是一个系统内置指令（bash-builtins） Bash-builtins 有哪些? (bash,">
 <meta property="og:locale">
 <meta property="article:published_time" content="2024-04-24T21:34:08.000Z">
-<meta property="article:modified_time" content="2024-04-24T21:34:45.276Z">
+<meta property="article:modified_time" content="2024-04-24T21:40:42.548Z">
 <meta property="article:author" content="橘猫元宝">
 <meta property="article:tag" content="cat">
 <meta name="twitter:card" content="summary">
@@ -62,7 +62,7 @@
 
 <!-- Variable -->
 <script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
-<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-04-25 05:34:45"};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-04-25 05:40:42"};</script>
 
 <!-- Theme mode css -->
 <link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
@@ -394,15 +394,17 @@ $ ulimit -aH
 <pre><code>$ prlimit --pid=53078 -n=5 
 </code></pre>
 <p>在对应的进程里面打开多个文件，一般进程会默认打开三个fd(stdin, stdout, stderr)，那么新打开3个文件，就会报错了:</p>
-<pre><code>&gt;&gt;&gt; fd1 = open(&#39;/tmp/lock.c&#39;)
-&gt;&gt;&gt; fd2 = open(&#39;/tmp/lock.c&#39;)
-&gt;&gt;&gt; fd3 = open(&#39;/tmp/lock.c&#39;)
-Traceback (most recent call last):
-  File &quot;&lt;stdin&gt;&quot;, line 1, in &lt;module&gt;
-OSError: [Errno 24] Too many open files: &#39;/tmp/lock.c&#39;
-</code></pre>
+<pre class="line-numbers language-python"><code class="language-python">
+<span class="token operator">>></span><span class="token operator">></span> fd1 <span class="token operator">=</span> open<span class="token punctuation">(</span><span class="token string">'/tmp/lock.c'</span><span class="token punctuation">)</span>
+<span class="token operator">>></span><span class="token operator">></span> fd2 <span class="token operator">=</span> open<span class="token punctuation">(</span><span class="token string">'/tmp/lock.c'</span><span class="token punctuation">)</span>
+<span class="token operator">>></span><span class="token operator">></span> fd3 <span class="token operator">=</span> open<span class="token punctuation">(</span><span class="token string">'/tmp/lock.c'</span><span class="token punctuation">)</span>
+Traceback <span class="token punctuation">(</span>most recent call last<span class="token punctuation">)</span><span class="token punctuation">:</span>
+  File <span class="token string">"&lt;stdin>"</span><span class="token punctuation">,</span> line <span class="token number">1</span><span class="token punctuation">,</span> <span class="token keyword">in</span> <span class="token operator">&lt;</span>module<span class="token operator">></span>
+OSError<span class="token punctuation">:</span> <span class="token punctuation">[</span>Errno <span class="token number">24</span><span class="token punctuation">]</span> Too many open files<span class="token punctuation">:</span> <span class="token string">'/tmp/lock.c'</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 <p>从proc查看单个进程的limit：</p>
-<pre class="line-numbers language-bash"><code class="language-bash">$ <span class="token function">cat</span> /proc/82804/limits
+<pre class="line-numbers language-bash"><code class="language-bash">
+$ <span class="token function">cat</span> /proc/82804/limits
 Limit                     Soft Limit           Hard Limit           Units     
 Max cpu <span class="token function">time</span>              unlimited            unlimited            seconds   
 Max <span class="token function">file</span> size             unlimited            unlimited            bytes     
@@ -420,64 +422,65 @@ Max msgqueue size         819200               819200               bytes
 Max <span class="token function">nice</span> priority         0                    0                    
 Max realtime priority     0                    0                    
 Max realtime <span class="token function">timeout</span>      unlimited            unlimited            us   
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<h4 id="show-limit-打印hard-limit-soft-limit"><a href="#show-limit-打印hard-limit-soft-limit" class="headerlink" title="show_limit 打印hard limit soft limit"></a>show_limit 打印hard limit soft limit</h4><pre class="line-numbers language-C"><code class="language-C">#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/resource.h>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="show-limit-打印hard-limit-soft-limit"><a href="#show-limit-打印hard-limit-soft-limit" class="headerlink" title="show_limit 打印hard limit soft limit"></a>show_limit 打印hard limit soft limit</h4><pre class="line-numbers language-c"><code class="language-c">
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdlib.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;unistd.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;string.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;sys/types.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;sys/time.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;sys/resource.h></span></span>
 
-#define ARRAY_LEN(arr) (sizeof((arr))/sizeof((arr)[0]))
+<span class="token macro property">#<span class="token directive keyword">define</span> ARRAY_LEN(arr) (sizeof((arr))/sizeof((arr)[0]))</span>
 
-static void query_rlimits(void) {
-        unsigned i;
-        struct rlimit rlim;
-        struct rlimpair {
-                int rlim;
-                char *name;
-        };
-        struct rlimpair rlimpair_arr[] = {
-                {RLIMIT_CORE, "RLIMIT_CORE"},
-                {RLIMIT_DATA, "RLIMIT_DATA"},
-                {RLIMIT_NICE, "RLIMIT_NICE"},
-                {RLIMIT_FSIZE, "RLIMIT_FSIZE"},
-                {RLIMIT_SIGPENDING, "RLIMIT_SIGPENDING"},
-                {RLIMIT_MEMLOCK, "RLIMIT_MEMLOCK"},
-                {RLIMIT_NOFILE, "RLIMIT_NOFILE"},
-                {RLIMIT_MSGQUEUE, "RLIMIT_MSGQUEUE"},
-                {RLIMIT_RTTIME, "RLIMIT_RTTIME"},
-                {RLIMIT_STACK, "RLIMIT_STACK"},
-                {RLIMIT_CPU, "RLIMIT_CPU"},
-                {RLIMIT_NPROC, "RLIMIT_NPROC"},
-                {RLIMIT_AS, "RLIMIT_AS"},
-                {RLIMIT_LOCKS, "RLIMIT_LOCKS"},
-        };
-        char tmp1[16], tmp2[16];
+<span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">query_rlimits</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">unsigned</span> i<span class="token punctuation">;</span>
+        <span class="token keyword">struct</span> rlimit rlim<span class="token punctuation">;</span>
+        <span class="token keyword">struct</span> rlimpair <span class="token punctuation">{</span>
+                <span class="token keyword">int</span> rlim<span class="token punctuation">;</span>
+                <span class="token keyword">char</span> <span class="token operator">*</span>name<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span><span class="token punctuation">;</span>
+        <span class="token keyword">struct</span> rlimpair rlimpair_arr<span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+                <span class="token punctuation">{</span>RLIMIT_CORE<span class="token punctuation">,</span> <span class="token string">"RLIMIT_CORE"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+                <span class="token punctuation">{</span>RLIMIT_DATA<span class="token punctuation">,</span> <span class="token string">"RLIMIT_DATA"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+                <span class="token punctuation">{</span>RLIMIT_NICE<span class="token punctuation">,</span> <span class="token string">"RLIMIT_NICE"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+                <span class="token punctuation">{</span>RLIMIT_FSIZE<span class="token punctuation">,</span> <span class="token string">"RLIMIT_FSIZE"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+                <span class="token punctuation">{</span>RLIMIT_SIGPENDING<span class="token punctuation">,</span> <span class="token string">"RLIMIT_SIGPENDING"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+                <span class="token punctuation">{</span>RLIMIT_MEMLOCK<span class="token punctuation">,</span> <span class="token string">"RLIMIT_MEMLOCK"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+                <span class="token punctuation">{</span>RLIMIT_NOFILE<span class="token punctuation">,</span> <span class="token string">"RLIMIT_NOFILE"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+                <span class="token punctuation">{</span>RLIMIT_MSGQUEUE<span class="token punctuation">,</span> <span class="token string">"RLIMIT_MSGQUEUE"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+                <span class="token punctuation">{</span>RLIMIT_RTTIME<span class="token punctuation">,</span> <span class="token string">"RLIMIT_RTTIME"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+                <span class="token punctuation">{</span>RLIMIT_STACK<span class="token punctuation">,</span> <span class="token string">"RLIMIT_STACK"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+                <span class="token punctuation">{</span>RLIMIT_CPU<span class="token punctuation">,</span> <span class="token string">"RLIMIT_CPU"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+                <span class="token punctuation">{</span>RLIMIT_NPROC<span class="token punctuation">,</span> <span class="token string">"RLIMIT_NPROC"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+                <span class="token punctuation">{</span>RLIMIT_AS<span class="token punctuation">,</span> <span class="token string">"RLIMIT_AS"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+                <span class="token punctuation">{</span>RLIMIT_LOCKS<span class="token punctuation">,</span> <span class="token string">"RLIMIT_LOCKS"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">;</span>
+        <span class="token keyword">char</span> tmp1<span class="token punctuation">[</span><span class="token number">16</span><span class="token punctuation">]</span><span class="token punctuation">,</span> tmp2<span class="token punctuation">[</span><span class="token number">16</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
 
-        printf("RESOURCE LIMIT                 SOFT              HARD\n");
-        for (i = 0; i < ARRAY_LEN(rlimpair_arr); i++) {
-                if (prlimit(0, rlimpair_arr[i].rlim, 0, &rlim) == -1) {
-                            fprintf(stderr, "prlimit error\n");
-                            exit(1);
-        }
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"RESOURCE LIMIT                 SOFT              HARD\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span>i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> <span class="token function">ARRAY_LEN</span><span class="token punctuation">(</span>rlimpair_arr<span class="token punctuation">)</span><span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">prlimit</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> rlimpair_arr<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>rlim<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>rlim<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                            <span class="token function">fprintf</span><span class="token punctuation">(</span><span class="token constant">stderr</span><span class="token punctuation">,</span> <span class="token string">"prlimit error\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                            <span class="token function">exit</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
 
-                snprintf(tmp1, 16, "%ld", rlim.rlim_cur);
-                snprintf(tmp2, 16, "%ld", rlim.rlim_max);
-                printf("%-18s:  %16s  %16s\n",
-                       rlimpair_arr[i].name,
-                       (rlim.rlim_cur == -1UL ? "unlimited" : tmp1),
-                       (rlim.rlim_max == -1UL ? "unlimited" : tmp2)
-                    );
-        }
-}
+                <span class="token function">snprintf</span><span class="token punctuation">(</span>tmp1<span class="token punctuation">,</span> <span class="token number">16</span><span class="token punctuation">,</span> <span class="token string">"%ld"</span><span class="token punctuation">,</span> rlim<span class="token punctuation">.</span>rlim_cur<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token function">snprintf</span><span class="token punctuation">(</span>tmp2<span class="token punctuation">,</span> <span class="token number">16</span><span class="token punctuation">,</span> <span class="token string">"%ld"</span><span class="token punctuation">,</span> rlim<span class="token punctuation">.</span>rlim_max<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"%-18s:  %16s  %16s\n"</span><span class="token punctuation">,</span>
+                       rlimpair_arr<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>name<span class="token punctuation">,</span>
+                       <span class="token punctuation">(</span>rlim<span class="token punctuation">.</span>rlim_cur <span class="token operator">==</span> <span class="token operator">-</span><span class="token number">1UL</span> <span class="token operator">?</span> <span class="token string">"unlimited"</span> <span class="token punctuation">:</span> tmp1<span class="token punctuation">)</span><span class="token punctuation">,</span>
+                       <span class="token punctuation">(</span>rlim<span class="token punctuation">.</span>rlim_max <span class="token operator">==</span> <span class="token operator">-</span><span class="token number">1UL</span> <span class="token operator">?</span> <span class="token string">"unlimited"</span> <span class="token punctuation">:</span> tmp2<span class="token punctuation">)</span>
+                    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
 
-int main(void) {
-    query_rlimits();
-    return 0;
-}
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">query_rlimits</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 <p>运行结果：</p>
 <pre class="line-numbers language-bash"><code class="language-bash">$ ./a.out 
 RESOURCE LIMIT                 SOFT              HARD
@@ -496,88 +499,89 @@ RLIMIT_NPROC      <span class="token keyword">:</span>             14481        
 RLIMIT_AS         <span class="token keyword">:</span>         unlimited         unlimited
 RLIMIT_LOCKS      <span class="token keyword">:</span>         unlimited         unlimited
 <span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<h4 id="rlimit-primes程序了解如何使用system-call-限制CPU"><a href="#rlimit-primes程序了解如何使用system-call-限制CPU" class="headerlink" title="rlimit_primes程序了解如何使用system call 限制CPU"></a>rlimit_primes程序了解如何使用system call 限制CPU</h4><pre class="line-numbers language-C"><code class="language-C">#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/resource.h>
+<h4 id="rlimit-primes程序了解如何使用system-call-限制CPU"><a href="#rlimit-primes程序了解如何使用system-call-限制CPU" class="headerlink" title="rlimit_primes程序了解如何使用system call 限制CPU"></a>rlimit_primes程序了解如何使用system call 限制CPU</h4><pre class="line-numbers language-c"><code class="language-c">
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdlib.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;unistd.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;string.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;sys/types.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;sys/time.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;sys/resource.h></span></span>
 
-#define MAX    10000000         // 10 million limit
-#define WARP    16
+<span class="token macro property">#<span class="token directive keyword">define</span> MAX    10000000         </span><span class="token comment" spellcheck="true">// 10 million limit</span>
+<span class="token macro property">#<span class="token directive keyword">define</span> WARP    16</span>
 
-void compute_prime_gen(int limit) {
-    int i, j, num = 2;
-    int is_prime;
-    printf(" 2, 3 ");
-    for (i = 4; i <= limit; i++) {
-        is_prime = 1;
-        for (j = 2; j < limit / 2; j++) {
-            if ((i != j) && (i % j == 0)) {
-                is_prime = 0;
-                break;
-            }
-        }
+<span class="token keyword">void</span> <span class="token function">compute_prime_gen</span><span class="token punctuation">(</span><span class="token keyword">int</span> limit<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> i<span class="token punctuation">,</span> j<span class="token punctuation">,</span> num <span class="token operator">=</span> <span class="token number">2</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> is_prime<span class="token punctuation">;</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">" 2, 3 "</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span>i <span class="token operator">=</span> <span class="token number">4</span><span class="token punctuation">;</span> i <span class="token operator">&lt;=</span> limit<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        is_prime <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span>j <span class="token operator">=</span> <span class="token number">2</span><span class="token punctuation">;</span> j <span class="token operator">&lt;</span> limit <span class="token operator">/</span> <span class="token number">2</span><span class="token punctuation">;</span> j<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token punctuation">(</span>i <span class="token operator">!=</span> j<span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span> <span class="token punctuation">(</span>i <span class="token operator">%</span> j <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                is_prime <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+                <span class="token keyword">break</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
 
-        if (is_prime) {
-            num++;
-            printf("%6d", i);
-            if (num % WARP == 0) {
-                printf("\n");
-            }
-        }
-    }
-}
-
-
-void setup_cpu_rlimit(int cpulimit) {
-    struct rlimit rlim_new, rlim_old;
-    if (cpulimit == -1) {
-        rlim_new.rlim_cur = rlim_new.rlim_max = RLIM_INFINITY;
-    } else {
-        rlim_new.rlim_cur = rlim_new.rlim_max = (rlim_t)cpulimit;
-    }
-
-    if (prlimit(0, RLIMIT_CPU, &rlim_new, &rlim_old) == -1) {
-        fprintf(stderr, "prlimit error!\n");
-        exit(2);
-    }
-
-    printf("CPU rlimit [soft,hard] new: [%ld:%ld]s : old [%ld:%ld]s (-1 = unlimited)\n",
-           rlim_new.rlim_cur, rlim_new.rlim_max, rlim_old.rlim_cur, rlim_old.rlim_max);
-}
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>is_prime<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            num<span class="token operator">++</span><span class="token punctuation">;</span>
+            <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"%6d"</span><span class="token punctuation">,</span> i<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>num <span class="token operator">%</span> WARP <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
 
 
-int main(int argc, char* argv[]) {
+<span class="token keyword">void</span> <span class="token function">setup_cpu_rlimit</span><span class="token punctuation">(</span><span class="token keyword">int</span> cpulimit<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">struct</span> rlimit rlim_new<span class="token punctuation">,</span> rlim_old<span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>cpulimit <span class="token operator">==</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        rlim_new<span class="token punctuation">.</span>rlim_cur <span class="token operator">=</span> rlim_new<span class="token punctuation">.</span>rlim_max <span class="token operator">=</span> RLIM_INFINITY<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+        rlim_new<span class="token punctuation">.</span>rlim_cur <span class="token operator">=</span> rlim_new<span class="token punctuation">.</span>rlim_max <span class="token operator">=</span> <span class="token punctuation">(</span>rlim_t<span class="token punctuation">)</span>cpulimit<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">prlimit</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> RLIMIT_CPU<span class="token punctuation">,</span> <span class="token operator">&amp;</span>rlim_new<span class="token punctuation">,</span> <span class="token operator">&amp;</span>rlim_old<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">fprintf</span><span class="token punctuation">(</span><span class="token constant">stderr</span><span class="token punctuation">,</span> <span class="token string">"prlimit error!\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">exit</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"CPU rlimit [soft,hard] new: [%ld:%ld]s : old [%ld:%ld]s (-1 = unlimited)\n"</span><span class="token punctuation">,</span>
+           rlim_new<span class="token punctuation">.</span>rlim_cur<span class="token punctuation">,</span> rlim_new<span class="token punctuation">.</span>rlim_max<span class="token punctuation">,</span> rlim_old<span class="token punctuation">.</span>rlim_cur<span class="token punctuation">,</span> rlim_old<span class="token punctuation">.</span>rlim_max<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token keyword">int</span> argc<span class="token punctuation">,</span> <span class="token keyword">char</span><span class="token operator">*</span> argv<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
     
-    int limit, nsec;
-    if (argc < 3) {
-        fprintf(stderr, "Usage: %s limit-to-primes cpu-time\n", argv[0]);
-        exit(1);
-    }
+    <span class="token keyword">int</span> limit<span class="token punctuation">,</span> nsec<span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>argc <span class="token operator">&lt;</span> <span class="token number">3</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">fprintf</span><span class="token punctuation">(</span><span class="token constant">stderr</span><span class="token punctuation">,</span> <span class="token string">"Usage: %s limit-to-primes cpu-time\n"</span><span class="token punctuation">,</span> argv<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">exit</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
 
-    limit = atoi(argv[1]);
-    if (limit <= 4 || limit > MAX) {
-        fprintf(stderr, "number: %s up to limit!\n",
-        argv[1]);
-        exit(1);
-    }
+    limit <span class="token operator">=</span> <span class="token function">atoi</span><span class="token punctuation">(</span>argv<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>limit <span class="token operator">&lt;=</span> <span class="token number">4</span> <span class="token operator">||</span> limit <span class="token operator">></span> MAX<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">fprintf</span><span class="token punctuation">(</span><span class="token constant">stderr</span><span class="token punctuation">,</span> <span class="token string">"number: %s up to limit!\n"</span><span class="token punctuation">,</span>
+        argv<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">exit</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
 
-    nsec = atoi(argv[2]);
-    if (nsec == 0) {
-        nsec = 1;
-    }
+    nsec <span class="token operator">=</span> <span class="token function">atoi</span><span class="token punctuation">(</span>argv<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>nsec <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        nsec <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
 
-    if (nsec != -2) {
-        setup_cpu_rlimit(nsec);
-    }
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>nsec <span class="token operator">!=</span> <span class="token operator">-</span><span class="token number">2</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">setup_cpu_rlimit</span><span class="token punctuation">(</span>nsec<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
 
-    compute_prime_gen(limit);
+    <span class="token function">compute_prime_gen</span><span class="token punctuation">(</span>limit<span class="token punctuation">)</span><span class="token punctuation">;</span>
 
-    return 0;
-}
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 <p>运行实例：</p>
 <pre class="line-numbers language-bash"><code class="language-bash"> 53003 53017 53047 53051 53069 53077 53087 53089 53093 53101 53113 53117 53129 53147 53149 53161
  53171 53173 53189 53197 53201 53231 53233 53239 53267 53269 53279 53281 53299 53309 53323 53327
@@ -591,38 +595,40 @@ int main(int argc, char* argv[]) {
 <p>会发送一个信号，kill掉进程。</p>
 <h3 id="练习"><a href="#练习" class="headerlink" title="练习"></a>练习</h3><p>写一个程序，触发系统coredump，修改limit值，避免产生core文件。</p>
 <p>先做必要配置：</p>
-<pre class="line-numbers language-bash"><code class="language-bash"><span class="token keyword">echo</span> <span class="token string">"1"</span> <span class="token operator">></span> /proc/sys/kernel/core_uses_pid  <span class="token comment" spellcheck="true"># 使得core文件包含pid信息</span>
+<pre class="line-numbers language-bash"><code class="language-bash">
+<span class="token keyword">echo</span> <span class="token string">"1"</span> <span class="token operator">></span> /proc/sys/kernel/core_uses_pid  <span class="token comment" spellcheck="true"># 使得core文件包含pid信息</span>
 <span class="token function">cd</span> /proc/sys/kernel/
 <span class="token keyword">echo</span> <span class="token string">"/tmp/core-%e-%p-%t"</span> <span class="token operator">></span> core_pattern <span class="token comment" spellcheck="true"># 修改格式，保存在/tmp目录下</span>
 
 <span class="token function">ulimit</span> -c unlimited  <span class="token comment" spellcheck="true"># 改为不限制core文件大小</span>
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 <p>运行以下代码：</p>
-<pre class="line-numbers language-C"><code class="language-C">#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+<pre class="line-numbers language-c"><code class="language-c">
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdlib.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;string.h></span></span>
 
-void func(char* ptr) {
-    strcpy(ptr, "hello world bug");
-}
+<span class="token keyword">void</span> <span class="token function">func</span><span class="token punctuation">(</span><span class="token keyword">char</span><span class="token operator">*</span> ptr<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">strcpy</span><span class="token punctuation">(</span>ptr<span class="token punctuation">,</span> <span class="token string">"hello world bug"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
 
-int main() {
-    // 分配一块内存
-    char* ptr = (char*)malloc(20);
-    if (ptr == NULL) {
-        printf("内存分配失败。\n");
-        return 1;
-    }
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 分配一块内存</span>
+    <span class="token keyword">char</span><span class="token operator">*</span> ptr <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">char</span><span class="token operator">*</span><span class="token punctuation">)</span><span class="token function">malloc</span><span class="token punctuation">(</span><span class="token number">20</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>ptr <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"内存分配失败。\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
 
-    // 调用函数，在空指针上执行写操作，导致段错误
-    func(ptr);
+    <span class="token comment" spellcheck="true">// 调用函数，在空指针上执行写操作，导致段错误</span>
+    <span class="token function">func</span><span class="token punctuation">(</span>ptr<span class="token punctuation">)</span><span class="token punctuation">;</span>
 
-    // 释放动态分配的内存
-    free(ptr);
+    <span class="token comment" spellcheck="true">// 释放动态分配的内存</span>
+    <span class="token function">free</span><span class="token punctuation">(</span>ptr<span class="token punctuation">)</span><span class="token punctuation">;</span>
 
-    return 0;
-}
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 <pre class="line-numbers language-bash"><code class="language-bash">$ gdb ./a.out /tmp/core-a.out-137201-1713949146 
 GNU gdb <span class="token punctuation">(</span>GDB<span class="token punctuation">)</span> Rocky Linux 10.2-11.el9
 Copyright <span class="token punctuation">(</span>C<span class="token punctuation">)</span> 2021 Free Software Foundation, Inc.
