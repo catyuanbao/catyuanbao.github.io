@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="x5-fullscreen" content="true">
+<meta name="full-screen" content="yes">
+<meta name="theme-color" content="#317EFB" />
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
+<meta name="description" content="AI 大模型笔记一简介大模型，全程”大语言模型”，英文Large Language Model，缩写 LLM  把大模型当初一个函数，给输入，得到输出； 任何业务问题，用语言描述，成为大模型输入，得到业务问题结果； 实际工作中，通常需要将业务拆解为若干子任务，分别解决。理解业务本质，对拆解任务比较有用。  模型是如何得到结果的简单描述：根据上下文关联，猜下一个词出现的概率。 OpenAI接口名称">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AI大模型笔记一">
+<meta property="og:url" content="http://example.com/2024/05/09/AI%E5%A4%A7%E6%A8%A1%E5%9E%8B%E7%AC%94%E8%AE%B0%E4%B8%80/index.html">
+<meta property="og:site_name" content="Cat YuanBao">
+<meta property="og:description" content="AI 大模型笔记一简介大模型，全程”大语言模型”，英文Large Language Model，缩写 LLM  把大模型当初一个函数，给输入，得到输出； 任何业务问题，用语言描述，成为大模型输入，得到业务问题结果； 实际工作中，通常需要将业务拆解为若干子任务，分别解决。理解业务本质，对拆解任务比较有用。  模型是如何得到结果的简单描述：根据上下文关联，猜下一个词出现的概率。 OpenAI接口名称">
+<meta property="og:locale">
+<meta property="article:published_time" content="2024-05-09T09:08:06.000Z">
+<meta property="article:modified_time" content="2024-05-09T09:08:37.946Z">
+<meta property="article:author" content="橘猫元宝">
+<meta property="article:tag" content="cat">
+<meta name="twitter:card" content="summary">
+
+    <meta name="keywords" content="cat">
+
+
+<title >AI大模型笔记一</title>
+
+<!-- Favicon -->
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='16x16' ></link>
+
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='32x32' ></link>
+
+
+
+
+<!-- Plugin -->
+
+
+
+
+    
+<link rel="stylesheet" href="/css/plugins/bootstrap.row.css">
+
+    
+<link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.css">
+
+    
+    
+
+
+
+
+<!-- Icon -->
+
+    
+<link rel="stylesheet" href="/css/plugins/font-awesome.min.css">
+
+
+
+
+<!-- Variable -->
+<script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-05-09 17:08:37"};</script>
+
+<!-- Theme mode css -->
+<link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
+<script>
+    let defaultMode = ASYNC_CONFIG.theme.default !=='auto' ?  ASYNC_CONFIG.theme.default : (window.matchMedia("(prefers-color-scheme: light)").matches ? 'style-light' : 'style-dark')
+    let catchMode = localStorage.getItem('theme-mode') || defaultMode;
+    let type = catchMode === 'style-dark' ? 'add' : 'remove';
+    document.documentElement.classList[type]('dark')
+</script>
+
+<!-- CDN -->
+
+
+    
+    
+
+
+
+<!-- Site Analytics -->
+ 
+<meta name="generator" content="Hexo 7.0.0"><link rel="stylesheet" href="/css/prism.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+<body>
+
+  <!-- app wrapper -->
+  <div class="trm-app-frame">
+
+    <!-- page preloader -->
+    <div class="trm-preloader">
+    <div class="trm-holder">
+        <div class="preloader">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+    <!-- page preloader end -->
+
+    <!-- change mode preloader -->
+    <div class="trm-mode-swich-animation-frame">
+    <div class="trm-mode-swich-animation">
+        <i class="i-sun"><i class="iconfont far fa-sun"></i></i>
+        <div class="trm-horizon"></div>
+        <i class="i-moon"><i class="iconfont far fa-moon"></i></i>
+    </div>
+</div>
+    <!-- change mode preloader end -->
+
+      <!-- scroll container -->
+      <div id="trm-dynamic-content" class="trm-swup-animation">
+        <div id="trm-scroll-container" class="trm-scroll-container" style="opacity: 0">
+            <!-- top bar -->
+            <header class="trm-top-bar">
+	<div class="container">
+		<div class="trm-left-side">
+			<!-- logo -->
+<a href="/" class="trm-logo-frame trm-anima-link">
+    
+        <img alt="logo" src="/img/favicon.svg">
+    
+    
+        <div class="trm-logo-text">
+            元宝<span>橘猫</span>
+        </div>
+    
+</a>
+<!-- logo end -->
+		</div>
+		<div class="trm-right-side">
+			<!-- menu -->
+<div class="trm-menu">
+    <nav>
+        <ul>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/" target="">
+                    首页
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/archives/" target="">
+                    归档
+                </a>
+                
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+<!-- menu end -->
+			
+    <!-- mode switcher place -->
+    <div class="trm-mode-switcher-place">
+        <div class="trm-mode-switcher">
+            <i class="iconfont far fa-sun"></i>
+            <input class="tgl tgl-light" id="trm-swich" type="checkbox">
+            <label class="trm-swich" for="trm-swich"></label>
+            <i class="iconfont far fa-moon"></i>
+        </div>
+    </div>
+    <!-- mode switcher place end -->
+
+			
+		</div>
+		<div class="trm-menu-btn">
+			<span></span>
+		</div>
+	</div>
+</header>
+            <!-- top bar end -->
+
+            <!-- body -->
+            
+<div class="trm-content-start">
+    <!-- banner -->
+    <div class="trm-banner">
+    
+    <!-- banner cover -->
+    <img style="object-position:top;object-fit:cover;" alt="banner" class="trm-banner-cover" src="/img/banner.png">
+    <!-- banner cover end -->
+    
+
+    <!-- banner content -->
+    <div class="trm-banner-content trm-overlay">
+        <div class="container">
+            <div class="row">
+                
+                <div class="col-lg-4"></div>
+                
+                <div class="col-lg-8">
+
+                    <!-- banner title -->
+                    <div class="trm-banner-text ">
+                        <div class="trm-label trm-mb-20">
+                            NEWS LETTER
+                        </div>
+                        <h1 class="trm-mb-30 trm-hsmb-font">
+                            AI大模型笔记一
+                        </h1>
+
+                        
+                            <ul class="trm-breadcrumbs trm-label">
+                                <li>
+                                    <a href="/" class="trm-anima-link">Home</a>
+                                </li>
+                                <li>
+                                    <span>
+                                        2024
+                                    </span>
+                                </li>
+                            </ul>
+                        
+                    </div>
+                    <!-- banner title end -->
+
+                    <!-- scroll hint -->
+                    <span id="scroll-triger" class="trm-scroll-hint-frame">
+                        <div class="trm-scroll-hint"></div>
+                        <span class="trm-label">Scroll down</span>
+                    </span>
+                    <!-- scroll hint end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- banner content end -->
+</div>
+    <!-- banner end -->
+    <div class="container">
+        <div class="row">
+            
+                <div class="trm-page-sidebar col-lg-4 hidden-sm">
+                    <!-- main card -->
+                    <div class="trm-main-card-frame trm-sidebar">
+    <div class="trm-main-card"> 
+        <!-- card header -->
+<div class="trm-mc-header">
+    <div class="trm-avatar-frame trm-mb-20">
+        <img alt="Avatar" class="trm-avatar" src="/img/cat.jpg">
+    </div>
+    <h5 class="trm-name trm-mb-15">
+        橘猫元宝
+    </h5>
+    
+</div>
+<!-- card header end -->
+        <!-- sidebar social -->
+
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<div class="trm-social">
+    
+        <a href="https://github.com" title="Github" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-github"></i>
+        </a>
+    
+</div>
+
+<!-- sidebar social end -->
+        <!-- info -->
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<ul class="trm-table trm-mb-20">
+    
+        <li>
+            <div class="trm-label">
+                Residence:
+            </div>
+            <div class="trm-label trm-label-light">
+                Mars
+            </div>
+        </li>
+    
+</ul>
+<!-- info end -->
+
+        
+    </div>
+</div>
+                    <!-- main card end -->
+                </div>
+            
+            <div class="trm-page-content col-lg-8">
+                <div id="trm-content" class="trm-content">
+                    <div class="trm-post-info row hidden-sm">
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-calendar-alt trm-icon"></i><br>
+            05/09
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-clock trm-icon"></i><br>
+            17:08
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div id="post-author" class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-user trm-icon"></i><br>
+            橘猫元宝
+        </div>
+    </div>
+</div>
+<div class="trm-card ">
+    <article id="article-container" class="trm-publication">
+    <h1 id="AI-大模型笔记一"><a href="#AI-大模型笔记一" class="headerlink" title="AI 大模型笔记一"></a>AI 大模型笔记一</h1><h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>大模型，全程”大语言模型”，英文Large Language Model，缩写 LLM</p>
+<ol>
+<li>把大模型当初一个函数，给输入，得到输出；</li>
+<li>任何业务问题，用语言描述，成为大模型输入，得到业务问题结果；</li>
+<li>实际工作中，通常需要将业务拆解为若干子任务，分别解决。理解业务本质，对拆解任务比较有用。</li>
+</ol>
+<h4 id="模型是如何得到结果的"><a href="#模型是如何得到结果的" class="headerlink" title="模型是如何得到结果的"></a>模型是如何得到结果的</h4><p>简单描述：根据上下文关联，猜下一个词出现的概率。</p>
+<p>OpenAI接口名称 completion，表示只会生成的本质。</p>
+<h4 id="和API交互实例"><a href="#和API交互实例" class="headerlink" title="和API交互实例"></a>和API交互实例</h4><pre class="line-numbers language-bash"><code class="language-bash">$ curl https://api.openai.com/v1/models -H <span class="token string">'Authorization: Bearer your-token'</span>
+<span class="token punctuation">{</span>
+  <span class="token string">"object"</span><span class="token keyword">:</span> <span class="token string">"list"</span>,
+  <span class="token string">"data"</span><span class="token keyword">:</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+      <span class="token string">"id"</span><span class="token keyword">:</span> <span class="token string">"dall-e-3"</span>,
+      <span class="token string">"object"</span><span class="token keyword">:</span> <span class="token string">"model"</span>,
+      <span class="token string">"created"</span><span class="token keyword">:</span> 1698785189,
+      <span class="token string">"owned_by"</span><span class="token keyword">:</span> <span class="token string">"system"</span>
+    <span class="token punctuation">}</span>,
+    <span class="token punctuation">{</span>
+      <span class="token string">"id"</span><span class="token keyword">:</span> <span class="token string">"whisper-1"</span>,
+      <span class="token string">"object"</span><span class="token keyword">:</span> <span class="token string">"model"</span>,
+      <span class="token string">"created"</span><span class="token keyword">:</span> 1677532384,
+      <span class="token string">"owned_by"</span><span class="token keyword">:</span> <span class="token string">"openai-internal"</span>
+    <span class="token punctuation">}</span>,
+    <span class="token punctuation">{</span>
+      <span class="token string">"id"</span><span class="token keyword">:</span> <span class="token string">"davinci-002"</span>,
+      <span class="token string">"object"</span><span class="token keyword">:</span> <span class="token string">"model"</span>,
+      <span class="token string">"created"</span><span class="token keyword">:</span> 1692634301,
+      <span class="token string">"owned_by"</span><span class="token keyword">:</span> <span class="token string">"system"</span>
+    <span class="token punctuation">}</span>,
+    <span class="token punctuation">{</span>
+      <span class="token string">"id"</span><span class="token keyword">:</span> <span class="token string">"gpt-3.5-turbo-1106"</span>,
+      <span class="token string">"object"</span><span class="token keyword">:</span> <span class="token string">"model"</span>,
+      <span class="token string">"created"</span><span class="token keyword">:</span> 1698959748,
+      <span class="token string">"owned_by"</span><span class="token keyword">:</span> <span class="token string">"system"</span>
+    <span class="token punctuation">}</span>,
+    <span class="token punctuation">{</span>
+      <span class="token string">"id"</span><span class="token keyword">:</span> <span class="token string">"gpt-3.5-turbo-16k-0613"</span>,
+      <span class="token string">"object"</span><span class="token keyword">:</span> <span class="token string">"model"</span>,
+      <span class="token string">"created"</span><span class="token keyword">:</span> 1685474247,
+      <span class="token string">"owned_by"</span><span class="token keyword">:</span> <span class="token string">"openai"</span>
+    <span class="token punctuation">}</span>,
+    <span class="token punctuation">{</span>
+      <span class="token string">"id"</span><span class="token keyword">:</span> <span class="token string">"dall-e-2"</span>,
+      <span class="token string">"object"</span><span class="token keyword">:</span> <span class="token string">"model"</span>,
+      <span class="token string">"created"</span><span class="token keyword">:</span> 1698798177,
+      <span class="token string">"owned_by"</span><span class="token keyword">:</span> <span class="token string">"system"</span>
+    <span class="token punctuation">}</span>,
+    <span class="token punctuation">{</span>
+      <span class="token string">"id"</span><span class="token keyword">:</span> <span class="token string">"gpt-3.5-turbo-16k"</span>,
+      <span class="token string">"object"</span><span class="token keyword">:</span> <span class="token string">"model"</span>,
+      <span class="token string">"created"</span><span class="token keyword">:</span> 1683758102,
+      <span class="token string">"owned_by"</span><span class="token keyword">:</span> <span class="token string">"openai-internal"</span>
+    <span class="token punctuation">}</span>,
+    <span class="token punctuation">{</span>
+      <span class="token string">"id"</span><span class="token keyword">:</span> <span class="token string">"tts-1-hd-1106"</span>,
+      <span class="token string">"object"</span><span class="token keyword">:</span> <span class="token string">"model"</span>,
+      <span class="token string">"created"</span><span class="token keyword">:</span> 1699053533,
+      <span class="token string">"owned_by"</span><span class="token keyword">:</span> <span class="token string">"system"</span>
+    <span class="token punctuation">}</span>,
+    <span class="token punctuation">{</span>
+      <span class="token string">"id"</span><span class="token keyword">:</span> <span class="token string">"tts-1-hd"</span>,
+      <span class="token string">"object"</span><span class="token keyword">:</span> <span class="token string">"model"</span>,
+      <span class="token string">"created"</span><span class="token keyword">:</span> 1699046015,
+      <span class="token string">"owned_by"</span><span class="token keyword">:</span> <span class="token string">"system"</span>
+    <span class="token punctuation">}</span>,
+    <span class="token punctuation">{</span>
+      <span class="token string">"id"</span><span class="token keyword">:</span> <span class="token string">"gpt-3.5-turbo"</span>,
+      <span class="token string">"object"</span><span class="token keyword">:</span> <span class="token string">"model"</span>,
+      <span class="token string">"created"</span><span class="token keyword">:</span> 1677610602,
+      <span class="token string">"owned_by"</span><span class="token keyword">:</span> <span class="token string">"openai"</span>
+    <span class="token punctuation">}</span>,
+    <span class="token punctuation">{</span>
+      <span class="token string">"id"</span><span class="token keyword">:</span> <span class="token string">"gpt-3.5-turbo-instruct-0914"</span>,
+      <span class="token string">"object"</span><span class="token keyword">:</span> <span class="token string">"model"</span>,
+      <span class="token string">"created"</span><span class="token keyword">:</span> 1694122472,
+      <span class="token string">"owned_by"</span><span class="token keyword">:</span> <span class="token string">"system"</span>
+    <span class="token punctuation">}</span>,
+    <span class="token punctuation">{</span>
+      <span class="token string">"id"</span><span class="token keyword">:</span> <span class="token string">"gpt-3.5-turbo-0613"</span>,
+      <span class="token string">"object"</span><span class="token keyword">:</span> <span class="token string">"model"</span>,
+      <span class="token string">"created"</span><span class="token keyword">:</span> 1686587434,
+      <span class="token string">"owned_by"</span><span class="token keyword">:</span> <span class="token string">"openai"</span>
+    <span class="token punctuation">}</span>,
+    <span class="token punctuation">{</span>
+      <span class="token string">"id"</span><span class="token keyword">:</span> <span class="token string">"gpt-3.5-turbo-instruct"</span>,
+      <span class="token string">"object"</span><span class="token keyword">:</span> <span class="token string">"model"</span>,
+      <span class="token string">"created"</span><span class="token keyword">:</span> 1692901427,
+      <span class="token string">"owned_by"</span><span class="token keyword">:</span> <span class="token string">"system"</span>
+    <span class="token punctuation">}</span>,
+    <span class="token punctuation">{</span>
+      <span class="token string">"id"</span><span class="token keyword">:</span> <span class="token string">"gpt-3.5-turbo-0125"</span>,
+      <span class="token string">"object"</span><span class="token keyword">:</span> <span class="token string">"model"</span>,
+      <span class="token string">"created"</span><span class="token keyword">:</span> 1706048358,
+      <span class="token string">"owned_by"</span><span class="token keyword">:</span> <span class="token string">"system"</span>
+    <span class="token punctuation">}</span>,
+    <span class="token punctuation">{</span>
+      <span class="token string">"id"</span><span class="token keyword">:</span> <span class="token string">"tts-1"</span>,
+      <span class="token string">"object"</span><span class="token keyword">:</span> <span class="token string">"model"</span>,
+      <span class="token string">"created"</span><span class="token keyword">:</span> 1681940951,
+      <span class="token string">"owned_by"</span><span class="token keyword">:</span> <span class="token string">"openai-internal"</span>
+    <span class="token punctuation">}</span>,
+    <span class="token punctuation">{</span>
+      <span class="token string">"id"</span><span class="token keyword">:</span> <span class="token string">"gpt-3.5-turbo-0301"</span>,
+      <span class="token string">"object"</span><span class="token keyword">:</span> <span class="token string">"model"</span>,
+      <span class="token string">"created"</span><span class="token keyword">:</span> 1677649963,
+      <span class="token string">"owned_by"</span><span class="token keyword">:</span> <span class="token string">"openai"</span>
+    <span class="token punctuation">}</span>,
+    <span class="token punctuation">{</span>
+      <span class="token string">"id"</span><span class="token keyword">:</span> <span class="token string">"babbage-002"</span>,
+      <span class="token string">"object"</span><span class="token keyword">:</span> <span class="token string">"model"</span>,
+      <span class="token string">"created"</span><span class="token keyword">:</span> 1692634615,
+      <span class="token string">"owned_by"</span><span class="token keyword">:</span> <span class="token string">"system"</span>
+    <span class="token punctuation">}</span>,
+    <span class="token punctuation">{</span>
+      <span class="token string">"id"</span><span class="token keyword">:</span> <span class="token string">"tts-1-1106"</span>,
+      <span class="token string">"object"</span><span class="token keyword">:</span> <span class="token string">"model"</span>,
+      <span class="token string">"created"</span><span class="token keyword">:</span> 1699053241,
+      <span class="token string">"owned_by"</span><span class="token keyword">:</span> <span class="token string">"system"</span>
+    <span class="token punctuation">}</span>,
+    <span class="token punctuation">{</span>
+      <span class="token string">"id"</span><span class="token keyword">:</span> <span class="token string">"text-embedding-3-large"</span>,
+      <span class="token string">"object"</span><span class="token keyword">:</span> <span class="token string">"model"</span>,
+      <span class="token string">"created"</span><span class="token keyword">:</span> 1705953180,
+      <span class="token string">"owned_by"</span><span class="token keyword">:</span> <span class="token string">"system"</span>
+    <span class="token punctuation">}</span>,
+    <span class="token punctuation">{</span>
+      <span class="token string">"id"</span><span class="token keyword">:</span> <span class="token string">"text-embedding-3-small"</span>,
+      <span class="token string">"object"</span><span class="token keyword">:</span> <span class="token string">"model"</span>,
+      <span class="token string">"created"</span><span class="token keyword">:</span> 1705948997,
+      <span class="token string">"owned_by"</span><span class="token keyword">:</span> <span class="token string">"system"</span>
+    <span class="token punctuation">}</span>,
+    <span class="token punctuation">{</span>
+      <span class="token string">"id"</span><span class="token keyword">:</span> <span class="token string">"text-embedding-ada-002"</span>,
+      <span class="token string">"object"</span><span class="token keyword">:</span> <span class="token string">"model"</span>,
+      <span class="token string">"created"</span><span class="token keyword">:</span> 1671217299,
+      <span class="token string">"owned_by"</span><span class="token keyword">:</span> <span class="token string">"openai-internal"</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>测试基本的生成代码：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> os
+<span class="token keyword">import</span> openai
+
+<span class="token keyword">def</span> <span class="token function">init_api</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">with</span> open<span class="token punctuation">(</span><span class="token string">'.env'</span><span class="token punctuation">)</span> <span class="token keyword">as</span> env<span class="token punctuation">:</span>
+        <span class="token keyword">for</span> line <span class="token keyword">in</span> env<span class="token punctuation">:</span>
+            key<span class="token punctuation">,</span> value <span class="token operator">=</span> line<span class="token punctuation">.</span>strip<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">"="</span><span class="token punctuation">)</span>
+            os<span class="token punctuation">.</span>environ<span class="token punctuation">[</span>key<span class="token punctuation">]</span> <span class="token operator">=</span> value
+
+        openai<span class="token punctuation">.</span>api_key <span class="token operator">=</span> os<span class="token punctuation">.</span>environ<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">'API_KEY'</span><span class="token punctuation">)</span>
+
+init_api<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># response = openai.completion.create(</span>
+<span class="token comment" spellcheck="true">#         model="gpt-3.5-turbo",</span>
+<span class="token comment" spellcheck="true">#         prompt="Hello world",</span>
+<span class="token comment" spellcheck="true">#         max_tokens=7,</span>
+<span class="token comment" spellcheck="true">#         temperature=0,</span>
+<span class="token comment" spellcheck="true">#         )</span>
+
+<span class="token comment" spellcheck="true"># print(response)</span>
+<span class="token comment" spellcheck="true"># print(dir(response))</span>
+
+
+completion <span class="token operator">=</span> openai<span class="token punctuation">.</span>chat<span class="token punctuation">.</span>completions<span class="token punctuation">.</span>create<span class="token punctuation">(</span>
+    model<span class="token operator">=</span><span class="token string">"gpt-3.5-turbo"</span><span class="token punctuation">,</span>
+    messages<span class="token operator">=</span><span class="token punctuation">[</span>
+        <span class="token punctuation">{</span>
+            <span class="token string">"role"</span><span class="token punctuation">:</span> <span class="token string">"user"</span><span class="token punctuation">,</span>
+            <span class="token string">"content"</span><span class="token punctuation">:</span> <span class="token string">"Once upon a time"</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">]</span><span class="token punctuation">,</span>
+    temperature<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">,</span>
+    max_tokens<span class="token operator">=</span><span class="token number">50</span><span class="token punctuation">,</span>
+<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>completion<span class="token punctuation">.</span>choices<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span>message<span class="token punctuation">.</span>content<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>completion<span class="token punctuation">)</span>
+
+
+<span class="token comment" spellcheck="true"># ChatCompletion(id='chatcmpl-8uEigv7BsA2WnQwQCzCpIBr7ORvB1', choices=[Choice(finish_reason='stop', index=0, logprobs=None, message=ChatCompletionMessage(content='Hello! How can I assist you today?', role='assistant', function_call=None, tool_calls=None))], created=1708413642, model='gpt-3.5-turbo-0125', object='chat.completion', system_fingerprint='fp_69829325d0', usage=CompletionUsage(completion_tokens=9, prompt_tokens=8, total_tokens=17))</span>
+
+<span class="token comment" spellcheck="true"># next time call</span>
+<span class="token comment" spellcheck="true"># ChatCompletion(id='chatcmpl-8uEjp32TULalDMJwTX8AcyyogWJnB', choices=[Choice(finish_reason='stop', index=0, logprobs=None, message=ChatCompletionMessage(content='Hello! How can I assist you today?', role='assistant', function_call=None, tool_calls=None))], created=1708413713, model='gpt-3.5-turbo-0125', object='chat.completion', system_fingerprint='fp_69829325d0', usage=CompletionUsage(completion_tokens=9, prompt_tokens=8, total_tokens=17))</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="简单说明原理"><a href="#简单说明原理" class="headerlink" title="简单说明原理"></a>简单说明原理</h4><ol>
+<li>LLM阅读了大量文本，数据。这个过程称为<strong>训练</strong>，使用了技术是<strong>机器学习</strong>；</li>
+<li>把一串token后面跟着的不同token的概率记录下来，记下来的就是<strong>参数</strong>，也叫<strong>权重</strong>；</li>
+<li>当我们给它一些token，LLM就能计算出来概率最高的下一个token，过程就是<strong>生成</strong>，也叫<strong>推理</strong>；</li>
+<li>用生成的token，再加上上下文，就能继续生成下一个token，从而得到后续的文字；</li>
+<li>LLM本身并没有逻辑能力，只是记录了大量的概率，选择出来概率最高的生成结果。</li>
+</ol>
+<p>关于第5条LLM自身的回答</p>
+<pre><code>是的，您提到的点是正确的。大语言模型（如GPT系列）本身并不具备真正的逻辑推理能力，它们的工作原理主要是基于概率建模和统计学习。这些模型通过学习大量的文本数据，建立了词语之间的关联性，并使用这些关联性来预测下一个可能的词语或句子。因此，它们的输出通常是基于给定上下文中最可能的词语或短语。
+
+虽然这些模型可以表现出某种程度的“推理”能力，比如填补句子的空白或生成相关的文本，但这种“推理”实际上是基于统计模式的预测，而不是真正的逻辑推理。在处理复杂的逻辑问题或推理任务时，大语言模型的性能通常会受到限制。
+</code></pre>
+<h4 id="Token是什么？"><a href="#Token是什么？" class="headerlink" title="Token是什么？"></a>Token是什么？</h4><ol>
+<li>可能是一个单词，也可能是半个，可能是一个汉字，或者半个汉字；</li>
+<li>大模型的训练前，需要把一串文本给原子化，类似分词，把它切割成原子的token；</li>
+<li>国产LLM，一个汉字算1个token，可能比外国产品更节省资金。</li>
+</ol>
+<h4 id="生成的机制内核简介"><a href="#生成的机制内核简介" class="headerlink" title="生成的机制内核简介"></a>生成的机制内核简介</h4><p>这个生成机制的内核叫做 Transformer(变形金刚 <a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/Transformer%E6%A8%A1%E5%9E%8B)%EF%BC%8C%E7%94%B1Google%E5%BC%80%E5%8F%91%E3%80%82">https://zh.wikipedia.org/wiki/Transformer%E6%A8%A1%E5%9E%8B)，由Google开发。</a></p>
+<p>其他的内核架构</p>
+<ol>
+<li>RWKV <a target="_blank" rel="noopener" href="https://wiki.rwkv.com/">https://wiki.rwkv.com/</a> 支持低成本的训练。</li>
+<li>Manba <a target="_blank" rel="noopener" href="https://www.datacamp.com/tutorial/introduction-to-the-mamba-llm-architecture">https://www.datacamp.com/tutorial/introduction-to-the-mamba-llm-architecture</a> 适合长文本</li>
+</ol>
+<h2 id="用好AI的核心心法"><a href="#用好AI的核心心法" class="headerlink" title="用好AI的核心心法"></a>用好AI的核心心法</h2><ol>
+<li>把AI当人看（ChatGPT已经非常复杂，它的创造者也无法知道它会返回什么，类似你和一个人对话，也不知道会得到什么反馈。）</li>
+<li>用人的思维来理解AI</li>
+<li>用人的思维控制AI</li>
+<li>用人的思维来说服用户正常看待AI的不足与局限。</li>
+</ol>
+<h3 id="LLM应用模式"><a href="#LLM应用模式" class="headerlink" title="LLM应用模式"></a>LLM应用模式</h3><ol>
+<li>AI 嵌入流程模式（AI embedded）；</li>
+<li>AI 辅助模式 (AI Copilot)；</li>
+<li>AI 代理模式(AI Agent)；</li>
+</ol>
+<p>AI agent 是终极目标，Copilot 是目前追求的状态。</p>
+<h3 id="Prompt-工程"><a href="#Prompt-工程" class="headerlink" title="Prompt 工程"></a>Prompt 工程</h3><p>类似一问一答的对话式流程，最为简单的实现，调用AI的API，根据返回的结果做直接的使用。</p>
+<h3 id="Agent-Function-Calling"><a href="#Agent-Function-Calling" class="headerlink" title="Agent + Function Calling"></a>Agent + Function Calling</h3><ol>
+<li>Agent：AI 主动题反问；</li>
+<li>Function Calling ： AI要求执行某个方法。</li>
+</ol>
+<p>比如：你问AI，今天是否要带伞，它反问你在哪里（Agent），再调用当地的天气接口（Function Calling），再告诉你答案。</p>
+<h3 id="RAG"><a href="#RAG" class="headerlink" title="RAG"></a>RAG</h3><p>RAG &#x3D; Embeddings + 向量数据库</p>
+<ol>
+<li>Embeddings：把文本转为数组，方便计算相似度，成为文本向量化</li>
+<li>向量数据库：把向量化的数值保存起来；</li>
+<li>向量搜索：根据输入向量，得到最为相似的向量；</li>
+<li>类似开卷考试，先把问题和答案记录到书上，考试时，把考题和书上的问题比对，找到答案。</li>
+</ol>
+<h3 id="Fine-tuning"><a href="#Fine-tuning" class="headerlink" title="Fine-tuning"></a>Fine-tuning</h3><p>模型微调，增量训练，教给LLM更多知识。</p>
+
+</article>
+    
+    
+
+</div>
+<div class="trm-post-next-prev row">
+    <div class="col-lg-12">
+        <!-- title -->
+        <h5 class="trm-title-with-divider">
+            其他文章
+            <span data-number="02"></span>
+        </h5>
+    </div>
+    
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/05/09/AI%E5%A4%A7%E6%A8%A1%E5%9E%8B%E7%AC%94%E8%AE%B0%E4%BA%8C/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" #.">
+                    未分类
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/05/09/AI%E5%A4%A7%E6%A8%A1%E5%9E%8B%E7%AC%94%E8%AE%B0%E4%BA%8C/" class="trm-anima-link">
+                    AI大模型笔记二
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/05/09</li>
+                <li>17:07</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+</div>
+
+    
+
+
+
+                    <div class="trm-divider footer-divider"></div>
+
+                    <!-- footer -->
+                    <footer class="trm-scroll-animation">
+
+    
+
+    
+
+    
+        <div class="trm-footer-item">
+            <span>
+                由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v7.0.0
+            </span>
+            <span class="footer-separator" data-separator=" | "></span>
+            <span> 
+                主题 - 
+                <a rel="noopener" href='https://github.com/MaLuns/hexo-theme-async' target='_blank'>Async</a>
+                v2.1.8
+            </span>
+        </div>
+      
+
+     
+
+     
+</footer>
+ 
+                    <!-- footer end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- body end -->
+
+            
+
+            
+<div class="trm-fixed-container">
+    
+    
+        <div class="trm-fixed-btn" data-title="阅读模式" onclick="asyncFun.switchReadMode()">
+            <i class="iconfont fas fa-book-reader"></i>
+        </div>
+    
+    
+    <div id="trm-back-top" class="trm-fixed-btn" data-title="回到顶部">
+        <i class="iconfont fas fa-arrow-up"></i>
+    </div>
+</div>
+        </div>
+      </div>
+      <!-- scroll container end -->
+  </div>
+  <!-- app wrapper end -->
+
+  
+  <!-- Plugin -->
+
+
+
+
+    
+    
+<script src="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+
+    
+
+    
+
+    
+
+    <!-- 数学公式 -->
+    
+
+    <!-- 评论插件 -->
+    
+        
+
+        
+    
+
+
+
+<!-- CDN -->
+
+
+    
+
+    
+
+    
+
+
+
+
+    <!-- Service Worker -->
+    
+    <!-- baidu push -->
+    
+
+
+<script id="async-script" src="/js/main.js?v=2.1.8"></script>
+
+</body>
+
+</html>
