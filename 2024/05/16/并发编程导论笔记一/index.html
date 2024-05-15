@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="x5-fullscreen" content="true">
+<meta name="full-screen" content="yes">
+<meta name="theme-color" content="#317EFB" />
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
+<meta name="description" content="背景学习Cuda之前，需要先对并行计算有所了解，本文主要记录《An Introduction to Parallel Programming 第二版》第一章和第二章内容，Why parallel computing（为什么需要并行计算）和 Parallel hardware and parallel software（并发计算的硬件和软件），这本书也有对Cuda的简单描述，可以用来简单了解Cuda">
+<meta property="og:type" content="article">
+<meta property="og:title" content="并发编程导论笔记一">
+<meta property="og:url" content="http://example.com/2024/05/16/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E5%AF%BC%E8%AE%BA%E7%AC%94%E8%AE%B0%E4%B8%80/index.html">
+<meta property="og:site_name" content="Cat YuanBao">
+<meta property="og:description" content="背景学习Cuda之前，需要先对并行计算有所了解，本文主要记录《An Introduction to Parallel Programming 第二版》第一章和第二章内容，Why parallel computing（为什么需要并行计算）和 Parallel hardware and parallel software（并发计算的硬件和软件），这本书也有对Cuda的简单描述，可以用来简单了解Cuda">
+<meta property="og:locale">
+<meta property="article:published_time" content="2024-05-15T17:46:44.000Z">
+<meta property="article:modified_time" content="2024-05-15T23:28:10.323Z">
+<meta property="article:author" content="橘猫元宝">
+<meta property="article:tag" content="cat">
+<meta name="twitter:card" content="summary">
+
+    <meta name="keywords" content="cat">
+
+
+<title >并发编程导论笔记一</title>
+
+<!-- Favicon -->
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='16x16' ></link>
+
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='32x32' ></link>
+
+
+
+
+<!-- Plugin -->
+
+
+
+
+    
+<link rel="stylesheet" href="/css/plugins/bootstrap.row.css">
+
+    
+<link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.css">
+
+    
+    
+
+
+
+
+<!-- Icon -->
+
+    
+<link rel="stylesheet" href="/css/plugins/font-awesome.min.css">
+
+
+
+
+<!-- Variable -->
+<script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-05-16 07:28:10"};</script>
+
+<!-- Theme mode css -->
+<link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
+<script>
+    let defaultMode = ASYNC_CONFIG.theme.default !=='auto' ?  ASYNC_CONFIG.theme.default : (window.matchMedia("(prefers-color-scheme: light)").matches ? 'style-light' : 'style-dark')
+    let catchMode = localStorage.getItem('theme-mode') || defaultMode;
+    let type = catchMode === 'style-dark' ? 'add' : 'remove';
+    document.documentElement.classList[type]('dark')
+</script>
+
+<!-- CDN -->
+
+
+    
+    
+
+
+
+<!-- Site Analytics -->
+ 
+<meta name="generator" content="Hexo 7.0.0"><link rel="stylesheet" href="/css/prism.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+<body>
+
+  <!-- app wrapper -->
+  <div class="trm-app-frame">
+
+    <!-- page preloader -->
+    <div class="trm-preloader">
+    <div class="trm-holder">
+        <div class="preloader">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+    <!-- page preloader end -->
+
+    <!-- change mode preloader -->
+    <div class="trm-mode-swich-animation-frame">
+    <div class="trm-mode-swich-animation">
+        <i class="i-sun"><i class="iconfont far fa-sun"></i></i>
+        <div class="trm-horizon"></div>
+        <i class="i-moon"><i class="iconfont far fa-moon"></i></i>
+    </div>
+</div>
+    <!-- change mode preloader end -->
+
+      <!-- scroll container -->
+      <div id="trm-dynamic-content" class="trm-swup-animation">
+        <div id="trm-scroll-container" class="trm-scroll-container" style="opacity: 0">
+            <!-- top bar -->
+            <header class="trm-top-bar">
+	<div class="container">
+		<div class="trm-left-side">
+			<!-- logo -->
+<a href="/" class="trm-logo-frame trm-anima-link">
+    
+        <img alt="logo" src="/img/favicon.svg">
+    
+    
+        <div class="trm-logo-text">
+            元宝<span>橘猫</span>
+        </div>
+    
+</a>
+<!-- logo end -->
+		</div>
+		<div class="trm-right-side">
+			<!-- menu -->
+<div class="trm-menu">
+    <nav>
+        <ul>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/" target="">
+                    首页
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/archives/" target="">
+                    归档
+                </a>
+                
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+<!-- menu end -->
+			
+    <!-- mode switcher place -->
+    <div class="trm-mode-switcher-place">
+        <div class="trm-mode-switcher">
+            <i class="iconfont far fa-sun"></i>
+            <input class="tgl tgl-light" id="trm-swich" type="checkbox">
+            <label class="trm-swich" for="trm-swich"></label>
+            <i class="iconfont far fa-moon"></i>
+        </div>
+    </div>
+    <!-- mode switcher place end -->
+
+			
+		</div>
+		<div class="trm-menu-btn">
+			<span></span>
+		</div>
+	</div>
+</header>
+            <!-- top bar end -->
+
+            <!-- body -->
+            
+<div class="trm-content-start">
+    <!-- banner -->
+    <div class="trm-banner">
+    
+    <!-- banner cover -->
+    <img style="object-position:top;object-fit:cover;" alt="banner" class="trm-banner-cover" src="/img/banner.png">
+    <!-- banner cover end -->
+    
+
+    <!-- banner content -->
+    <div class="trm-banner-content trm-overlay">
+        <div class="container">
+            <div class="row">
+                
+                <div class="col-lg-4"></div>
+                
+                <div class="col-lg-8">
+
+                    <!-- banner title -->
+                    <div class="trm-banner-text ">
+                        <div class="trm-label trm-mb-20">
+                            NEWS LETTER
+                        </div>
+                        <h1 class="trm-mb-30 trm-hsmb-font">
+                            并发编程导论笔记一
+                        </h1>
+
+                        
+                            <ul class="trm-breadcrumbs trm-label">
+                                <li>
+                                    <a href="/" class="trm-anima-link">Home</a>
+                                </li>
+                                <li>
+                                    <span>
+                                        2024
+                                    </span>
+                                </li>
+                            </ul>
+                        
+                    </div>
+                    <!-- banner title end -->
+
+                    <!-- scroll hint -->
+                    <span id="scroll-triger" class="trm-scroll-hint-frame">
+                        <div class="trm-scroll-hint"></div>
+                        <span class="trm-label">Scroll down</span>
+                    </span>
+                    <!-- scroll hint end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- banner content end -->
+</div>
+    <!-- banner end -->
+    <div class="container">
+        <div class="row">
+            
+                <div class="trm-page-sidebar col-lg-4 hidden-sm">
+                    <!-- main card -->
+                    <div class="trm-main-card-frame trm-sidebar">
+    <div class="trm-main-card"> 
+        <!-- card header -->
+<div class="trm-mc-header">
+    <div class="trm-avatar-frame trm-mb-20">
+        <img alt="Avatar" class="trm-avatar" src="/img/cat.jpg">
+    </div>
+    <h5 class="trm-name trm-mb-15">
+        橘猫元宝
+    </h5>
+    
+</div>
+<!-- card header end -->
+        <!-- sidebar social -->
+
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<div class="trm-social">
+    
+        <a href="https://github.com" title="Github" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-github"></i>
+        </a>
+    
+</div>
+
+<!-- sidebar social end -->
+        <!-- info -->
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<ul class="trm-table trm-mb-20">
+    
+        <li>
+            <div class="trm-label">
+                Residence:
+            </div>
+            <div class="trm-label trm-label-light">
+                Mars
+            </div>
+        </li>
+    
+</ul>
+<!-- info end -->
+
+        
+    </div>
+</div>
+                    <!-- main card end -->
+                </div>
+            
+            <div class="trm-page-content col-lg-8">
+                <div id="trm-content" class="trm-content">
+                    <div class="trm-post-info row hidden-sm">
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-calendar-alt trm-icon"></i><br>
+            05/16
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-clock trm-icon"></i><br>
+            01:46
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div id="post-author" class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-user trm-icon"></i><br>
+            橘猫元宝
+        </div>
+    </div>
+</div>
+<div class="trm-card ">
+    <article id="article-container" class="trm-publication">
+    <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>学习Cuda之前，需要先对并行计算有所了解，本文主要记录《An Introduction to Parallel Programming 第二版》第一章和第二章内容，Why parallel computing（为什么需要并行计算）和 Parallel hardware and parallel software（并发计算的硬件和软件），这本书也有对Cuda的简单描述，可以用来简单了解Cuda编程。</p>
+<h2 id="为什么需要并行计算"><a href="#为什么需要并行计算" class="headerlink" title="为什么需要并行计算"></a>为什么需要并行计算</h2><h3 id="本书目标"><a href="#本书目标" class="headerlink" title="本书目标"></a>本书目标</h3><pre><code>We’ll be focusing on learning to write programs that are explicitly parallel. Our pur-
+pose is to learn the basics of programming parallel computers using the C language
+and four different APIs or application program interfaces: the Message-Passing
+Interface or MPI, POSIX threads or Pthreads, OpenMP, and CUDA. MPI and
+Pthreads are libraries of type definitions, functions, and macros that can be used in
+C programs. OpenMP consists of a library and some modifications to the C compiler.
+CUDA consists of a library and modifications to the C++ compiler.
+
+You may well wonder why we’re learning about four different APIs instead of
+just one. The answer has to do with both the extensions and parallel systems. Cur-
+rently, there are two main ways of classifying parallel systems: one is to consider the
+memory that the different cores have access to, and the other is to consider whether
+the cores can operate independently of each other.
+
+In the memory classification, we’ll be focusing on shared-memory systems and
+distributed-memory systems.
+
+The second classification divides parallel systems according to the number of
+independent instruction streams and the number of independent data streams. 
+</code></pre>
+<p>主要介绍的是基本的并行编程，包括使用MPI，Pthread，OpenMP 以及CUDA。为什么需要了解各种并行编程方法？需要了解多核都能访问以及单个核独立运行的情况。从内存角度来说，包括共享内存和分布式内存。第二个分类是指令流数量和数据流数量。就是MIMD等。</p>
+<pre><code>In a MIMD system, it’s perfectly feasible for one core to execute an addition while
+another core executes a multiply. 
+
+In a SIMD system, two cores either execute the
+same instruction (on their own data) or, if they need to execute different instructions,
+one executes its instruction while the other is idle, and then the second executes
+its instruction while the first is idle. In a SIMD system, we couldn’t have one core
+executing an addition while another core executes a multiplication. 
+</code></pre>
+<p>以下介绍了不同的技术属于哪种架构：</p>
+<p>• MPI is an API for programming distributed memory MIMD systems.<br>• Pthreads is an API for programming shared memory MIMD systems.<br>• OpenMP is an API for programming both shared memory MIMD and shared memory SIMD systems, although we’ll be focusing on programming MIMD systems.<br>• CUDA is an API for programming Nvidia GPUs, which have aspects of all four of<br>our classifications: shared memory and distributed memory, SIMD, and MIMD. We will, however, be focusing on the shared memory SIMD and MIMD aspects of the API.</p>
+<h3 id="最后的一个问题"><a href="#最后的一个问题" class="headerlink" title="最后的一个问题"></a>最后的一个问题</h3><p>Write an essay describing a research problem in your major that would benefit from the use of parallel computing.  </p>
+<p>ChatPGT的回答，并行计算主要用于机器学习领域。</p>
+<pre><code>在计算机科学领域，一个极具挑战性的研究问题是如何利用并行计算来优化大规模数据处理中的机器学习算法。作为一个跨学科领域，计算机科学与各种领域相交，而机器学习则是一个具有广泛应用的重要领域，涵盖自然语言处理、图像识别、医学诊断等多个领域。然而，随着数据集的规模和复杂性呈指数级增长，传统的计算方法往往无法在合理的时间内有效地处理和分析这些海量信息。这一瓶颈限制了开发更准确和可扩展的机器学习模型的进展。
+
+并行计算是一种同时执行多个计算任务的范式，为解决大规模机器学习任务中的计算挑战提供了一种有前景的解决方案。通过利用并行处理的能力，研究人员可以将计算工作负载分布到多个处理器上，从而加速复杂算法的执行，并在合理的时间内对庞大的数据集进行分析。这种方法不仅提高了机器学习算法的效率，还促进了对以往由于计算限制而不可行的新技术和方法的探索。
+
+机器学习研究中一个具体的领域，极大地受益于并行计算，就是深度学习。深度学习是一个专注于训练多层人工神经网络以从原始数据中提取高级特征的子领域。卷积神经网络（CNN）和循环神经网络（RNN）等深度学习算法在诸如图像分类、语音识别和自动驾驶等多个应用中展现了出色的性能。然而，在大规模数据集上训练深度神经网络需要大量的计算资源，使用传统的计算架构可能需要数天甚至数周才能完成。
+
+通过利用诸如CUDA（Compute Unified Device Architecture）用于GPU（图形处理器）加速或Apache Spark等分布式计算平台的并行计算框架，研究人员可以加速深度学习模型的训练过程，将计算分布到多个处理单元或分布式节点上。这种并行化不仅减少了训练时间，还使研究人员能够尝试更大的神经网络结构和数据集，从而开发出更健壮和准确的模型。
+
+此外，并行计算还可以提高其他机器学习技术的可扩展性和效率，如集成学习、聚类和降维。例如，集成方法如随机森林和梯度提升涉及独立训练多个基学习器，并将它们的预测组合以提高整体性能。并行化各个基学习器的训练可以显著减少计算开销，使研究人员能够构建更大更多样的集成模型。
+
+总之，优化大规模数据处理中的机器学习算法代表着计算机科学中的一个关键研究问题，并行计算为解决这一挑战提供了强大的方法。通过利用并行架构的计算能力，研究人员可以加速复杂机器学习模型的训练，探索更大的数据集，并在人工智能领域的各个领域中开启新的创新机遇。随着数据的规模和复杂性不断增长，将并行计算技术整合到机器学习研究中将在推动人工智能前沿的同时，推动各个领域的变革性发现。
+</code></pre>
+<p>第一章主要介绍了并行计算的好处，以及常用的并行计算的框架和分类。有个大概印象，为后面学习打下基础。</p>
+<h2 id="Parallel-hardware-and-parallel-software"><a href="#Parallel-hardware-and-parallel-software" class="headerlink" title="Parallel hardware and parallel software"></a>Parallel hardware and parallel software</h2><p>第二章的内容比较广阔，包括计算机体系结构，缓存，后续框架的概览，以及一些公式（Amdahl’s law很多地方都提到了），属于对整部书的概要。</p>
+<p>作者也建议读者可以略读部分内容，我主要感兴趣的是缓存部分，后续框架的大致印象建立，方便后面深入细节。</p>
+<h3 id="冯诺依曼架构"><a href="#冯诺依曼架构" class="headerlink" title="冯诺依曼架构"></a>冯诺依曼架构</h3><p>The “classical” von Neumann architecture consists of main memory, a central-processing unit (CPU) or processor or core, and an interconnection between the memory and the CPU. </p>
+<p>Instructions and data are transferred between the CPU and memory via the inter connect. </p>
+<p>This has traditionally been a bus, which consists of a collection of parallel wires and some hardware controlling access to the wires.</p>
+<p>When data or instructions are transferred from memory to the CPU, we sometimes say the data or instructions are fetched or read from memory. When data are transferred from the CPU to memory, we sometimes say the data are written to memory or stored.</p>
+<p>冯诺依曼架构核心的单位是主存和CPU，以及中间的连接器(bus)。</p>
+<h3 id="Processes-multitasking-and-threads（进程，多任务，线程）"><a href="#Processes-multitasking-and-threads（进程，多任务，线程）" class="headerlink" title="Processes, multitasking, and threads（进程，多任务，线程）"></a>Processes, multitasking, and threads（进程，多任务，线程）</h3><h4 id="启动进程包括什么信息？"><a href="#启动进程包括什么信息？" class="headerlink" title="启动进程包括什么信息？"></a>启动进程包括什么信息？</h4><p>• The executable machine language program.<br>• A block of memory, which will include the executable code, a call stack that keeps track of active functions, a heap that can be used for memory explicitly allocated by the user program, and some other memory locations.<br>• Descriptors of resources that the operating system has allocated to the process, for example, file descriptors.<br>• Security information—for example, information specifying which hardware and software resources the process can access.<br>• Information about the state of the process, such as whether the process is ready to run or is waiting on some resource, the content of the registers, and information about the process’s memory.</p>
+<p>进程的状态，比如ps中可以查看进程是否运行，休眠，僵尸进程等。</p>
+<p>线程，这里简单提了一嘴线程，是一种轻量化的进程。</p>
+<h3 id="关于cache的基础知识"><a href="#关于cache的基础知识" class="headerlink" title="关于cache的基础知识"></a>关于cache的基础知识</h3><h4 id="cache基础"><a href="#cache基础" class="headerlink" title="cache基础"></a>cache基础</h4><pre><code>一般来说，缓存是一组内存位置的集合，可以在较短的时间内访问。
+在我们的上下文中，当我们谈论缓存时，我们通常指的是CPU缓存，它是内存位置的集合。
+CPU的访问cache速度比CPU访问主存储器的速度快。
+CPU缓存可以可以与CPU位于同一芯片上，也可以位于单独的芯片上。
+其可以比普通存储器芯片更快地被访问。可以的内存比主存储器更快地访问更昂贵。
+所以缓存比主存储器容量小很多。
+
+缓存哪些数据就是要考虑的首要问题，以数组为例：
+int array[1000];
+是按照0-999的索引依次排列的，平坦的。
+
+That is, a memory access will effectively operate on blocks of data and instructions instead of individual instructions and individual data items. These blocks are called cache blocks or cache lines.
+缓存块和缓存行是基本的单位，并不是单独的指令或者数据。
+
+cache也是分级的，现代CPU一般有3级cache.
+
+When the CPU needs to access an instruction or data, it works its way down the
+cache hierarchy: First it checks the level 1 cache, then the level 2, and so on. Finally,
+if the information needed isn’t in any of the caches, it accesses main memory. When a
+cache is checked for information and the information is available, it’s called a cache
+hit or just a hit. If the information isn’t available, it’s called a cache miss or a miss.
+Hit or miss is often modified by the level. 
+
+这里简单介绍了cache的命中与缺失。
+
+</code></pre>
+<h4 id="cache映射"><a href="#cache映射" class="headerlink" title="cache映射"></a>cache映射</h4><pre><code>Another issue in cache design is deciding where lines should be stored. That is, if
+we fetch a cache line from main memory, where in the cache should it be placed?
+The answer to this question varies from system to system. At one extreme is a fully
+associative cache, in which a new line can be placed at any location in the cache. At
+the other extreme is a direct mapped cache, in which each cache line has a unique
+location in the cache to which it will be assigned. Intermediate schemes are called n-way set associative. 
+
+The idea behind most commonly used approaches is called least recently used.
+这里主要介绍了cache的按行映射，以及淘汰算法，一般使用LRU算法。
+</code></pre>
+<h4 id="一段和cache相关的经典代码"><a href="#一段和cache相关的经典代码" class="headerlink" title="一段和cache相关的经典代码"></a>一段和cache相关的经典代码</h4><p>按行取值和案列取值，缓存是按行放的，C语言的二维数组也是按照行存储的。所以案列取值会造成缓存缺失，造成性能不佳。</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">define</span> max 10000</span>
+<span class="token keyword">int</span> array<span class="token punctuation">[</span>max<span class="token punctuation">]</span><span class="token punctuation">[</span>max<span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> i<span class="token punctuation">,</span> j<span class="token punctuation">;</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span>i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> max<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span>j <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> j <span class="token operator">&lt;</span> max<span class="token punctuation">;</span> j<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            array<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">[</span>j<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">1234</span><span class="token punctuation">;</span>  <span class="token comment" spellcheck="true">// 按行取值</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+
+<span class="token macro property">#<span class="token directive keyword">define</span> max 10000</span>
+<span class="token keyword">int</span> array<span class="token punctuation">[</span>max<span class="token punctuation">]</span><span class="token punctuation">[</span>max<span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> i<span class="token punctuation">,</span> j<span class="token punctuation">;</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span>i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> max<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span>j <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> j <span class="token operator">&lt;</span> max<span class="token punctuation">;</span> j<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            array<span class="token punctuation">[</span>j<span class="token punctuation">]</span><span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">1234</span><span class="token punctuation">;</span>  <span class="token comment" spellcheck="true">//按列取值</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果：</p>
+<pre><code>$ time ./line
+./line  0.58s user 0.06s system 90% cpu 0.711 total
+
+$ time ./co  
+./co  3.76s user 0.07s system 90% cpu 4.238 total
+</code></pre>
+<p>这里还可以使用perf来观察缓存是否命中，但是虚拟机好像没有支持，暂时不折腾这个了。</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ perf <span class="token function">stat</span> -d -d ./line
+
+ Performance counter stats <span class="token keyword">for</span> <span class="token string">'./line'</span><span class="token keyword">:</span>
+
+            841.55 msec task-clock                       <span class="token comment" spellcheck="true">#    0.843 CPUs utilized             </span>
+                67      context-switches                 <span class="token comment" spellcheck="true">#   79.615 /sec                      </span>
+                 2      cpu-migrations                   <span class="token comment" spellcheck="true">#    2.377 /sec                      </span>
+              1126      page-faults                      <span class="token comment" spellcheck="true">#    1.338 K/sec                     </span>
+   <span class="token operator">&lt;</span>not supported<span class="token operator">></span>      cycles                                                                
+   <span class="token operator">&lt;</span>not supported<span class="token operator">></span>      instructions                                                          
+   <span class="token operator">&lt;</span>not supported<span class="token operator">></span>      branches                                                              
+   <span class="token operator">&lt;</span>not supported<span class="token operator">></span>      branch-misses                                                         
+   <span class="token operator">&lt;</span>not supported<span class="token operator">></span>      L1-dcache-loads                                                       
+   <span class="token operator">&lt;</span>not supported<span class="token operator">></span>      L1-dcache-load-misses                                                 
+   <span class="token operator">&lt;</span>not supported<span class="token operator">></span>      LLC-loads                                                             
+   <span class="token operator">&lt;</span>not supported<span class="token operator">></span>      LLC-load-misses                                                       
+   <span class="token operator">&lt;</span>not supported<span class="token operator">></span>      L1-icache-loads                                                       
+   <span class="token operator">&lt;</span>not supported<span class="token operator">></span>      L1-icache-load-misses                                                 
+   <span class="token operator">&lt;</span>not supported<span class="token operator">></span>      dTLB-loads                                                            
+   <span class="token operator">&lt;</span>not supported<span class="token operator">></span>      dTLB-load-misses                                                      
+   <span class="token operator">&lt;</span>not supported<span class="token operator">></span>      iTLB-loads                                                            
+   <span class="token operator">&lt;</span>not supported<span class="token operator">></span>      iTLB-load-misses                                                      
+
+       0.998760208 seconds <span class="token function">time</span> elapsed
+
+       0.703801000 seconds user
+       0.119890000 seconds sys
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="Virtual-memory"><a href="#Virtual-memory" class="headerlink" title="Virtual memory"></a>Virtual memory</h3><pre><code>Virtual memory was developed so that main memory can function as a cache for
+secondary storage. It exploits the principle of spatial and temporal locality by keeping
+in main memory only the active parts of the many running programs; those parts that
+are idle can be kept in a block of secondary storage, called swap space. 
+Like CPU caches, virtual memory operates on blocks of data and instructions. These blocks
+are commonly called pages, and since secondary storage access can be hundreds of
+thousands of times slower than main memory access, pages are relatively large—most
+systems have a fixed page size that currently ranges from 4 to 16 kilobytes.
+
+这里主要介绍了虚拟内存，还提到了交换空间。需要明确概念的区别。
+
+    Virtual Memory（虚拟内存）：
+        虚拟内存是操作系统的一种技术，允许程序使用比实际物理内存更大的内存空间。
+        它通过将部分数据存储在硬盘上，以便在需要时进行交换，从而使得操作系统看起来好像有更多的内存可用。
+        虚拟内存的主要作用是提供了一种将物理内存和硬盘空间结合起来使用的方式，以便更有效地管理内存。
+        虚拟内存还允许操作系统实现内存保护和内存共享等功能。
+
+    Swap Space（交换空间）：
+        交换空间是硬盘上专门为虚拟内存而预留的一部分空间，用于存放被暂时不需要的内存数据。
+        当系统中的物理内存不足以容纳当前正在运行的程序所需的全部数据时，操作系统会将部分不常用的内存数据移动到交换空间中，从而腾出物理内存供其他程序使用。
+        交换空间的大小通常是根据系统管理员的设置来确定的，它可以是单个文件或专门的分区。
+
+    区别：
+        虚拟内存是一种技术，而交换空间是用于支持虚拟内存的硬盘空间的一部分。
+        虚拟内存是指操作系统管理内存的方式，而交换空间是为了实现虚拟内存而存在的。
+        虚拟内存不一定需要交换空间的支持，但在大多数情况下，操作系统会使用交换空间来作为虚拟内存的一部分。
+        虚拟内存的大小通常比交换空间大得多，因为它还包括了系统内核、程序代码等。
+
+总的来说，虚拟内存是一种概念或技术，而交换空间是用于实现虚拟内存的一部分硬盘空间。交换空间是虚拟内存的一种具体实现方式之一。
+
+
+We may run into trouble if we try to assign physical memory addresses to pages
+when we compile a program. If we do this, then each page of the program can only
+be assigned to one block of memory, and with a multitasking operating system, we’re
+likely to have many programs wanting to use the same block of memory. To avoid this
+problem, when a program is compiled, its pages are assigned virtual page numbers.
+Then, when the program is run, a table is created that maps the virtual page numbers
+to physical addresses. When the program is run and it refers to a virtual address,
+this page table is used to translate the virtual address into a physical address. If the
+creation of the page table is managed by the operating system, it can ensure that the
+memory used by one program doesn’t overlap the memory used by another.
+
+在程序编译完成后，它的页表并没有真正被分配虚拟页表号，而是在程序运行时由操作系统动态地创建和管理。
+
+当程序被加载到内存并开始执行时，操作系统会分配一个虚拟页表，并为程序创建一个相应的页表。这个页表将虚拟页号映射到物理地址，以便程序能够正确访问内存中的数据和指令。操作系统会负责更新和维护这个页表，以确保程序能够正确地访问其所需的内存。
+
+所以，尽管在编译时我们会使用虚拟页号来代表程序的页表，但真正的页表是在程序运行时由操作系统动态创建和管理的。
+
+系统使用虚拟内存来避免不同程序的内存重合？
+
+虚拟内存的主要目的并不是为了避免不同程序的内存重叠，而是为了提供更大的内存地址空间以及更有效地管理物理内存的使用。然而，虚拟内存确实可以帮助操作系统实现一些内存管理方面的功能，其中包括：
+
+    内存保护：虚拟内存可以使操作系统为每个程序分配独立的内存地址空间，从而防止程序之间的相互干扰。如果一个程序访问了不属于自己的内存空间，操作系统会产生一个异常，并终止该程序的执行。
+
+    内存隔离：每个程序都拥有自己的虚拟地址空间，使得每个程序能够独立地使用内存，而不受其他程序的影响。这种隔离性可以防止一个程序的错误影响其他程序的正常运行。
+
+    内存共享：虚拟内存允许多个程序共享同一个物理内存页，从而节省内存空间。这在需要同时运行多个相似的程序或多个实例时特别有用。
+
+虚拟内存并不是专门用于避免不同程序的内存重叠的技术，但它提供了一种有效的内存管理机制，可以帮助操作系统实现内存保护、隔离和共享，从而确保不同程序之间的内存访问不会互相干扰。
+
+
+简单介绍translation-lookaside buffer？
+
+Translation Lookaside Buffer（TLB）是计算机体系结构中的一种高速缓存，用于加速虚拟地址到物理地址的转换过程。在使用虚拟内存的系统中，程序中使用的地址通常是虚拟地址，而不是直接访问物理内存的物理地址。当CPU执行指令时，需要将虚拟地址转换为物理地址，以便在内存中读取或写入数据。
+
+TLB位于CPU内部，它存储了最近用于地址转换的虚拟地址和对应的物理地址的映射。TLB中的条目通常包括虚拟页号和物理页框号的映射关系。当CPU需要转换虚拟地址时，首先查找TLB，如果找到了对应的映射，则称为TLB命中（TLB hit），CPU可以直接使用TLB中的物理地址，从而加快地址转换的速度。如果在TLB中未找到对应的映射，则称为TLB未命中（TLB miss），CPU需要访问页表来获取地址映射，并将结果存储到TLB中以供后续使用。
+
+TLB的大小通常比较有限，因为它位于CPU内部并且需要快速访问，所以只能容纳少量的映射。因此，TLB的设计旨在提高命中率，以减少TLB未命中的发生次数，从而降低地址转换的开销。TLB是虚拟内存系统中的重要组成部分，对于提高内存访问效率和系统性能起着关键作用。
+</code></pre>
+<h4 id="关于-page-fault"><a href="#关于-page-fault" class="headerlink" title="关于 page fault"></a>关于 page fault</h4><p>在一个C程序中，获取页面错误（page fault）通常是通过访问一个未映射的虚拟地址来实现的。在现代操作系统中，这通常会导致程序收到一个SIGSEGV信号（segmentation violation，段错误），表明程序尝试访问了无效的内存地址。</p>
+<p>以下代码显示了一个page fault实例：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdlib.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;signal.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;unistd.h></span></span>
+
+<span class="token comment" spellcheck="true">// SIGSEGV信号处理函数</span>
+<span class="token keyword">void</span> <span class="token function">sigsegv_handler</span><span class="token punctuation">(</span><span class="token keyword">int</span> signum<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Received SIGSEGV signal: Page fault occurred!\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">exit</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 注册SIGSEGV信号处理函数</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">signal</span><span class="token punctuation">(</span>SIGSEGV<span class="token punctuation">,</span> sigsegv_handler<span class="token punctuation">)</span> <span class="token operator">==</span> SIG_ERR<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">perror</span><span class="token punctuation">(</span><span class="token string">"signal"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">exit</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 分配一个小的内存块，但不映射</span>
+    <span class="token keyword">char</span> <span class="token operator">*</span>ptr <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">char</span> <span class="token operator">*</span><span class="token punctuation">)</span><span class="token number">0xDEADBEEF</span><span class="token punctuation">;</span>  <span class="token comment" spellcheck="true">// 尝试访问一个未映射的虚拟地址</span>
+
+    <span class="token comment" spellcheck="true">// 尝试读取该地址上的值，触发页面错误</span>
+    <span class="token keyword">char</span> value <span class="token operator">=</span> <span class="token operator">*</span>ptr<span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// 这一行不会被执行，因为页面错误会导致程序退出</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Value at address 0xDEADBEEF: %c\n"</span><span class="token punctuation">,</span> value<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="指令级别的并发"><a href="#指令级别的并发" class="headerlink" title="指令级别的并发"></a>指令级别的并发</h3><h4 id="流水线"><a href="#流水线" class="headerlink" title="流水线"></a>流水线</h4><pre><code>指令级别并发和流水线技术是提高计算机处理器性能的两种关键技术。
+
+    指令级别并发（ILP，Instruction-Level Parallelism）：
+        指令级别并发是通过在同一时间执行多条指令来提高处理器性能的技术。
+        处理器在执行指令时，通常会包含多个阶段（如取指、译码、执行、访存、写回等），每个阶段都可以并行执行不同指令的相应阶段。
+        指令级别并发的实现包括：
+            超标量处理器：具有多个执行单元，能够同时执行多条指令。
+            超流水线处理器：将指令执行过程分解为多个阶段，并在不同的时钟周期内执行不同阶段的指令，以实现并行执行。
+            指令突发执行（Speculative Execution）：根据预测执行的结果，提前执行后续指令，以尽量减少流水线中的停顿。
+
+    流水线技术（Pipeline）：
+        流水线技术将处理器的指令执行过程分解为多个阶段，并将每个阶段串联起来，形成一个流水线。每个阶段完成特定的任务，且多个阶段可以并行执行。
+        流水线中的每个阶段称为一个流水级（pipeline stage），如取指、译码、执行、访存、写回等。
+        流水线技术可以使得多个指令在不同阶段同时执行，从而提高处理器的吞吐量和性能。
+        流水线的性能受制于流水线深度、流水线冒险（如数据相关、控制相关等）以及流水线停顿（如分支预测错误等）等因素。
+
+指令级别并发和流水线技术常常结合使用，以实现更高的处理器性能。流水线技术提供了并行执行指令的基础框架，而指令级别并发则进一步利用了流水线中的各个阶段的并行性，提高了处理器的效率。
+</code></pre>
+<h4 id="Multiple-issue"><a href="#Multiple-issue" class="headerlink" title="Multiple issue"></a>Multiple issue</h4><p>指令预测，主要是和编译器优化有关，后面的多线程部分会详细看到实例。</p>
+<h3 id="Parallel-hardware"><a href="#Parallel-hardware" class="headerlink" title="Parallel hardware"></a>Parallel hardware</h3><h4 id="SIMD-systems"><a href="#SIMD-systems" class="headerlink" title="SIMD systems"></a>SIMD systems</h4><pre><code>Single instruction, multiple data, or SIMD, systems are parallel systems. As the
+name suggests, SIMD systems operate on multiple data streams by applying the same
+instruction to multiple data items, so an abstract SIMD system can be thought of as
+having a single control unit and multiple datapaths. 
+
+单个指令，多个数据。
+</code></pre>
+<p>听起来比较复杂，看一个C程序实例，编译时需要加-mavx</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;immintrin.h></span> </span><span class="token comment" spellcheck="true">// 包含SIMD指令集的头文件</span>
+
+<span class="token macro property">#<span class="token directive keyword">define</span> ARRAY_SIZE 8 </span><span class="token comment" spellcheck="true">// 定义数组大小为8</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 定义两个数组，用于存储数据</span>
+    <span class="token keyword">float</span> a<span class="token punctuation">[</span>ARRAY_SIZE<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token number">1.0</span><span class="token punctuation">,</span> <span class="token number">2.0</span><span class="token punctuation">,</span> <span class="token number">3.0</span><span class="token punctuation">,</span> <span class="token number">4.0</span><span class="token punctuation">,</span> <span class="token number">5.0</span><span class="token punctuation">,</span> <span class="token number">6.0</span><span class="token punctuation">,</span> <span class="token number">7.0</span><span class="token punctuation">,</span> <span class="token number">8.0</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+    <span class="token keyword">float</span> b<span class="token punctuation">[</span>ARRAY_SIZE<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token number">1.0</span><span class="token punctuation">,</span> <span class="token number">1.0</span><span class="token punctuation">,</span> <span class="token number">1.0</span><span class="token punctuation">,</span> <span class="token number">1.0</span><span class="token punctuation">,</span> <span class="token number">1.0</span><span class="token punctuation">,</span> <span class="token number">1.0</span><span class="token punctuation">,</span> <span class="token number">1.0</span><span class="token punctuation">,</span> <span class="token number">1.0</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+    <span class="token keyword">float</span> result<span class="token punctuation">[</span>ARRAY_SIZE<span class="token punctuation">]</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// 存储计算结果的数组</span>
+
+    <span class="token comment" spellcheck="true">// 使用SIMD指令进行并行加法运算</span>
+    __m256 vec_a <span class="token operator">=</span> <span class="token function">_mm256_loadu_ps</span><span class="token punctuation">(</span>a<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// 将数组a加载到256位的向量寄存器</span>
+    __m256 vec_b <span class="token operator">=</span> <span class="token function">_mm256_loadu_ps</span><span class="token punctuation">(</span>b<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// 将数组b加载到256位的向量寄存器</span>
+    __m256 vec_result <span class="token operator">=</span> <span class="token function">_mm256_add_ps</span><span class="token punctuation">(</span>vec_a<span class="token punctuation">,</span> vec_b<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// 执行向量加法运算</span>
+
+    <span class="token comment" spellcheck="true">// 将结果存储回数组中</span>
+    <span class="token function">_mm256_storeu_ps</span><span class="token punctuation">(</span>result<span class="token punctuation">,</span> vec_result<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// 输出结果</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Result: "</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> ARRAY_SIZE<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"%.1f "</span><span class="token punctuation">,</span> result<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果：</p>
+<pre><code>$ ./a.out 
+Result: 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0
+</code></pre>
+<p>GPU使用的也是这种架构设计。</p>
+<p>实际上，英伟达的显卡并不仅仅是SIMD架构，而是一种更为复杂的架构，可以说是混合了SIMD和MIMD（Multiple Instruction, Multiple Data）的特性。在英伟达的GPU架构中，每个GPU通常包含多个处理单元（Streaming Multiprocessors，SMs），每个SM又包含多个CUDA核心，这些CUDA核心可以执行相同的指令（SIMD特性），但同时也可以执行不同的指令（MIMD特性）。</p>
+<p>此外，英伟达的GPU可以通过NVIDIA的CUDA并行计算平台进行集群化和并行化的计算，包括使用多个GPU进行协同计算的技术，例如NVIDIA的CUDA Multi-GPU技术。这种情况下，每个GPU可以独立执行不同的指令，处理不同的数据，因此也具有了MIMD的特性。</p>
+<p>因此，可以说英伟达的GPU架构具有一定程度的混合SIMD和MIMD的特性。它可以同时执行多个线程，并行处理多个数据，既具备了SIMD的并行计算特性，又具备了MIMD的灵活性和通用性。</p>
+<p>后面还简单介绍了MIMD等混合架构，这部分暂时跳过细读了。</p>
+<p>继续回到cache:</p>
+<h4 id="cache-coherence"><a href="#cache-coherence" class="headerlink" title="cache coherence"></a>cache coherence</h4><p>这个问题，主要是每个核都有自己的cache，cache里面的数据并不是多个核直接共享的，就会导致数据不一致的问题。</p>
+<p>缓存一致性（cache coherence）问题的解决方案通常包括以下几种主要方法：</p>
+<ol>
+<li><strong>缓存一致性协议（Cache Coherence Protocols）</strong>：缓存一致性协议定义了多个缓存之间如何协作以保持数据的一致性。常见的缓存一致性协议包括MESI（Modified, Exclusive, Shared, Invalid）和MOESI（Modified, Owned, Exclusive, Shared, Invalid）等。这些协议通过在缓存之间发送消息、维护缓存状态和进行数据更新等方式来确保数据的一致性。</li>
+<li><strong>总线协议（Bus Protocols）</strong>：在基于总线的系统中，总线协议用于管理缓存之间的通信。常见的总线协议包括Snooping协议，其中每个缓存控制器通过监听总线上的数据传输来检测其他缓存的操作，并相应地更新本地缓存状态。</li>
+<li><strong>目录协议（Directory Protocols）</strong>：在分布式存储系统中，目录协议用于维护共享数据的位置和状态信息。每个缓存控制器都维护一个目录，记录了共享数据所在的位置和被缓存的状态。当某个缓存修改了共享数据时，它会向目录发送请求，并根据目录的响应来更新其他缓存的状态。</li>
+<li><strong>一致性内存模型（Coherent Memory Models）</strong>：一致性内存模型定义了多个处理器或线程访问内存时的一致性行为。在一致性内存模型下，系统保证对内存的访问是按照一定的顺序和规则进行的，从而避免了缓存一致性问题。</li>
+</ol>
+<p>这些方法可以单独使用或者组合使用，根据系统的需求和性能目标来选择最合适的方案。缓存一致性问题的解决需要综合考虑系统的架构、通信机制、性能需求以及成本等因素。</p>
+<h4 id="False-sharing"><a href="#False-sharing" class="headerlink" title="False sharing"></a>False sharing</h4><p>多线程中的问题 伪共享：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdlib.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;pthread.h></span></span>
+
+<span class="token macro property">#<span class="token directive keyword">define</span> ARRAY_SIZE 100000000</span>
+
+<span class="token keyword">typedef</span> <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> first<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> end<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> id<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>ARG<span class="token punctuation">;</span>
+
+<span class="token keyword">int</span> <span class="token operator">*</span>arr<span class="token punctuation">;</span>
+<span class="token keyword">int</span> result<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+<span class="token comment" spellcheck="true">// 线程函数，用于每个线程对共享数据进行写操作</span>
+<span class="token keyword">void</span> <span class="token operator">*</span><span class="token function">compute</span><span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span>arg<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> i<span class="token punctuation">;</span>
+    ARG<span class="token operator">*</span> my_arg <span class="token operator">=</span> <span class="token punctuation">(</span>ARG<span class="token operator">*</span><span class="token punctuation">)</span>arg<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> first <span class="token operator">=</span> my_arg<span class="token operator">-></span>first<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> end <span class="token operator">=</span> my_arg<span class="token operator">-></span>end<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> id <span class="token operator">=</span> my_arg<span class="token operator">-></span>id<span class="token punctuation">;</span>
+
+    <span class="token keyword">for</span> <span class="token punctuation">(</span>i <span class="token operator">=</span> first<span class="token punctuation">;</span> i <span class="token operator">&lt;</span> end<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        result<span class="token punctuation">[</span>id<span class="token punctuation">]</span> <span class="token operator">=</span> result<span class="token punctuation">[</span>id<span class="token punctuation">]</span> <span class="token operator">+</span> arr<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">return</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> i<span class="token punctuation">;</span>
+    arr <span class="token operator">=</span> <span class="token function">malloc</span><span class="token punctuation">(</span><span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">)</span><span class="token operator">*</span> ARRAY_SIZE<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span>i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> ARRAY_SIZE<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        arr<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> i<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    result<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    result<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> mid <span class="token operator">=</span> ARRAY_SIZE <span class="token operator">/</span> <span class="token number">2</span><span class="token punctuation">;</span>
+    ARG arg1 <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token number">0</span><span class="token punctuation">,</span> mid<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+    ARG arg2 <span class="token operator">=</span> <span class="token punctuation">{</span>mid<span class="token punctuation">,</span> ARRAY_SIZE<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+    
+    pthread_t t1<span class="token punctuation">,</span> t2<span class="token punctuation">;</span>
+
+    <span class="token function">pthread_create</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>t1<span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">,</span> compute<span class="token punctuation">,</span> <span class="token operator">&amp;</span>arg1<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">pthread_create</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>t2<span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">,</span> compute<span class="token punctuation">,</span> <span class="token operator">&amp;</span>arg2<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+
+    <span class="token function">pthread_join</span><span class="token punctuation">(</span>t1<span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">pthread_join</span><span class="token punctuation">(</span>t2<span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Done.\n res is %d\n"</span><span class="token punctuation">,</span> result<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">+</span> result<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行时间：</p>
+<pre><code>$ time ./a.out 
+Done.
+ res is 887459712
+./a.out  1.18s user 0.08s system 163% cpu 0.775 total
+</code></pre>
+<p>使用局部变量保存，并不共享结果的方式：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdlib.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;pthread.h></span></span>
+
+<span class="token macro property">#<span class="token directive keyword">define</span> ARRAY_SIZE 100000000</span>
+
+<span class="token keyword">typedef</span> <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> first<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> end<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> id<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> sum<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>ARG<span class="token punctuation">;</span>
+
+<span class="token keyword">int</span> <span class="token operator">*</span>arr<span class="token punctuation">;</span>
+<span class="token keyword">int</span> result<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+<span class="token comment" spellcheck="true">// 线程函数，用于每个线程对共享数据进行写操作</span>
+<span class="token keyword">void</span> <span class="token operator">*</span><span class="token function">compute</span><span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span>arg<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> i<span class="token punctuation">;</span>
+    ARG<span class="token operator">*</span> my_arg <span class="token operator">=</span> <span class="token punctuation">(</span>ARG<span class="token operator">*</span><span class="token punctuation">)</span>arg<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> first <span class="token operator">=</span> my_arg<span class="token operator">-></span>first<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> end <span class="token operator">=</span> my_arg<span class="token operator">-></span>end<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> id <span class="token operator">=</span> my_arg<span class="token operator">-></span>id<span class="token punctuation">;</span>
+
+    <span class="token keyword">int</span> local_sum <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">for</span> <span class="token punctuation">(</span>i <span class="token operator">=</span> first<span class="token punctuation">;</span> i <span class="token operator">&lt;</span> end<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        local_sum <span class="token operator">+</span><span class="token operator">=</span> arr<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    my_arg<span class="token operator">-></span>sum <span class="token operator">=</span> local_sum<span class="token punctuation">;</span>
+
+    <span class="token keyword">return</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> i<span class="token punctuation">;</span>
+    arr <span class="token operator">=</span> <span class="token function">malloc</span><span class="token punctuation">(</span><span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">)</span><span class="token operator">*</span> ARRAY_SIZE<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span>i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> ARRAY_SIZE<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        arr<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> i<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    result<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    result<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> mid <span class="token operator">=</span> ARRAY_SIZE <span class="token operator">/</span> <span class="token number">2</span><span class="token punctuation">;</span>
+    ARG arg1 <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token number">0</span><span class="token punctuation">,</span> mid<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+    ARG arg2 <span class="token operator">=</span> <span class="token punctuation">{</span>mid<span class="token punctuation">,</span> ARRAY_SIZE<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+    
+    pthread_t t1<span class="token punctuation">,</span> t2<span class="token punctuation">;</span>
+
+    <span class="token function">pthread_create</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>t1<span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">,</span> compute<span class="token punctuation">,</span> <span class="token operator">&amp;</span>arg1<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">pthread_create</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>t2<span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">,</span> compute<span class="token punctuation">,</span> <span class="token operator">&amp;</span>arg2<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+
+    <span class="token function">pthread_join</span><span class="token punctuation">(</span>t1<span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">pthread_join</span><span class="token punctuation">(</span>t2<span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Done.\n res is %d\n"</span><span class="token punctuation">,</span> arg1<span class="token punctuation">.</span>sum <span class="token operator">+</span> arg2<span class="token punctuation">.</span>sum<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果：</p>
+<pre><code>$ time ./a.out
+Done.
+ res is 887459712
+./a.out  0.37s user 0.09s system 129% cpu 0.353 total
+</code></pre>
+<p>可以看到 差距比较大，这是因为伪共享造成的性能下降，解决方法就是解耦，将逻辑写在自己的线程里，而不是共享数据。</p>
+<h3 id="略过部分"><a href="#略过部分" class="headerlink" title="略过部分"></a>略过部分</h3><p>这部分都是简单提了一嘴对应的技术，比如线程安全，锁，MPI的消息传播等，后续章节会详细阅读，看到后面再返回看下。</p>
+<h3 id="关于IO接口"><a href="#关于IO接口" class="headerlink" title="关于IO接口"></a>关于IO接口</h3><pre><code>To partially address these issues, we’ll be making these assumptions and follow-
+ing these rules when our parallel programs need to do I/O:
+
+• In distributed-memory programs, only process 0 will access stdin. In shared-
+memory programs, only the master thread or thread 0 will access stdin.
+• In both distributed-memory and shared-memory programs, all the
+processes/threads can access stdout and stderr.
+• However, because of the nondeterministic order of output to stdout, in most cases
+only a single process/thread will be used for all output to stdout. The principal
+exception will be output for debugging a program. In this situation, we’ll often
+have multiple processes/threads writing to stdout.
+• Only a single process/thread will attempt to access any single file other than stdin,
+stdout, or stderr. So, for example, each process/thread can open its own, private
+file for reading or writing, but no two processes/threads will open the same file.
+• Debug output should always include the rank or ID of the process/thread that’s
+generating the output.
+
+1. 分布式内存程序，只有第一个进程可以使用stdin.共享内存程序，只有主线程可以使用stdin
+2. 分布式内存和共享内存程序，所有的进程/线程都可以使用stdout和stderr
+</code></pre>
+<h3 id="GPU-IO接口"><a href="#GPU-IO接口" class="headerlink" title="GPU IO接口"></a>GPU IO接口</h3><pre><code>In most cases, the host code in our GPU programs will carry out all I/O. Since we’ll
+only be running one process/thread on the host, the standard C I/O functions should
+behave as they do in ordinary serial C programs.
+
+The exception to the rule that we use the host for I/O is that when we are debug-
+ging our GPU code, we’ll want to be able to write to stdout and/or stderr. In the
+systems we use, each thread can write to stdout, and, as with MIMD programs, the
+order of the output is nondeterministic. Also in the systems we use, no GPU thread
+has access to stderr, stdin, or secondary storage.
+
+没有GPU的线程可以使用stderr和stdin。
+
+在GPU编程中，通常确实不太方便使用标准输入流(stdin)和标准错误流(stderr)，因为GPU线程在执行时通常不是在主机上运行的，而是在GPU设备上。标准输入流和标准错误流通常是与主机关联的，因此在GPU线程中直接访问它们可能会导致错误或未定义的行为。
+
+相反，GPU编程通常更关注于从主机向GPU传递数据，以及将结果从GPU传递回主机。这可以通过使用专门的GPU编程接口（如CUDA或OpenCL）提供的机制来完成，例如通过在主机上分配内存并将数据复制到GPU上进行计算，然后将结果从GPU复制回主机。
+
+如果需要在GPU程序中输出调试信息，可以考虑使用特定的调试功能或技术，如CUDA的printf调试，它允许在GPU线程中使用类似于printf的函数来输出调试信息，但是请注意，使用这种方式会影响程序的性能，并且只能在支持的设备上使用。
+</code></pre>
+<h3 id="Amdahl’s-law"><a href="#Amdahl’s-law" class="headerlink" title="Amdahl’s law"></a>Amdahl’s law</h3><p>这个公式主要是介绍了一个性能优化的度量方法，比如一个系统可以优化的比例是多少，优化效果是多少，从而对整个系统有什么提升，对于算法的性能优化与系统整体优化测试方法比较重要。</p>
+<p>当涉及到提高计算速度时，Amdahl’s Law 是一个重要的概念。它描述了在系统中如果优化了一部分，对整体性能的影响。Amdahl’s Law 的基本公式如下：<br>$$<br>Speedup&#x3D;1 &#x2F; ((1−P)+P&#x2F;S))<br>$$<br>在这个公式中：</p>
+<ul>
+<li>Speedup 表示整体性能的提升倍数；</li>
+<li>P 是程序中可并行化部分的比例；</li>
+<li>S 是该部分的加速比（即优化后的速度相比原始速度的增益）。</li>
+</ul>
+<p>让我们通过一个实例来解释 Amdahl’s Law：</p>
+<p>假设有一个需要执行的任务，其中有 20% 的代码可以通过并行化进行优化，而优化后的并行化部分可以达到原来的 5 倍速度。</p>
+<p>那么根据 Amdahl’s Law：</p>
+<ul>
+<li>可并行化的部分比例 P&#x3D;0.2P&#x3D;0.2</li>
+<li>加速比 S&#x3D;5S&#x3D;5</li>
+</ul>
+<p>将这些值代入公式，我们可以计算整体的 Speedup：</p>
+<pre><code>&gt;&gt;&gt; 1 / ((1-0.2) + (0.2/5))
+1.1904761904761905
+</code></pre>
+<p>因此，整体上的性能提升约为 1.19 倍。这意味着即使某部分代码被优化到了 5 倍速度，但由于只有 20% 的代码可以被优化，整体上只有 1.19 倍的性能提升。这个例子很好地说明了 Amdahl’s Law 中并行化比例对整体性能提升的影响。</p>
+<h3 id="本章总结"><a href="#本章总结" class="headerlink" title="本章总结"></a>本章总结</h3><p>​     这部分主要是对并行计算有一个大概的认识，包括后面会用到哪些技术，技术背后的价值，存在的意义做了详细说明，之前读的时候，都会略过1-2章，因为不理解为啥介绍各类指令流和数据流的分类，直到大概了解GPGPU的基本原理，才逐渐理解作者的写作意图，主要为了后面更全面的介绍GPU做铺垫。</p>
+
+</article>
+    
+    
+
+</div>
+<div class="trm-post-next-prev row">
+    <div class="col-lg-12">
+        <!-- title -->
+        <h5 class="trm-title-with-divider">
+            其他文章
+            <span data-number="02"></span>
+        </h5>
+    </div>
+    
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/05/16/GPGPU%E6%A6%82%E8%BF%B0/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" #.">
+                    未分类
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/05/16/GPGPU%E6%A6%82%E8%BF%B0/" class="trm-anima-link">
+                    GPGPU概述
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/05/16</li>
+                <li>01:34</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+</div>
+
+    
+
+
+
+                    <div class="trm-divider footer-divider"></div>
+
+                    <!-- footer -->
+                    <footer class="trm-scroll-animation">
+
+    
+
+    
+
+    
+        <div class="trm-footer-item">
+            <span>
+                由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v7.0.0
+            </span>
+            <span class="footer-separator" data-separator=" | "></span>
+            <span> 
+                主题 - 
+                <a rel="noopener" href='https://github.com/MaLuns/hexo-theme-async' target='_blank'>Async</a>
+                v2.1.8
+            </span>
+        </div>
+      
+
+     
+
+     
+</footer>
+ 
+                    <!-- footer end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- body end -->
+
+            
+
+            
+<div class="trm-fixed-container">
+    
+    
+        <div class="trm-fixed-btn" data-title="阅读模式" onclick="asyncFun.switchReadMode()">
+            <i class="iconfont fas fa-book-reader"></i>
+        </div>
+    
+    
+    <div id="trm-back-top" class="trm-fixed-btn" data-title="回到顶部">
+        <i class="iconfont fas fa-arrow-up"></i>
+    </div>
+</div>
+        </div>
+      </div>
+      <!-- scroll container end -->
+  </div>
+  <!-- app wrapper end -->
+
+  
+  <!-- Plugin -->
+
+
+
+
+    
+    
+<script src="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+
+    
+
+    
+
+    
+
+    <!-- 数学公式 -->
+    
+
+    <!-- 评论插件 -->
+    
+        
+
+        
+    
+
+
+
+<!-- CDN -->
+
+
+    
+
+    
+
+    
+
+
+
+
+    <!-- Service Worker -->
+    
+    <!-- baidu push -->
+    
+
+
+<script id="async-script" src="/js/main.js?v=2.1.8"></script>
+
+</body>
+
+</html>
