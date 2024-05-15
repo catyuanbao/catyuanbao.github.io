@@ -15,7 +15,7 @@
 <meta property="og:description" content="背景学习Cuda之前，需要先对并行计算有所了解，本文主要记录《An Introduction to Parallel Programming 第二版》第一章和第二章内容，Why parallel computing（为什么需要并行计算）和 Parallel hardware and parallel software（并发计算的硬件和软件），这本书也有对Cuda的简单描述，可以用来简单了解Cuda">
 <meta property="og:locale">
 <meta property="article:published_time" content="2024-05-15T17:46:44.000Z">
-<meta property="article:modified_time" content="2024-05-15T23:28:10.323Z">
+<meta property="article:modified_time" content="2024-05-15T23:30:56.516Z">
 <meta property="article:author" content="橘猫元宝">
 <meta property="article:tag" content="cat">
 <meta name="twitter:card" content="summary">
@@ -62,7 +62,7 @@
 
 <!-- Variable -->
 <script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
-<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-05-16 07:28:10"};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-05-16 07:30:56"};</script>
 
 <!-- Theme mode css -->
 <link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
@@ -320,16 +320,17 @@
 <div class="trm-card ">
     <article id="article-container" class="trm-publication">
     <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>学习Cuda之前，需要先对并行计算有所了解，本文主要记录《An Introduction to Parallel Programming 第二版》第一章和第二章内容，Why parallel computing（为什么需要并行计算）和 Parallel hardware and parallel software（并发计算的硬件和软件），这本书也有对Cuda的简单描述，可以用来简单了解Cuda编程。</p>
-<h2 id="为什么需要并行计算"><a href="#为什么需要并行计算" class="headerlink" title="为什么需要并行计算"></a>为什么需要并行计算</h2><h3 id="本书目标"><a href="#本书目标" class="headerlink" title="本书目标"></a>本书目标</h3><pre><code>We’ll be focusing on learning to write programs that are explicitly parallel. Our pur-
+<h2 id="为什么需要并行计算"><a href="#为什么需要并行计算" class="headerlink" title="为什么需要并行计算"></a>为什么需要并行计算</h2><h3 id="本书目标"><a href="#本书目标" class="headerlink" title="本书目标"></a>本书目标</h3><pre class="line-numbers language-bash"><code class="language-bash">
+We’ll be focusing on learning to <span class="token function">write</span> programs that are explicitly parallel. Our pur-
 pose is to learn the basics of programming parallel computers using the C language
 and four different APIs or application program interfaces: the Message-Passing
 Interface or MPI, POSIX threads or Pthreads, OpenMP, and CUDA. MPI and
-Pthreads are libraries of type definitions, functions, and macros that can be used in
+Pthreads are libraries of <span class="token function">type</span> definitions, functions, and macros that can be used <span class="token keyword">in</span>
 C programs. OpenMP consists of a library and some modifications to the C compiler.
 CUDA consists of a library and modifications to the C++ compiler.
 
 You may well wonder why we’re learning about four different APIs instead of
-just one. The answer has to do with both the extensions and parallel systems. Cur-
+just one. The answer has to <span class="token keyword">do</span> with both the extensions and parallel systems. Cur-
 rently, there are two main ways of classifying parallel systems: one is to consider the
 memory that the different cores have access to, and the other is to consider whether
 the cores can operate independently of each other.
@@ -339,17 +340,18 @@ distributed-memory systems.
 
 The second classification divides parallel systems according to the number of
 independent instruction streams and the number of independent data streams. 
-</code></pre>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 <p>主要介绍的是基本的并行编程，包括使用MPI，Pthread，OpenMP 以及CUDA。为什么需要了解各种并行编程方法？需要了解多核都能访问以及单个核独立运行的情况。从内存角度来说，包括共享内存和分布式内存。第二个分类是指令流数量和数据流数量。就是MIMD等。</p>
-<pre><code>In a MIMD system, it’s perfectly feasible for one core to execute an addition while
+<pre class="line-numbers language-bash"><code class="language-bash">
+In a MIMD system, it’s perfectly feasible <span class="token keyword">for</span> one core to execute an addition <span class="token keyword">while</span>
 another core executes a multiply. 
 
 In a SIMD system, two cores either execute the
-same instruction (on their own data) or, if they need to execute different instructions,
-one executes its instruction while the other is idle, and then the second executes
-its instruction while the first is idle. In a SIMD system, we couldn’t have one core
-executing an addition while another core executes a multiplication. 
-</code></pre>
+same instruction <span class="token punctuation">(</span>on their own data<span class="token punctuation">)</span> or, <span class="token keyword">if</span> they need to execute different instructions,
+one executes its instruction <span class="token keyword">while</span> the other is idle, and <span class="token keyword">then</span> the second executes
+its instruction <span class="token keyword">while</span> the first is idle. In a SIMD system, we couldn’t have one core
+executing an addition <span class="token keyword">while</span> another core executes a multiplication. 
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 <p>以下介绍了不同的技术属于哪种架构：</p>
 <p>• MPI is an API for programming distributed memory MIMD systems.<br>• Pthreads is an API for programming shared memory MIMD systems.<br>• OpenMP is an API for programming both shared memory MIMD and shared memory SIMD systems, although we’ll be focusing on programming MIMD systems.<br>• CUDA is an API for programming Nvidia GPUs, which have aspects of all four of<br>our classifications: shared memory and distributed memory, SIMD, and MIMD. We will, however, be focusing on the shared memory SIMD and MIMD aspects of the API.</p>
 <h3 id="最后的一个问题"><a href="#最后的一个问题" class="headerlink" title="最后的一个问题"></a>最后的一个问题</h3><p>Write an essay describing a research problem in your major that would benefit from the use of parallel computing.  </p>
