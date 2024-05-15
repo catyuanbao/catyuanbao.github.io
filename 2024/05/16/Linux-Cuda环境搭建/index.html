@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="x5-fullscreen" content="true">
+<meta name="full-screen" content="yes">
+<meta name="theme-color" content="#317EFB" />
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
+<meta name="description" content="#include &lt;stdio.h&gt;#include &lt;cuda.h&gt; global void hello(void) {        printf(“Hello from thread %d\n”, threadIdx.x);} int main() {        int thread_count &#x3D; 10;        hello &lt;&lt;&amp;l">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux Cuda环境搭建">
+<meta property="og:url" content="http://example.com/2024/05/16/Linux-Cuda%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/index.html">
+<meta property="og:site_name" content="Cat YuanBao">
+<meta property="og:description" content="#include &lt;stdio.h&gt;#include &lt;cuda.h&gt; global void hello(void) {        printf(“Hello from thread %d\n”, threadIdx.x);} int main() {        int thread_count &#x3D; 10;        hello &lt;&lt;&amp;l">
+<meta property="og:locale">
+<meta property="article:published_time" content="2024-05-15T17:23:28.000Z">
+<meta property="article:modified_time" content="2024-05-15T17:24:15.988Z">
+<meta property="article:author" content="橘猫元宝">
+<meta property="article:tag" content="cat">
+<meta name="twitter:card" content="summary">
+
+    <meta name="keywords" content="cat">
+
+
+<title >Linux Cuda环境搭建</title>
+
+<!-- Favicon -->
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='16x16' ></link>
+
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='32x32' ></link>
+
+
+
+
+<!-- Plugin -->
+
+
+
+
+    
+<link rel="stylesheet" href="/css/plugins/bootstrap.row.css">
+
+    
+<link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.css">
+
+    
+    
+
+
+
+
+<!-- Icon -->
+
+    
+<link rel="stylesheet" href="/css/plugins/font-awesome.min.css">
+
+
+
+
+<!-- Variable -->
+<script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-05-16 01:24:15"};</script>
+
+<!-- Theme mode css -->
+<link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
+<script>
+    let defaultMode = ASYNC_CONFIG.theme.default !=='auto' ?  ASYNC_CONFIG.theme.default : (window.matchMedia("(prefers-color-scheme: light)").matches ? 'style-light' : 'style-dark')
+    let catchMode = localStorage.getItem('theme-mode') || defaultMode;
+    let type = catchMode === 'style-dark' ? 'add' : 'remove';
+    document.documentElement.classList[type]('dark')
+</script>
+
+<!-- CDN -->
+
+
+    
+    
+
+
+
+<!-- Site Analytics -->
+ 
+<meta name="generator" content="Hexo 7.0.0"><link rel="stylesheet" href="/css/prism.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+<body>
+
+  <!-- app wrapper -->
+  <div class="trm-app-frame">
+
+    <!-- page preloader -->
+    <div class="trm-preloader">
+    <div class="trm-holder">
+        <div class="preloader">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+    <!-- page preloader end -->
+
+    <!-- change mode preloader -->
+    <div class="trm-mode-swich-animation-frame">
+    <div class="trm-mode-swich-animation">
+        <i class="i-sun"><i class="iconfont far fa-sun"></i></i>
+        <div class="trm-horizon"></div>
+        <i class="i-moon"><i class="iconfont far fa-moon"></i></i>
+    </div>
+</div>
+    <!-- change mode preloader end -->
+
+      <!-- scroll container -->
+      <div id="trm-dynamic-content" class="trm-swup-animation">
+        <div id="trm-scroll-container" class="trm-scroll-container" style="opacity: 0">
+            <!-- top bar -->
+            <header class="trm-top-bar">
+	<div class="container">
+		<div class="trm-left-side">
+			<!-- logo -->
+<a href="/" class="trm-logo-frame trm-anima-link">
+    
+        <img alt="logo" src="/img/favicon.svg">
+    
+    
+        <div class="trm-logo-text">
+            元宝<span>橘猫</span>
+        </div>
+    
+</a>
+<!-- logo end -->
+		</div>
+		<div class="trm-right-side">
+			<!-- menu -->
+<div class="trm-menu">
+    <nav>
+        <ul>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/" target="">
+                    首页
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/archives/" target="">
+                    归档
+                </a>
+                
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+<!-- menu end -->
+			
+    <!-- mode switcher place -->
+    <div class="trm-mode-switcher-place">
+        <div class="trm-mode-switcher">
+            <i class="iconfont far fa-sun"></i>
+            <input class="tgl tgl-light" id="trm-swich" type="checkbox">
+            <label class="trm-swich" for="trm-swich"></label>
+            <i class="iconfont far fa-moon"></i>
+        </div>
+    </div>
+    <!-- mode switcher place end -->
+
+			
+		</div>
+		<div class="trm-menu-btn">
+			<span></span>
+		</div>
+	</div>
+</header>
+            <!-- top bar end -->
+
+            <!-- body -->
+            
+<div class="trm-content-start">
+    <!-- banner -->
+    <div class="trm-banner">
+    
+    <!-- banner cover -->
+    <img style="object-position:top;object-fit:cover;" alt="banner" class="trm-banner-cover" src="/img/banner.png">
+    <!-- banner cover end -->
+    
+
+    <!-- banner content -->
+    <div class="trm-banner-content trm-overlay">
+        <div class="container">
+            <div class="row">
+                
+                <div class="col-lg-4"></div>
+                
+                <div class="col-lg-8">
+
+                    <!-- banner title -->
+                    <div class="trm-banner-text ">
+                        <div class="trm-label trm-mb-20">
+                            NEWS LETTER
+                        </div>
+                        <h1 class="trm-mb-30 trm-hsmb-font">
+                            Linux Cuda环境搭建
+                        </h1>
+
+                        
+                            <ul class="trm-breadcrumbs trm-label">
+                                <li>
+                                    <a href="/" class="trm-anima-link">Home</a>
+                                </li>
+                                <li>
+                                    <span>
+                                        2024
+                                    </span>
+                                </li>
+                            </ul>
+                        
+                    </div>
+                    <!-- banner title end -->
+
+                    <!-- scroll hint -->
+                    <span id="scroll-triger" class="trm-scroll-hint-frame">
+                        <div class="trm-scroll-hint"></div>
+                        <span class="trm-label">Scroll down</span>
+                    </span>
+                    <!-- scroll hint end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- banner content end -->
+</div>
+    <!-- banner end -->
+    <div class="container">
+        <div class="row">
+            
+                <div class="trm-page-sidebar col-lg-4 hidden-sm">
+                    <!-- main card -->
+                    <div class="trm-main-card-frame trm-sidebar">
+    <div class="trm-main-card"> 
+        <!-- card header -->
+<div class="trm-mc-header">
+    <div class="trm-avatar-frame trm-mb-20">
+        <img alt="Avatar" class="trm-avatar" src="/img/cat.jpg">
+    </div>
+    <h5 class="trm-name trm-mb-15">
+        橘猫元宝
+    </h5>
+    
+</div>
+<!-- card header end -->
+        <!-- sidebar social -->
+
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<div class="trm-social">
+    
+        <a href="https://github.com" title="Github" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-github"></i>
+        </a>
+    
+</div>
+
+<!-- sidebar social end -->
+        <!-- info -->
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<ul class="trm-table trm-mb-20">
+    
+        <li>
+            <div class="trm-label">
+                Residence:
+            </div>
+            <div class="trm-label trm-label-light">
+                Mars
+            </div>
+        </li>
+    
+</ul>
+<!-- info end -->
+
+        
+    </div>
+</div>
+                    <!-- main card end -->
+                </div>
+            
+            <div class="trm-page-content col-lg-8">
+                <div id="trm-content" class="trm-content">
+                    <div class="trm-post-info row hidden-sm">
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-calendar-alt trm-icon"></i><br>
+            05/16
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-clock trm-icon"></i><br>
+            01:23
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div id="post-author" class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-user trm-icon"></i><br>
+            橘猫元宝
+        </div>
+    </div>
+</div>
+<div class="trm-card ">
+    <article id="article-container" class="trm-publication">
+    <p>#include &lt;stdio.h&gt;<br>#include &lt;cuda.h&gt;</p>
+<p><strong>global</strong> void hello(void) {<br>        printf(“Hello from thread %d\n”, threadIdx.x);<br>}</p>
+<p>int main() {<br>        int thread_count &#x3D; 10;<br>        hello &lt;&lt;&lt; 1, thread_count &gt;&gt;&gt;();</p>
+<pre><code>    cudaDeviceSynchronize();
+    return 0;
+</code></pre>
+<p>}</p>
+<h1 id="yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-8-56-16"><a href="#yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-8-56-16" class="headerlink" title="yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [8:56:16]"></a>yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [8:56:16]</h1><p>$ more core.<br>more: 对 core. stat 失败: 没有那个文件或目录</p>
+<h1 id="yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-8-56-19"><a href="#yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-8-56-19" class="headerlink" title="yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [8:56:19]"></a>yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [8:56:19]</h1><p>$ more core.py<br>from numba import cuda<br>cc_cores_per_SM_dict &#x3D; {<br>    (2,0) : 32,<br>    (2,1) : 48,<br>    (3,0) : 192,<br>    (3,5) : 192,<br>    (3,7) : 192,<br>    (5,0) : 128,<br>    (5,2) : 128,<br>    (6,0) : 64,<br>    (6,1) : 128,<br>    (7,0) : 64,<br>    (7,5) : 64,<br>    (8,0) : 64,<br>    (8,6) : 128<br>    }<br>d &#x3D; cuda.get_current_device()<br>my_sms &#x3D; getattr(d, ‘MULTIPROCESSOR_COUNT’)<br>my_cc &#x3D; getattr(d, ‘compute_capability’)<br>cores_per_sm &#x3D; cc_cores_per_SM_dict.get(my_cc)<br>total_cores &#x3D; cores_per_sm*my_sms<br>print(total_cores)</p>
+<h1 id="yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-8-56-21"><a href="#yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-8-56-21" class="headerlink" title="yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [8:56:21]"></a>yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [8:56:21]</h1><p>$ vim query.py        </p>
+<h1 id="yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-8-56-42"><a href="#yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-8-56-42" class="headerlink" title="yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [8:56:42]"></a>yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [8:56:42]</h1><p>$ python3 query.py<br>CUDA device query (PyCUDA version) </p>
+<p>Detected 1 CUDA Capable device(s) </p>
+<p>Device 0: NVIDIA GeForce GTX 1660<br>         Compute Capability: 7.5<br>         Total Memory: 5933 megabytes<br>         (22) Multiprocessors, (64) CUDA Cores &#x2F; Multiprocessor: 1408 CUDA Cores<br>         ASYNC_ENGINE_COUNT: 3<br>         CAN_MAP_HOST_MEMORY: 1<br>         CAN_USE_HOST_POINTER_FOR_REGISTERED_MEM: 1<br>         CLOCK_RATE: 1830000<br>         COMPUTE_CAPABILITY_MAJOR: 7<br>         COMPUTE_CAPABILITY_MINOR: 5<br>         COMPUTE_MODE: DEFAULT<br>         COMPUTE_PREEMPTION_SUPPORTED: 1<br>         CONCURRENT_KERNELS: 1<br>         CONCURRENT_MANAGED_ACCESS: 1<br>         DIRECT_MANAGED_MEM_ACCESS_FROM_HOST: 0<br>         ECC_ENABLED: 0<br>         GENERIC_COMPRESSION_SUPPORTED: 0<br>         GLOBAL_L1_CACHE_SUPPORTED: 1<br>         GLOBAL_MEMORY_BUS_WIDTH: 192<br>         GPU_OVERLAP: 1<br>         HANDLE_TYPE_POSIX_FILE_DESCRIPTOR_SUPPORTED: 1<br>         HANDLE_TYPE_WIN32_HANDLE_SUPPORTED: 0<br>         HANDLE_TYPE_WIN32_KMT_HANDLE_SUPPORTED: 0<br>         HOST_NATIVE_ATOMIC_SUPPORTED: 0<br>         INTEGRATED: 0<br>         KERNEL_EXEC_TIMEOUT: 1<br>         L2_CACHE_SIZE: 1572864<br>         LOCAL_L1_CACHE_SUPPORTED: 1<br>         MANAGED_MEMORY: 1<br>         MAXIMUM_SURFACE1D_LAYERED_LAYERS: 2048<br>         MAXIMUM_SURFACE1D_LAYERED_WIDTH: 32768<br>         MAXIMUM_SURFACE1D_WIDTH: 32768<br>         MAXIMUM_SURFACE2D_HEIGHT: 65536<br>         MAXIMUM_SURFACE2D_LAYERED_HEIGHT: 32768<br>         MAXIMUM_SURFACE2D_LAYERED_LAYERS: 2048<br>         MAXIMUM_SURFACE2D_LAYERED_WIDTH: 32768<br>         MAXIMUM_SURFACE2D_WIDTH: 131072<br>         MAXIMUM_SURFACE3D_DEPTH: 16384<br>         MAXIMUM_SURFACE3D_HEIGHT: 16384<br>         MAXIMUM_SURFACE3D_WIDTH: 16384<br>         MAXIMUM_SURFACECUBEMAP_LAYERED_LAYERS: 2046<br>         MAXIMUM_SURFACECUBEMAP_LAYERED_WIDTH: 32768<br>         MAXIMUM_SURFACECUBEMAP_WIDTH: 32768<br>         MAXIMUM_TEXTURE1D_LAYERED_LAYERS: 2048<br>         MAXIMUM_TEXTURE1D_LAYERED_WIDTH: 32768<br>         MAXIMUM_TEXTURE1D_LINEAR_WIDTH: 268435456<br>         MAXIMUM_TEXTURE1D_MIPMAPPED_WIDTH: 32768<br>         MAXIMUM_TEXTURE1D_WIDTH: 131072<br>         MAXIMUM_TEXTURE2D_ARRAY_HEIGHT: 32768<br>         MAXIMUM_TEXTURE2D_ARRAY_NUMSLICES: 2048<br>         MAXIMUM_TEXTURE2D_ARRAY_WIDTH: 32768<br>         MAXIMUM_TEXTURE2D_GATHER_HEIGHT: 32768<br>         MAXIMUM_TEXTURE2D_GATHER_WIDTH: 32768<br>         MAXIMUM_TEXTURE2D_HEIGHT: 65536<br>         MAXIMUM_TEXTURE2D_LINEAR_HEIGHT: 65000<br>         MAXIMUM_TEXTURE2D_LINEAR_PITCH: 2097120<br>         MAXIMUM_TEXTURE2D_LINEAR_WIDTH: 131072<br>         MAXIMUM_TEXTURE2D_MIPMAPPED_HEIGHT: 32768<br>         MAXIMUM_TEXTURE2D_MIPMAPPED_WIDTH: 32768<br>         MAXIMUM_TEXTURE2D_WIDTH: 131072<br>         MAXIMUM_TEXTURE3D_DEPTH: 16384<br>         MAXIMUM_TEXTURE3D_DEPTH_ALTERNATE: 32768<br>         MAXIMUM_TEXTURE3D_HEIGHT: 16384<br>         MAXIMUM_TEXTURE3D_HEIGHT_ALTERNATE: 8192<br>         MAXIMUM_TEXTURE3D_WIDTH: 16384<br>         MAXIMUM_TEXTURE3D_WIDTH_ALTERNATE: 8192<br>         MAXIMUM_TEXTURECUBEMAP_LAYERED_LAYERS: 2046<br>         MAXIMUM_TEXTURECUBEMAP_LAYERED_WIDTH: 32768<br>         MAXIMUM_TEXTURECUBEMAP_WIDTH: 32768<br>         MAX_BLOCKS_PER_MULTIPROCESSOR: 16<br>         MAX_BLOCK_DIM_X: 1024<br>         MAX_BLOCK_DIM_Y: 1024<br>         MAX_BLOCK_DIM_Z: 64<br>         MAX_GRID_DIM_X: 2147483647<br>         MAX_GRID_DIM_Y: 65535<br>         MAX_GRID_DIM_Z: 65535<br>         MAX_PERSISTING_L2_CACHE_SIZE: 0<br>         MAX_PITCH: 2147483647<br>         MAX_REGISTERS_PER_BLOCK: 65536<br>         MAX_REGISTERS_PER_MULTIPROCESSOR: 65536<br>         MAX_SHARED_MEMORY_PER_BLOCK: 49152<br>         MAX_SHARED_MEMORY_PER_BLOCK_OPTIN: 65536<br>         MAX_SHARED_MEMORY_PER_MULTIPROCESSOR: 65536<br>         MAX_THREADS_PER_BLOCK: 1024<br>         MAX_THREADS_PER_MULTIPROCESSOR: 1024<br>         MEMORY_CLOCK_RATE: 4001000<br>         MEMORY_POOLS_SUPPORTED: 1<br>         MULTI_GPU_BOARD: 0<br>         MULTI_GPU_BOARD_GROUP_ID: 0<br>         PAGEABLE_MEMORY_ACCESS: 0<br>         PAGEABLE_MEMORY_ACCESS_USES_HOST_PAGE_TABLES: 0<br>         PCI_BUS_ID: 38<br>         PCI_DEVICE_ID: 0<br>         PCI_DOMAIN_ID: 0<br>         READ_ONLY_HOST_REGISTER_SUPPORTED: 1<br>         RESERVED_SHARED_MEMORY_PER_BLOCK: 0<br>         SINGLE_TO_DOUBLE_PRECISION_PERF_RATIO: 32<br>         STREAM_PRIORITIES_SUPPORTED: 1<br>         SURFACE_ALIGNMENT: 512<br>         TCC_DRIVER: 0<br>         TEXTURE_ALIGNMENT: 512<br>         TEXTURE_PITCH_ALIGNMENT: 32<br>         TOTAL_CONSTANT_MEMORY: 65536<br>         UNIFIED_ADDRESSING: 1<br>         WARP_SIZE: 32</p>
+<h1 id="yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-8-56-47"><a href="#yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-8-56-47" class="headerlink" title="yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [8:56:47]"></a>yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [8:56:47]</h1><p>$ vim query.py </p>
+<h1 id="yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-8-57-09"><a href="#yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-8-57-09" class="headerlink" title="yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [8:57:09]"></a>yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [8:57:09]</h1><p>$ python3 query.py<br>CUDA device query (PyCUDA version) </p>
+<p>Detected 1 CUDA Capable device(s) </p>
+<p>Device 0: NVIDIA GeForce GTX 1660<br>         Compute Capability: 7.5<br>         Total Memory: 5933 megabytes<br>         (22) Multiprocessors, (64) CUDA Cores &#x2F; Multiprocessor: 1408 CUDA Cores<br>         ASYNC_ENGINE_COUNT: 3<br>         CAN_MAP_HOST_MEMORY: 1<br>         CAN_USE_HOST_POINTER_FOR_REGISTERED_MEM: 1<br>         CLOCK_RATE: 1830000<br>         COMPUTE_CAPABILITY_MAJOR: 7<br>         COMPUTE_CAPABILITY_MINOR: 5<br>         COMPUTE_MODE: DEFAULT<br>         COMPUTE_PREEMPTION_SUPPORTED: 1<br>         CONCURRENT_KERNELS: 1<br>         CONCURRENT_MANAGED_ACCESS: 1<br>         DIRECT_MANAGED_MEM_ACCESS_FROM_HOST: 0<br>         ECC_ENABLED: 0<br>         GENERIC_COMPRESSION_SUPPORTED: 0<br>         GLOBAL_L1_CACHE_SUPPORTED: 1<br>         GLOBAL_MEMORY_BUS_WIDTH: 192<br>         GPU_OVERLAP: 1<br>         HANDLE_TYPE_POSIX_FILE_DESCRIPTOR_SUPPORTED: 1<br>         HANDLE_TYPE_WIN32_HANDLE_SUPPORTED: 0<br>         HANDLE_TYPE_WIN32_KMT_HANDLE_SUPPORTED: 0<br>         HOST_NATIVE_ATOMIC_SUPPORTED: 0<br>         INTEGRATED: 0<br>         KERNEL_EXEC_TIMEOUT: 1<br>         L2_CACHE_SIZE: 1572864<br>         LOCAL_L1_CACHE_SUPPORTED: 1<br>         MANAGED_MEMORY: 1<br>         MAXIMUM_SURFACE1D_LAYERED_LAYERS: 2048<br>         MAXIMUM_SURFACE1D_LAYERED_WIDTH: 32768<br>         MAXIMUM_SURFACE1D_WIDTH: 32768<br>         MAXIMUM_SURFACE2D_HEIGHT: 65536<br>         MAXIMUM_SURFACE2D_LAYERED_HEIGHT: 32768<br>         MAXIMUM_SURFACE2D_LAYERED_LAYERS: 2048<br>         MAXIMUM_SURFACE2D_LAYERED_WIDTH: 32768<br>         MAXIMUM_SURFACE2D_WIDTH: 131072<br>         MAXIMUM_SURFACE3D_DEPTH: 16384<br>         MAXIMUM_SURFACE3D_HEIGHT: 16384<br>         MAXIMUM_SURFACE3D_WIDTH: 16384<br>         MAXIMUM_SURFACECUBEMAP_LAYERED_LAYERS: 2046<br>         MAXIMUM_SURFACECUBEMAP_LAYERED_WIDTH: 32768<br>         MAXIMUM_SURFACECUBEMAP_WIDTH: 32768<br>         MAXIMUM_TEXTURE1D_LAYERED_LAYERS: 2048<br>         MAXIMUM_TEXTURE1D_LAYERED_WIDTH: 32768<br>         MAXIMUM_TEXTURE1D_LINEAR_WIDTH: 268435456<br>         MAXIMUM_TEXTURE1D_MIPMAPPED_WIDTH: 32768<br>         MAXIMUM_TEXTURE1D_WIDTH: 131072<br>         MAXIMUM_TEXTURE2D_ARRAY_HEIGHT: 32768<br>         MAXIMUM_TEXTURE2D_ARRAY_NUMSLICES: 2048<br>         MAXIMUM_TEXTURE2D_ARRAY_WIDTH: 32768<br>         MAXIMUM_TEXTURE2D_GATHER_HEIGHT: 32768<br>         MAXIMUM_TEXTURE2D_GATHER_WIDTH: 32768<br>         MAXIMUM_TEXTURE2D_HEIGHT: 65536<br>         MAXIMUM_TEXTURE2D_LINEAR_HEIGHT: 65000<br>         MAXIMUM_TEXTURE2D_LINEAR_PITCH: 2097120<br>         MAXIMUM_TEXTURE2D_LINEAR_WIDTH: 131072<br>         MAXIMUM_TEXTURE2D_MIPMAPPED_HEIGHT: 32768<br>         MAXIMUM_TEXTURE2D_MIPMAPPED_WIDTH: 32768<br>         MAXIMUM_TEXTURE2D_WIDTH: 131072<br>         MAXIMUM_TEXTURE3D_DEPTH: 16384<br>         MAXIMUM_TEXTURE3D_DEPTH_ALTERNATE: 32768<br>         MAXIMUM_TEXTURE3D_HEIGHT: 16384<br>         MAXIMUM_TEXTURE3D_HEIGHT_ALTERNATE: 8192<br>         MAXIMUM_TEXTURE3D_WIDTH: 16384<br>         MAXIMUM_TEXTURE3D_WIDTH_ALTERNATE: 8192<br>         MAXIMUM_TEXTURECUBEMAP_LAYERED_LAYERS: 2046<br>         MAXIMUM_TEXTURECUBEMAP_LAYERED_WIDTH: 32768<br>         MAXIMUM_TEXTURECUBEMAP_WIDTH: 32768<br>         MAX_BLOCKS_PER_MULTIPROCESSOR: 16<br>         MAX_BLOCK_DIM_X: 1024<br>         MAX_BLOCK_DIM_Y: 1024<br>         MAX_BLOCK_DIM_Z: 64<br>         MAX_GRID_DIM_X: 2147483647<br>         MAX_GRID_DIM_Y: 65535<br>         MAX_GRID_DIM_Z: 65535<br>         MAX_PERSISTING_L2_CACHE_SIZE: 0<br>         MAX_PITCH: 2147483647<br>         MAX_REGISTERS_PER_BLOCK: 65536<br>         MAX_REGISTERS_PER_MULTIPROCESSOR: 65536<br>         MAX_SHARED_MEMORY_PER_BLOCK: 49152<br>         MAX_SHARED_MEMORY_PER_BLOCK_OPTIN: 65536<br>         MAX_SHARED_MEMORY_PER_MULTIPROCESSOR: 65536<br>         MAX_THREADS_PER_BLOCK: 1024<br>         MAX_THREADS_PER_MULTIPROCESSOR: 1024<br>         MEMORY_CLOCK_RATE: 4001000<br>         MEMORY_POOLS_SUPPORTED: 1<br>         MULTI_GPU_BOARD: 0<br>         MULTI_GPU_BOARD_GROUP_ID: 0<br>         PAGEABLE_MEMORY_ACCESS: 0<br>         PAGEABLE_MEMORY_ACCESS_USES_HOST_PAGE_TABLES: 0<br>         PCI_BUS_ID: 38<br>         PCI_DEVICE_ID: 0<br>         PCI_DOMAIN_ID: 0<br>         READ_ONLY_HOST_REGISTER_SUPPORTED: 1<br>         RESERVED_SHARED_MEMORY_PER_BLOCK: 0<br>         SINGLE_TO_DOUBLE_PRECISION_PERF_RATIO: 32<br>         STREAM_PRIORITIES_SUPPORTED: 1<br>         SURFACE_ALIGNMENT: 512<br>         TCC_DRIVER: 0<br>         TEXTURE_ALIGNMENT: 512<br>         TEXTURE_PITCH_ALIGNMENT: 32<br>         TOTAL_CONSTANT_MEMORY: 65536<br>         UNIFIED_ADDRESSING: 1<br>         WARP_SIZE: 32</p>
+<h1 id="yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-8-57-11"><a href="#yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-8-57-11" class="headerlink" title="yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [8:57:11]"></a>yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [8:57:11]</h1><p>$ ll<br>总用量 1.3M<br>-rwxrwxr-x 1 yuanbao yuanbao 818K 5月  14 22:07 a.out<br>-rw-rw-r– 1 yuanbao yuanbao 2.5K 5月  15 16:27 core.cu<br>-rw-rw-r– 1 yuanbao yuanbao  483 5月  15 16:29 core.py<br>-rw-rw-r– 1 yuanbao yuanbao  16K 5月  16 08:48 cuda环境搭建.md<br>-rw-rw-r– 1 yuanbao yuanbao 1.6K 5月  14 21:55 device_info.cu<br>-rw-rw-r– 1 yuanbao yuanbao 8.4K 5月  15 17:02 GPGPU概述.md<br>-rw-rw-r– 1 yuanbao yuanbao 409K 5月  15 18:17 gpu.jpeg<br>-rw-rw-r– 1 yuanbao yuanbao  230 5月  14 20:12 hello.cu<br>-rw-rw-r– 1 yuanbao yuanbao 1.7K 5月  16 08:56 query.py</p>
+<h1 id="yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-8-57-20"><a href="#yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-8-57-20" class="headerlink" title="yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [8:57:20]"></a>yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [8:57:20]</h1><p>$ vim cuda环境搭建.md </p>
+<h1 id="yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-8-57-50"><a href="#yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-8-57-50" class="headerlink" title="yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [8:57:50]"></a>yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [8:57:50]</h1><p>$ more query.py<br>import pycuda<br>import pycuda.driver as drv<br>drv.init()</p>
+<p>print(‘CUDA device query (PyCUDA version) \n’)</p>
+<p>print(‘Detected {} CUDA Capable device(s) \n’.format(drv.Device.count()))</p>
+<p>for i in range(drv.Device.count()):</p>
+<pre><code>gpu_device = drv.Device(i)
+print(&#39;Device &#123;&#125;: &#123;&#125;&#39;.format( i, gpu_device.name() )) 
+compute_capability = float( &#39;%d.%d&#39; % gpu_device.compute_capability() )
+print(&#39;\t Compute Capability: &#123;&#125;&#39;.format(compute_capability))
+print(&#39;\t Total Memory: &#123;&#125; megabytes&#39;.format(gpu_device.total_memory()//(1024**
+</code></pre>
+<p>2)))</p>
+<pre><code># The following will give us all remaining device attributes as seen 
+# in the original deviceQuery.
+# We set up a dictionary as such so that we can easily index
+# the values using a string descriptor.
+
+device_attributes_tuples = gpu_device.get_attributes().items() 
+device_attributes = &#123;&#125;
+
+for k, v in device_attributes_tuples:
+    device_attributes[str(k)] = v
+
+num_mp = device_attributes[&#39;MULTIPROCESSOR_COUNT&#39;]
+
+# Cores per multiprocessor is not reported by the GPU!  
+# We must use a lookup table based on compute capability.
+# See the following:
+# http://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#compute-capab
+</code></pre>
+<p>ilities</p>
+<pre><code>cuda_cores_per_mp = &#123; 5.0 : 128, 5.1 : 128, 5.2 : 128, 6.0 : 64, 6.1 : 128, 6.2
+</code></pre>
+<p> : 128, 7.5: 64}[compute_capability]</p>
+<pre><code>print(&#39;\t (&#123;&#125;) Multiprocessors, (&#123;&#125;) CUDA Cores / Multiprocessor: &#123;&#125; CUDA Cores
+</code></pre>
+<p>‘.format(num_mp, cuda_cores_per_mp, num_mp*cuda_cores_per_mp))</p>
+<pre><code>device_attributes.pop(&#39;MULTIPROCESSOR_COUNT&#39;)
+
+for k in device_attributes.keys():
+    print(&#39;\t &#123;&#125;: &#123;&#125;&#39;.format(k, device_attributes[k]))
+</code></pre>
+<h1 id="yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-8-57-52"><a href="#yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-8-57-52" class="headerlink" title="yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [8:57:52]"></a>yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [8:57:52]</h1><p>$ vim cuda环境搭建.md </p>
+<h1 id="yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-8-58-27"><a href="#yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-8-58-27" class="headerlink" title="yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [8:58:27]"></a>yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [8:58:27]</h1><p>$ python3 query.py<br>CUDA device query (PyCUDA version) </p>
+<p>Detected 1 CUDA Capable device(s) </p>
+<p>Device 0: NVIDIA GeForce GTX 1660<br>         Compute Capability: 7.5<br>         Total Memory: 5933 megabytes<br>         (22) Multiprocessors, (64) CUDA Cores &#x2F; Multiprocessor: 1408 CUDA Cores<br>         ASYNC_ENGINE_COUNT: 3<br>         CAN_MAP_HOST_MEMORY: 1<br>         CAN_USE_HOST_POINTER_FOR_REGISTERED_MEM: 1<br>         CLOCK_RATE: 1830000<br>         COMPUTE_CAPABILITY_MAJOR: 7<br>         COMPUTE_CAPABILITY_MINOR: 5<br>         COMPUTE_MODE: DEFAULT<br>         COMPUTE_PREEMPTION_SUPPORTED: 1<br>         CONCURRENT_KERNELS: 1<br>         CONCURRENT_MANAGED_ACCESS: 1<br>         DIRECT_MANAGED_MEM_ACCESS_FROM_HOST: 0<br>         ECC_ENABLED: 0<br>         GENERIC_COMPRESSION_SUPPORTED: 0<br>         GLOBAL_L1_CACHE_SUPPORTED: 1<br>         GLOBAL_MEMORY_BUS_WIDTH: 192<br>         GPU_OVERLAP: 1<br>         HANDLE_TYPE_POSIX_FILE_DESCRIPTOR_SUPPORTED: 1<br>         HANDLE_TYPE_WIN32_HANDLE_SUPPORTED: 0<br>         HANDLE_TYPE_WIN32_KMT_HANDLE_SUPPORTED: 0<br>         HOST_NATIVE_ATOMIC_SUPPORTED: 0<br>         INTEGRATED: 0<br>         KERNEL_EXEC_TIMEOUT: 1<br>         L2_CACHE_SIZE: 1572864<br>         LOCAL_L1_CACHE_SUPPORTED: 1<br>         MANAGED_MEMORY: 1<br>         MAXIMUM_SURFACE1D_LAYERED_LAYERS: 2048<br>         MAXIMUM_SURFACE1D_LAYERED_WIDTH: 32768<br>         MAXIMUM_SURFACE1D_WIDTH: 32768<br>         MAXIMUM_SURFACE2D_HEIGHT: 65536<br>         MAXIMUM_SURFACE2D_LAYERED_HEIGHT: 32768<br>         MAXIMUM_SURFACE2D_LAYERED_LAYERS: 2048<br>         MAXIMUM_SURFACE2D_LAYERED_WIDTH: 32768<br>         MAXIMUM_SURFACE2D_WIDTH: 131072<br>         MAXIMUM_SURFACE3D_DEPTH: 16384<br>         MAXIMUM_SURFACE3D_HEIGHT: 16384<br>         MAXIMUM_SURFACE3D_WIDTH: 16384<br>         MAXIMUM_SURFACECUBEMAP_LAYERED_LAYERS: 2046<br>         MAXIMUM_SURFACECUBEMAP_LAYERED_WIDTH: 32768<br>         MAXIMUM_SURFACECUBEMAP_WIDTH: 32768<br>         MAXIMUM_TEXTURE1D_LAYERED_LAYERS: 2048<br>         MAXIMUM_TEXTURE1D_LAYERED_WIDTH: 32768<br>         MAXIMUM_TEXTURE1D_LINEAR_WIDTH: 268435456<br>         MAXIMUM_TEXTURE1D_MIPMAPPED_WIDTH: 32768<br>         MAXIMUM_TEXTURE1D_WIDTH: 131072<br>         MAXIMUM_TEXTURE2D_ARRAY_HEIGHT: 32768<br>         MAXIMUM_TEXTURE2D_ARRAY_NUMSLICES: 2048<br>         MAXIMUM_TEXTURE2D_ARRAY_WIDTH: 32768<br>         MAXIMUM_TEXTURE2D_GATHER_HEIGHT: 32768<br>         MAXIMUM_TEXTURE2D_GATHER_WIDTH: 32768<br>         MAXIMUM_TEXTURE2D_HEIGHT: 65536<br>         MAXIMUM_TEXTURE2D_LINEAR_HEIGHT: 65000<br>         MAXIMUM_TEXTURE2D_LINEAR_PITCH: 2097120<br>         MAXIMUM_TEXTURE2D_LINEAR_WIDTH: 131072<br>         MAXIMUM_TEXTURE2D_MIPMAPPED_HEIGHT: 32768<br>         MAXIMUM_TEXTURE2D_MIPMAPPED_WIDTH: 32768<br>         MAXIMUM_TEXTURE2D_WIDTH: 131072<br>         MAXIMUM_TEXTURE3D_DEPTH: 16384<br>         MAXIMUM_TEXTURE3D_DEPTH_ALTERNATE: 32768<br>         MAXIMUM_TEXTURE3D_HEIGHT: 16384<br>         MAXIMUM_TEXTURE3D_HEIGHT_ALTERNATE: 8192<br>         MAXIMUM_TEXTURE3D_WIDTH: 16384<br>         MAXIMUM_TEXTURE3D_WIDTH_ALTERNATE: 8192<br>         MAXIMUM_TEXTURECUBEMAP_LAYERED_LAYERS: 2046<br>         MAXIMUM_TEXTURECUBEMAP_LAYERED_WIDTH: 32768<br>         MAXIMUM_TEXTURECUBEMAP_WIDTH: 32768<br>         MAX_BLOCKS_PER_MULTIPROCESSOR: 16<br>         MAX_BLOCK_DIM_X: 1024<br>         MAX_BLOCK_DIM_Y: 1024<br>         MAX_BLOCK_DIM_Z: 64<br>         MAX_GRID_DIM_X: 2147483647<br>         MAX_GRID_DIM_Y: 65535<br>         MAX_GRID_DIM_Z: 65535<br>         MAX_PERSISTING_L2_CACHE_SIZE: 0<br>         MAX_PITCH: 2147483647<br>         MAX_REGISTERS_PER_BLOCK: 65536<br>         MAX_REGISTERS_PER_MULTIPROCESSOR: 65536<br>         MAX_SHARED_MEMORY_PER_BLOCK: 49152<br>         MAX_SHARED_MEMORY_PER_BLOCK_OPTIN: 65536<br>         MAX_SHARED_MEMORY_PER_MULTIPROCESSOR: 65536<br>         MAX_THREADS_PER_BLOCK: 1024<br>         MAX_THREADS_PER_MULTIPROCESSOR: 1024<br>         MEMORY_CLOCK_RATE: 4001000<br>         MEMORY_POOLS_SUPPORTED: 1<br>         MULTI_GPU_BOARD: 0<br>         MULTI_GPU_BOARD_GROUP_ID: 0<br>         PAGEABLE_MEMORY_ACCESS: 0<br>         PAGEABLE_MEMORY_ACCESS_USES_HOST_PAGE_TABLES: 0<br>         PCI_BUS_ID: 38<br>         PCI_DEVICE_ID: 0<br>         PCI_DOMAIN_ID: 0<br>         READ_ONLY_HOST_REGISTER_SUPPORTED: 1<br>         RESERVED_SHARED_MEMORY_PER_BLOCK: 0<br>         SINGLE_TO_DOUBLE_PRECISION_PERF_RATIO: 32<br>         STREAM_PRIORITIES_SUPPORTED: 1<br>         SURFACE_ALIGNMENT: 512<br>         TCC_DRIVER: 0<br>         TEXTURE_ALIGNMENT: 512<br>         TEXTURE_PITCH_ALIGNMENT: 32<br>         TOTAL_CONSTANT_MEMORY: 65536<br>         UNIFIED_ADDRESSING: 1<br>         WARP_SIZE: 32</p>
+<h1 id="yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-12-58"><a href="#yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-12-58" class="headerlink" title="yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:12:58]"></a>yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:12:58]</h1><p>$ ll<br>总用量 1.3M<br>-rwxrwxr-x 1 yuanbao yuanbao 818K 5月  14 22:07 a.out<br>-rw-rw-r– 1 yuanbao yuanbao 2.5K 5月  15 16:27 core.cu<br>-rw-rw-r– 1 yuanbao yuanbao  483 5月  15 16:29 core.py<br>-rw-rw-r– 1 yuanbao yuanbao  22K 5月  16 08:58 cuda环境搭建.md<br>-rw-rw-r– 1 yuanbao yuanbao 1.6K 5月  14 21:55 device_info.cu<br>-rw-rw-r– 1 yuanbao yuanbao 8.4K 5月  15 17:02 GPGPU概述.md<br>-rw-rw-r– 1 yuanbao yuanbao 409K 5月  15 18:17 gpu.jpeg<br>-rw-rw-r– 1 yuanbao yuanbao  230 5月  14 20:12 hello.cu<br>-rw-rw-r– 1 yuanbao yuanbao 1.7K 5月  16 08:56 query.py</p>
+<h1 id="yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-19-31"><a href="#yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-19-31" class="headerlink" title="yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:19:31]"></a>yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:19:31]</h1><p>$ vim gpuarray.py</p>
+<h1 id="yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-19-41"><a href="#yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-19-41" class="headerlink" title="yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:19:41]"></a>yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:19:41]</h1><p>$ python3 gpuarray.py<br>  File “gpuarray.py”, line 20<br>    device_data_2x &#x3D;  device_data * np.float32( 2 ))<br>                                                   ^<br>SyntaxError: unmatched ‘)’</p>
+<h1 id="yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-19-48-C-1"><a href="#yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-19-48-C-1" class="headerlink" title="yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:19:48] C:1"></a>yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:19:48] C:1</h1><p>$ vim gpuarray.py </p>
+<h1 id="yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-20-07"><a href="#yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-20-07" class="headerlink" title="yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:20:07]"></a>yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:20:07]</h1><p>$ python3 gpuarray.py<br>total time to compute on CPU: 0.029657<br>total time to compute on GPU: 0.075934<br>Is the host computation the same as the GPU computation? : True</p>
+<h1 id="yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-20-10"><a href="#yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-20-10" class="headerlink" title="yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:20:10]"></a>yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:20:10]</h1><p>$ python3 gpuarray.py<br>total time to compute on CPU: 0.029607<br>total time to compute on GPU: 0.076826<br>Is the host computation the same as the GPU computation? : True</p>
+<h1 id="yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-20-22"><a href="#yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-20-22" class="headerlink" title="yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:20:22]"></a>yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:20:22]</h1><p>$ python3 gpuarray.py<br>total time to compute on CPU: 0.029790<br>total time to compute on GPU: 0.075280<br>Is the host computation the same as the GPU computation? : True</p>
+<h1 id="yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-20-25"><a href="#yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-20-25" class="headerlink" title="yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:20:25]"></a>yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:20:25]</h1><p>$ python3 gpuarray.py<br>total time to compute on CPU: 0.029601<br>total time to compute on GPU: 0.080291<br>Is the host computation the same as the GPU computation? : True</p>
+<h1 id="yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-20-26"><a href="#yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-20-26" class="headerlink" title="yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:20:26]"></a>yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:20:26]</h1><p>$ python3 gpuarray.py<br>total time to compute on CPU: 0.029727<br>total time to compute on GPU: 0.074974<br>Is the host computation the same as the GPU computation? : True</p>
+<h1 id="yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-20-29"><a href="#yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-20-29" class="headerlink" title="yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:20:29]"></a>yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:20:29]</h1><p>$ more gpuarray.py<br>import numpy as np<br>import pycuda.autoinit<br>from pycuda import gpuarray<br>from time import time</p>
+<p>host_data &#x3D; np.float32( np.random.random(50000000) )</p>
+<p>t1 &#x3D; time()<br>host_data_2x &#x3D;  host_data * np.float32(2)<br>t2 &#x3D; time()</p>
+<h1 id="输出CPU计算时间"><a href="#输出CPU计算时间" class="headerlink" title="输出CPU计算时间"></a>输出CPU计算时间</h1><p>print(‘total time to compute on CPU: %f’ % (t2 - t1))</p>
+<h1 id="放在GPU运行"><a href="#放在GPU运行" class="headerlink" title="放在GPU运行"></a>放在GPU运行</h1><p>device_data &#x3D; gpuarray.to_gpu(host_data)</p>
+<p>t1 &#x3D; time()<br>device_data_2x &#x3D;  device_data * np.float32( 2 )<br>t2 &#x3D; time()</p>
+<p>from_device &#x3D; device_data_2x.get()</p>
+<h1 id="统计计算时间"><a href="#统计计算时间" class="headerlink" title="统计计算时间"></a>统计计算时间</h1><p>print(‘total time to compute on GPU: %f’ % (t2 - t1))<br>print(‘Is the host computation the same as the GPU computation? : {}’.format(np.all<br>close(from_device, host_data_2x) ))</p>
+<h1 id="yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-20-34"><a href="#yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-20-34" class="headerlink" title="yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:20:34]"></a>yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:20:34]</h1><p>$ vim gpuarray.py</p>
+<h1 id="yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-22-48"><a href="#yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-22-48" class="headerlink" title="yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:22:48]"></a>yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:22:48]</h1><p>$ python3 gpuarray.py<br>Traceback (most recent call last):<br>  File “gpuarray.py”, line 7, in <module><br>    host_data &#x3D; np.float32( np.random.random(50000000000) )<br>  File “mtrand.pyx”, line 445, in numpy.random.mtrand.RandomState.random<br>  File “mtrand.pyx”, line 436, in numpy.random.mtrand.RandomState.random_sample<br>  File “_common.pyx”, line 307, in numpy.random._common.double_fill<br>numpy.core._exceptions.MemoryError: Unable to allocate 373. GiB for an array with shape (50000000000,) and data type float64</p>
+<h1 id="yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-22-50-C-1"><a href="#yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-22-50-C-1" class="headerlink" title="yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:22:50] C:1"></a>yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:22:50] C:1</h1><p>$ vim gpuarray.py    </p>
+<h1 id="yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-22-59"><a href="#yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-22-59" class="headerlink" title="yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:22:59]"></a>yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:22:59]</h1><p>$ python3 gpuarray.py<br>total time to compute on CPU: 0.300927<br>total time to compute on GPU: 0.077960<br>Is the host computation the same as the GPU computation? : True</p>
+<h1 id="yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-23-07"><a href="#yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-23-07" class="headerlink" title="yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:23:07]"></a>yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:23:07]</h1><p>$ python3 gpuarray.py<br>total time to compute on CPU: 0.301246<br>total time to compute on GPU: 0.097728<br>Is the host computation the same as the GPU computation? : True</p>
+<h1 id="yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-23-21"><a href="#yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-23-21" class="headerlink" title="yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:23:21]"></a>yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:23:21]</h1><p>$ more gpuarray.py<br>import numpy as np<br>import pycuda.autoinit<br>from pycuda import gpuarray<br>from time import time</p>
+<p>host_data &#x3D; np.float32( np.random.random(500000000) )</p>
+<p>t1 &#x3D; time()<br>host_data_2x &#x3D;  host_data * np.float32(2)<br>t2 &#x3D; time()</p>
+<h1 id="输出CPU计算时间-1"><a href="#输出CPU计算时间-1" class="headerlink" title="输出CPU计算时间"></a>输出CPU计算时间</h1><p>print(‘total time to compute on CPU: %f’ % (t2 - t1))</p>
+<h1 id="放在GPU运行-1"><a href="#放在GPU运行-1" class="headerlink" title="放在GPU运行"></a>放在GPU运行</h1><p>device_data &#x3D; gpuarray.to_gpu(host_data)</p>
+<p>t1 &#x3D; time()<br>device_data_2x &#x3D;  device_data * np.float32( 2 )<br>t2 &#x3D; time()</p>
+<p>from_device &#x3D; device_data_2x.get()</p>
+<h1 id="统计计算时间-1"><a href="#统计计算时间-1" class="headerlink" title="统计计算时间"></a>统计计算时间</h1><p>print(‘total time to compute on GPU: %f’ % (t2 - t1))<br>print(‘Is the host computation the same as the GPU computation? : {}’.format(np.all<br>close(from_device, host_data_2x) ))</p>
+<h1 id="yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-23-28"><a href="#yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-23-28" class="headerlink" title="yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:23:28]"></a>yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:23:28]</h1><p>$ python3 gpuarray.py<br>total time to compute on CPU: 0.302494<br>total time to compute on GPU: 0.078900<br>Is the host computation the same as the GPU computation? : True</p>
+<h1 id="yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-25-17"><a href="#yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-25-17" class="headerlink" title="yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:25:17]"></a>yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:25:17]</h1><p>$ more gpuarray.py<br>import numpy as np<br>import pycuda.autoinit<br>from pycuda import gpuarray<br>from time import time</p>
+<p>host_data &#x3D; np.float32( np.random.random(500000000) )</p>
+<p>t1 &#x3D; time()<br>host_data_2x &#x3D;  host_data * np.float32(2)<br>t2 &#x3D; time()</p>
+<h1 id="输出CPU计算时间-2"><a href="#输出CPU计算时间-2" class="headerlink" title="输出CPU计算时间"></a>输出CPU计算时间</h1><p>print(‘total time to compute on CPU: %f’ % (t2 - t1))</p>
+<h1 id="放在GPU运行-2"><a href="#放在GPU运行-2" class="headerlink" title="放在GPU运行"></a>放在GPU运行</h1><p>device_data &#x3D; gpuarray.to_gpu(host_data)</p>
+<p>t1 &#x3D; time()<br>device_data_2x &#x3D;  device_data * np.float32( 2 )<br>t2 &#x3D; time()</p>
+<p>from_device &#x3D; device_data_2x.get()</p>
+<h1 id="统计计算时间-2"><a href="#统计计算时间-2" class="headerlink" title="统计计算时间"></a>统计计算时间</h1><p>print(‘total time to compute on GPU: %f’ % (t2 - t1))<br>print(‘Is the host computation the same as the GPU computation? : {}’.format(np.all<br>close(from_device, host_data_2x) ))</p>
+<h1 id="yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-25-33"><a href="#yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-25-33" class="headerlink" title="yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:25:33]"></a>yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:25:33]</h1><p>$ ll<br>总用量 1.3M<br>-rwxrwxr-x 1 yuanbao yuanbao 818K 5月  14 22:07 a.out<br>-rw-rw-r– 1 yuanbao yuanbao 2.5K 5月  15 16:27 core.cu<br>-rw-rw-r– 1 yuanbao yuanbao  483 5月  15 16:29 core.py<br>-rw-rw-r– 1 yuanbao yuanbao  22K 5月  16 08:58 cuda环境搭建.md<br>-rw-rw-r– 1 yuanbao yuanbao 1.6K 5月  14 21:55 device_info.cu<br>-rw-rw-r– 1 yuanbao yuanbao 8.4K 5月  15 17:02 GPGPU概述.md<br>-rw-rw-r– 1 yuanbao yuanbao  658 5月  16 11:22 gpuarray.py<br>-rw-rw-r– 1 yuanbao yuanbao 409K 5月  15 18:17 gpu.jpeg<br>-rw-rw-r– 1 yuanbao yuanbao  230 5月  14 20:12 hello.cu<br>-rw-rw-r– 1 yuanbao yuanbao 1.7K 5月  16 08:56 query.py</p>
+<h1 id="yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-25-47"><a href="#yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-25-47" class="headerlink" title="yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:25:47]"></a>yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:25:47]</h1><p>$ vim GPGPU概述.md    </p>
+<h1 id="yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-26-39"><a href="#yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-26-39" class="headerlink" title="yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:26:39]"></a>yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:26:39]</h1><p>$ vim GPGPU概述.md</p>
+<h1 id="yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-30-30"><a href="#yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-30-30" class="headerlink" title="yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:30:30]"></a>yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:30:30]</h1><p>$ ll<br>总用量 1.3M<br>-rwxrwxr-x 1 yuanbao yuanbao 818K 5月  14 22:07 a.out<br>-rw-rw-r– 1 yuanbao yuanbao 2.5K 5月  15 16:27 core.cu<br>-rw-rw-r– 1 yuanbao yuanbao  483 5月  15 16:29 core.py<br>-rw-rw-r– 1 yuanbao yuanbao  22K 5月  16 08:58 cuda环境搭建.md<br>-rw-rw-r– 1 yuanbao yuanbao 1.6K 5月  14 21:55 device_info.cu<br>-rw-rw-r– 1 yuanbao yuanbao 9.6K 5月  16 11:30 GPGPU概述.md<br>-rw-rw-r– 1 yuanbao yuanbao  658 5月  16 11:22 gpuarray.py<br>-rw-rw-r– 1 yuanbao yuanbao 409K 5月  15 18:17 gpu.jpeg<br>-rw-rw-r– 1 yuanbao yuanbao  230 5月  14 20:12 hello.cu<br>-rw-rw-r– 1 yuanbao yuanbao 1.7K 5月  16 08:56 query.py</p>
+<h1 id="yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-30-31"><a href="#yuanbao-yuanbao-MS-7B89-in-桌面-cuda-learn-11-30-31" class="headerlink" title="yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:30:31]"></a>yuanbao @ yuanbao-MS-7B89 in ~&#x2F;桌面&#x2F;cuda-learn [11:30:31]</h1><p>$ more cuda环境搭建.md </p>
+<p>文本主要记录Linux Cuda环境的搭建过程，包括系统的选择，搭建中的问题。</p>
+<h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>之前使用win10系统一直没有搭建成功，主要Windows系统下开发环境配置也比较麻烦，尝试过W<br>SL，也没搞定，对这种伪的Linux系统不太感兴趣。<br>于是打算换成Linux系统搭建。</p>
+<h3 id="系统的选择与安装过程"><a href="#系统的选择与安装过程" class="headerlink" title="系统的选择与安装过程"></a>系统的选择与安装过程</h3><p>我的目的主要是快速搭建好系统和环境，学习Cuda相关的知识，所以对系统没有特别的偏好。</p>
+<p>看了网上写的使用Manjaro安装cuda比较简单，就试了试。</p>
+<p>没想到也是有坑，cuda是安装成功了12.4，但是显卡驱动安装的版本比较低（我的显卡是GTX 1<br>660的)，写一个测试代码一跑就报错无法运行。<br>对这个发行版不太熟悉，尝试安装低版本的cuda环境，也没成功，pacman直接安装的就是最新<br>的版本。于是作罢。</p>
+<p>后来换了Fedora Linux，驱动安装以后显示器的分辨率降低很多，看来也没配置好。</p>
+<p>最后还是换成了Ubuntu 20.04，安装驱动是直接使用GUI里面的附加驱动，选择一个专有的，版<br>本号比较高的。<br>Cuda Toolkit的安装使用的是12.2版本，安装方式使用的是下载run脚本运行安装，也比较简单<br>。</p>
+<p>这里需要注意，Cuda开发包的版本需要和驱动的版本适配，低版本的驱动无法兼容高版本的开<br>发包。这个问题很多文章没提到。<br>Cuda的版本最好和nvidai-smi中的版本一致，减少出现问题的可能性。</p>
+<p>安装后效果如下：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ nvcc -V
+nvcc: NVIDIA <span class="token punctuation">(</span>R<span class="token punctuation">)</span> Cuda compiler driver
+Copyright <span class="token punctuation">(</span>c<span class="token punctuation">)</span> 2005-2023 NVIDIA Corporation
+Built on Tue_Jun_13_19:16:58_PDT_2023
+Cuda compilation tools, release 12.2, V12.2.91
+Build cuda_12.2.r12.2/compiler.32965470_0
+
+
+$ nvidia-smi
+Tue May 14 22:04:55 2024       
++----------------------------------------------------------------------------------
+-----+
+<span class="token operator">|</span> NVIDIA-SMI 535.171.04             Driver Version: 535.171.04   CUDA Version: 12.2
+     <span class="token operator">|</span>
+<span class="token operator">|</span>-----------------------------------------+----------------------+-----------------
+-----+
+<span class="token operator">|</span> GPU  Name                 Persistence-M <span class="token operator">|</span> Bus-Id        Disp.A <span class="token operator">|</span> Volatile Uncorr.
+ ECC <span class="token operator">|</span>
+<span class="token operator">|</span> Fan  Temp   Perf          Pwr:Usage/Cap <span class="token operator">|</span>         Memory-Usage <span class="token operator">|</span> GPU-Util  Comput
+e M. <span class="token operator">|</span>
+<span class="token operator">|</span>                                         <span class="token operator">|</span>                      <span class="token operator">|</span>               MI
+G M. <span class="token operator">|</span>
+<span class="token operator">|</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">=</span>+<span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span>+<span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">=</span>
+<span class="token operator">==</span><span class="token operator">==</span><span class="token operator">=</span><span class="token operator">|</span>
+<span class="token operator">|</span>   0  NVIDIA GeForce GTX 1660        Off <span class="token operator">|</span> 00000000:26:00.0  On <span class="token operator">|</span>                 
+ N/A <span class="token operator">|</span>
+<span class="token operator">|</span> 33%   34C    P8              11W / 120W <span class="token operator">|</span>    538MiB /  6144MiB <span class="token operator">|</span>     14%      Def
+ault <span class="token operator">|</span>
+<span class="token operator">|</span>                                         <span class="token operator">|</span>                      <span class="token operator">|</span>                 
+ N/A <span class="token operator">|</span>
++-----------------------------------------+----------------------+-----------------
+-----+
+                                                                                   
+      
++----------------------------------------------------------------------------------
+-----+
+<span class="token operator">|</span> Processes:                                                                       
+     <span class="token operator">|</span>
+<span class="token operator">|</span>  GPU   GI   CI        PID   Type   Process name                            GPU Me
+mory <span class="token operator">|</span>
+<span class="token operator">|</span>        ID   ID                                                             Usage 
+     <span class="token operator">|</span>
+<span class="token operator">|</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span>
+<span class="token operator">==</span><span class="token operator">==</span><span class="token operator">=</span><span class="token operator">|</span>
+<span class="token operator">|</span>    0   N/A  N/A       871      G   /usr/lib/xorg/Xorg                           5
+3MiB <span class="token operator">|</span>
+<span class="token operator">|</span>    0   N/A  N/A      1380      G   /usr/lib/xorg/Xorg                          22
+0MiB <span class="token operator">|</span>
+<span class="token operator">|</span>    0   N/A  N/A      1518      G   /usr/bin/gnome-shell                         9
+5MiB <span class="token operator">|</span>
+<span class="token operator">|</span>    0   N/A  N/A      2566      G   <span class="token punctuation">..</span>.seed-version<span class="token operator">=</span>20240513-180116.288000      15
+5MiB <span class="token operator">|</span>
+<span class="token operator">|</span>    0   N/A  N/A      5403      G   gnome-control-center                          
+1MiB <span class="token operator">|</span>
++----------------------------------------------------------------------------------
+-----+
+
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>安装以后配置环境变量</p>
+<pre class="line-numbers language-bash"><code class="language-bash"><span class="token function">export</span> PATH<span class="token operator">=</span>/usr/local/cuda-12.2/bin:<span class="token variable">$PATH</span>
+<span class="token function">export</span> LD_LIBRARY_PATH<span class="token operator">=</span>/usr/local/cuda-12.2/bin/lib64:<span class="token variable">$LD_LIBRARY_PATH</span>
+<span class="token function">export</span> CUDA_HOME<span class="token operator">=</span>/usr/local/cuda-12.2
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<h3 id="安装后的测试代码"><a href="#安装后的测试代码" class="headerlink" title="安装后的测试代码"></a>安装后的测试代码</h3><p>这个主要是测试一下基本的代码是否OK.</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;cuda.h></span></span>
+
+__global__ <span class="token keyword">void</span> <span class="token function">hello</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Hello from thread %d\n"</span><span class="token punctuation">,</span> threadIdx<span class="token punctuation">.</span>x<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">int</span> thread_count <span class="token operator">=</span> <span class="token number">10</span><span class="token punctuation">;</span>
+        hello <span class="token operator">&lt;&lt;</span><span class="token operator">&lt;</span> <span class="token number">1</span><span class="token punctuation">,</span> thread_count <span class="token operator">>></span><span class="token operator">></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token function">cudaDeviceSynchronize</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>获取GPU设备信息的代码，安装后要测试一下这个代码，保证环境是OK的：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;cuda_runtime.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;device_launch_parameters.h></span></span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> device_id <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token function">cudaSetDevice</span><span class="token punctuation">(</span>device_id<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    cudaDeviceProp prop<span class="token punctuation">;</span>
+    <span class="token function">cudaGetDeviceProperties</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>prop<span class="token punctuation">,</span> device_id<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Device id: %d\n"</span><span class="token punctuation">,</span> device_id<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Device name: %s\n"</span><span class="token punctuation">,</span> prop<span class="token punctuation">.</span>name<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Compute capability: %d.%d\n"</span><span class="token punctuation">,</span> prop<span class="token punctuation">.</span>major<span class="token punctuation">,</span> prop<span class="token punctuation">.</span>minor<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Amount of global memory: %g GB\n"</span><span class="token punctuation">,</span> prop<span class="token punctuation">.</span>totalGlobalMem <span class="token operator">/</span> <span class="token punctuation">(</span><span class="token number">1024.0</span> <span class="token operator">*</span> <span class="token number">1024</span>
+ <span class="token operator">*</span> <span class="token number">1024</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Amount of constant memory: %g KB\n"</span><span class="token punctuation">,</span> prop<span class="token punctuation">.</span>totalConstMem <span class="token operator">/</span> <span class="token number">1024.0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Maximum grid size: %d %d %d\n"</span><span class="token punctuation">,</span> prop<span class="token punctuation">.</span>maxGridSize<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> prop<span class="token punctuation">.</span>maxGridSize<span class="token punctuation">[</span><span class="token number">1</span>
+<span class="token punctuation">]</span><span class="token punctuation">,</span> prop<span class="token punctuation">.</span>maxGridSize<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment" spellcheck="true">// 网格的最大尺寸</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Maximum block size: %d %d %d\n"</span><span class="token punctuation">,</span> prop<span class="token punctuation">.</span>maxThreadsDim<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> prop<span class="token punctuation">.</span>maxThreads
+Dim<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> prop<span class="token punctuation">.</span>maxThreadsDim<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment" spellcheck="true">// 块的最大尺寸</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Number of SMs: %d\n"</span><span class="token punctuation">,</span> prop<span class="token punctuation">.</span>multiProcessorCount<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Maximum amount of shared memory per block: %g KB\n"</span><span class="token punctuation">,</span> prop<span class="token punctuation">.</span>sharedMemPerB
+lock <span class="token operator">/</span> <span class="token number">1024.0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment" spellcheck="true">// 块内共享内存大小</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Maximum amount of shared memory per SM: %g KB\n"</span><span class="token punctuation">,</span> prop<span class="token punctuation">.</span>sharedMemPerMult
+iprocessor <span class="token operator">/</span> <span class="token number">1024.0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Maximum number of registers per block: %d K\n"</span><span class="token punctuation">,</span> prop<span class="token punctuation">.</span>regsPerBlock <span class="token operator">/</span> <span class="token number">102</span>
+<span class="token number">4</span><span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment" spellcheck="true">// 块内寄存器大小</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Maximum number of registers per SM: %d K\n"</span><span class="token punctuation">,</span> prop<span class="token punctuation">.</span>regsPerMultiprocessor
+ <span class="token operator">/</span> <span class="token number">1024</span><span class="token punctuation">)</span><span class="token punctuation">;</span>  
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Maximum number of threads per block: %d\n"</span><span class="token punctuation">,</span> prop<span class="token punctuation">.</span>maxThreadsPerBlock<span class="token punctuation">)</span><span class="token punctuation">;</span>  
+<span class="token comment" spellcheck="true">// 每个GPU块的最大线程数</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Maximun number of thread per multiprocesser:  %d\n"</span><span class="token punctuation">,</span> prop<span class="token punctuation">.</span>maxThreadsPer
+MultiProcessor<span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment" spellcheck="true">// 每个GPU的最大线程数</span>
+
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">Device id: 0
+Device name: NVIDIA GeForce GTX 1660
+Compute capability: 7.5
+Amount of global memory: 5.79468 GB
+Amount of constant memory: 64 KB
+Maximum grid size: 2147483647 65535 65535
+Maximum block size: 1024 1024 64
+Number of SMs: 22
+Maximum amount of shared memory per block: 48 KB
+Maximum amount of shared memory per SM: 64 KB
+Maximum number of registers per block: 64 K
+Maximum number of registers per SM: 64 K
+Maximum number of threads per block: 1024
+Maximun number of thread per multiprocesser:  1024
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="Pycuda-安装步骤"><a href="#Pycuda-安装步骤" class="headerlink" title="Pycuda 安装步骤"></a>Pycuda 安装步骤</h3><p>sudo安装会报错，有说法是nvcc没有root权限，可能会报错</p>
+<p>安装C++ boost:</p>
+<pre class="line-numbers language-bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">apt-get</span> <span class="token function">install</span> libboost-all-dev
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<pre class="line-numbers language-python"><code class="language-python">
+In file included <span class="token keyword">from</span> bpl<span class="token operator">-</span>subset<span class="token operator">/</span>bpl_subset<span class="token operator">/</span>boost<span class="token operator">/</span>function<span class="token operator">/</span>detail<span class="token operator">/</span>prologue<span class="token punctuation">.</span>hpp<span class="token punctuation">:</span><span class="token number">17</span><span class="token punctuation">,</span>
+                       <span class="token keyword">from</span> bpl<span class="token operator">-</span>subset<span class="token operator">/</span>bpl_subset<span class="token operator">/</span>boost<span class="token operator">/</span>function<span class="token operator">/</span>function_template<span class="token punctuation">.</span>
+hpp<span class="token punctuation">:</span><span class="token number">13</span><span class="token punctuation">,</span>
+                       <span class="token keyword">from</span> bpl<span class="token operator">-</span>subset<span class="token operator">/</span>bpl_subset<span class="token operator">/</span>boost<span class="token operator">/</span>function<span class="token operator">/</span>detail<span class="token operator">/</span>maybe_inclu
+de<span class="token punctuation">.</span>hpp<span class="token punctuation">:</span><span class="token number">13</span><span class="token punctuation">,</span>
+                       <span class="token keyword">from</span> bpl<span class="token operator">-</span>subset<span class="token operator">/</span>bpl_subset<span class="token operator">/</span>boost<span class="token operator">/</span>function<span class="token operator">/</span>function0<span class="token punctuation">.</span>hpp<span class="token punctuation">:</span><span class="token number">11</span><span class="token punctuation">,</span>
+                       <span class="token keyword">from</span> bpl<span class="token operator">-</span>subset<span class="token operator">/</span>bpl_subset<span class="token operator">/</span>boost<span class="token operator">/</span>python<span class="token operator">/</span>errors<span class="token punctuation">.</span>hpp<span class="token punctuation">:</span><span class="token number">13</span><span class="token punctuation">,</span>
+                       <span class="token keyword">from</span> bpl<span class="token operator">-</span>subset<span class="token operator">/</span>bpl_subset<span class="token operator">/</span>boost<span class="token operator">/</span>python<span class="token operator">/</span>handle<span class="token punctuation">.</span>hpp<span class="token punctuation">:</span><span class="token number">11</span><span class="token punctuation">,</span>
+                       <span class="token keyword">from</span> bpl<span class="token operator">-</span>subset<span class="token operator">/</span>bpl_subset<span class="token operator">/</span>boost<span class="token operator">/</span>python<span class="token operator">/</span>args_fwd<span class="token punctuation">.</span>hpp<span class="token punctuation">:</span><span class="token number">10</span><span class="token punctuation">,</span>
+                       <span class="token keyword">from</span> bpl<span class="token operator">-</span>subset<span class="token operator">/</span>bpl_subset<span class="token operator">/</span>boost<span class="token operator">/</span>python<span class="token operator">/</span>args<span class="token punctuation">.</span>hpp<span class="token punctuation">:</span><span class="token number">10</span><span class="token punctuation">,</span>
+                       <span class="token keyword">from</span> bpl<span class="token operator">-</span>subset<span class="token operator">/</span>bpl_subset<span class="token operator">/</span>boost<span class="token operator">/</span>python<span class="token punctuation">.</span>hpp<span class="token punctuation">:</span><span class="token number">11</span><span class="token punctuation">,</span>
+                       <span class="token keyword">from</span> src<span class="token operator">/</span>cpp<span class="token operator">/</span>cuda<span class="token punctuation">.</span>hpp<span class="token punctuation">:</span><span class="token number">36</span><span class="token punctuation">,</span>
+                       <span class="token keyword">from</span> src<span class="token operator">/</span>wrapper<span class="token operator">/</span>wrap_cudadrv<span class="token punctuation">.</span>cpp<span class="token punctuation">:</span><span class="token number">3</span><span class="token punctuation">:</span>
+      bpl<span class="token operator">-</span>subset<span class="token operator">/</span>bpl_subset<span class="token operator">/</span>boost<span class="token operator">/</span>function<span class="token operator">/</span>function_base<span class="token punctuation">.</span>hpp<span class="token punctuation">:</span> In instantiation of ‘
+static void pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>detail<span class="token punctuation">:</span><span class="token punctuation">:</span>function<span class="token punctuation">:</span><span class="token punctuation">:</span>functor_manager_common<span class="token operator">&lt;</span>Functor<span class="token operator">></span><span class="token punctuation">:</span><span class="token punctuation">:</span>manage_
+small<span class="token punctuation">(</span>const pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>detail<span class="token punctuation">:</span><span class="token punctuation">:</span>function<span class="token punctuation">:</span><span class="token punctuation">:</span>function_buffer
+<span class="token operator">&amp;</span><span class="token punctuation">,</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>detail<span class="token punctuation">:</span><span class="token punctuation">:</span>function<span class="token punctuation">:</span><span class="token punctuation">:</span>function_buffer<span class="token operator">&amp;</span><span class="token punctuation">,</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>detail<span class="token punctuation">:</span><span class="token punctuation">:</span>function<span class="token punctuation">:</span><span class="token punctuation">:</span>
+functor_manager_operation_type<span class="token punctuation">)</span> <span class="token punctuation">[</span><span class="token keyword">with</span> Functor <span class="token operator">=</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>_bi<span class="token punctuation">:</span><span class="token punctuation">:</span>bind_t<span class="token operator">&lt;</span>bool<span class="token punctuation">,</span> pycu
+daboost<span class="token punctuation">:</span><span class="token punctuation">:</span>python<span class="token punctuation">:</span><span class="token punctuation">:</span>detail<span class="token punctuation">:</span><span class="token punctuation">:</span>translate_exception<span class="token operator">&lt;</span>pycuda<span class="token punctuation">:</span><span class="token punctuation">:</span>error
+<span class="token punctuation">,</span> void <span class="token punctuation">(</span><span class="token operator">*</span><span class="token punctuation">)</span><span class="token punctuation">(</span>const pycuda<span class="token punctuation">:</span><span class="token punctuation">:</span>error<span class="token operator">&amp;</span><span class="token punctuation">)</span><span class="token operator">></span><span class="token punctuation">,</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>_bi<span class="token punctuation">:</span><span class="token punctuation">:</span>list3<span class="token operator">&lt;</span>pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>arg<span class="token operator">&lt;</span><span class="token number">1</span><span class="token operator">></span><span class="token punctuation">,</span> pyc
+udaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>arg<span class="token operator">&lt;</span><span class="token number">2</span><span class="token operator">></span><span class="token punctuation">,</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>_bi<span class="token punctuation">:</span><span class="token punctuation">:</span>value<span class="token operator">&lt;</span>void <span class="token punctuation">(</span><span class="token operator">*</span><span class="token punctuation">)</span><span class="token punctuation">(</span>const pycuda<span class="token punctuation">:</span><span class="token punctuation">:</span>error<span class="token operator">&amp;</span><span class="token punctuation">)</span><span class="token operator">></span> <span class="token operator">></span> <span class="token operator">></span><span class="token punctuation">]</span>’<span class="token punctuation">:</span>
+      bpl<span class="token operator">-</span>subset<span class="token operator">/</span>bpl_subset<span class="token operator">/</span>boost<span class="token operator">/</span>function<span class="token operator">/</span>function_base<span class="token punctuation">.</span>hpp<span class="token punctuation">:</span><span class="token number">364</span><span class="token punctuation">:</span><span class="token number">56</span><span class="token punctuation">:</span>   required fro
+m ‘static void pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>detail<span class="token punctuation">:</span><span class="token punctuation">:</span>function<span class="token punctuation">:</span><span class="token punctuation">:</span>functor_manager<span class="token operator">&lt;</span>Functor<span class="token operator">></span><span class="token punctuation">:</span><span class="token punctuation">:</span>manager<span class="token punctuation">(</span>con
+st pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>detail<span class="token punctuation">:</span><span class="token punctuation">:</span>function<span class="token punctuation">:</span><span class="token punctuation">:</span>function_buffer<span class="token operator">&amp;</span><span class="token punctuation">,</span> pycuda
+boost<span class="token punctuation">:</span><span class="token punctuation">:</span>detail<span class="token punctuation">:</span><span class="token punctuation">:</span>function<span class="token punctuation">:</span><span class="token punctuation">:</span>function_buffer<span class="token operator">&amp;</span><span class="token punctuation">,</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>detail<span class="token punctuation">:</span><span class="token punctuation">:</span>function<span class="token punctuation">:</span><span class="token punctuation">:</span>functor_m
+anager_operation_type<span class="token punctuation">,</span> mpl_<span class="token punctuation">:</span><span class="token punctuation">:</span>true_<span class="token punctuation">)</span> <span class="token punctuation">[</span><span class="token keyword">with</span> Functor <span class="token operator">=</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>_bi<span class="token punctuation">:</span><span class="token punctuation">:</span>bind_t<span class="token operator">&lt;</span>bool<span class="token punctuation">,</span> 
+pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>python<span class="token punctuation">:</span><span class="token punctuation">:</span>detail<span class="token punctuation">:</span><span class="token punctuation">:</span>translate_exception<span class="token operator">&lt;</span>pycuda<span class="token punctuation">:</span><span class="token punctuation">:</span>e
+rror<span class="token punctuation">,</span> void <span class="token punctuation">(</span><span class="token operator">*</span><span class="token punctuation">)</span><span class="token punctuation">(</span>const pycuda<span class="token punctuation">:</span><span class="token punctuation">:</span>error<span class="token operator">&amp;</span><span class="token punctuation">)</span><span class="token operator">></span><span class="token punctuation">,</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>_bi<span class="token punctuation">:</span><span class="token punctuation">:</span>list3<span class="token operator">&lt;</span>pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>arg<span class="token operator">&lt;</span><span class="token number">1</span><span class="token operator">></span><span class="token punctuation">,</span>
+ pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>arg<span class="token operator">&lt;</span><span class="token number">2</span><span class="token operator">></span><span class="token punctuation">,</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>_bi<span class="token punctuation">:</span><span class="token punctuation">:</span>value<span class="token operator">&lt;</span>void <span class="token punctuation">(</span><span class="token operator">*</span><span class="token punctuation">)</span><span class="token punctuation">(</span>const pycuda<span class="token punctuation">:</span><span class="token punctuation">:</span>error<span class="token operator">&amp;</span><span class="token punctuation">)</span><span class="token operator">></span> <span class="token operator">></span> <span class="token operator">></span><span class="token punctuation">;</span> 
+mpl_<span class="token punctuation">:</span><span class="token punctuation">:</span>true_ <span class="token operator">=</span> mpl_<span class="token punctuation">:</span><span class="token punctuation">:</span>bool_<span class="token operator">&lt;</span>true<span class="token operator">></span><span class="token punctuation">]</span>’
+      bpl<span class="token operator">-</span>subset<span class="token operator">/</span>bpl_subset<span class="token operator">/</span>boost<span class="token operator">/</span>function<span class="token operator">/</span>function_base<span class="token punctuation">.</span>hpp<span class="token punctuation">:</span><span class="token number">412</span><span class="token punctuation">:</span><span class="token number">18</span><span class="token punctuation">:</span>   required fro
+m ‘static void pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>detail<span class="token punctuation">:</span><span class="token punctuation">:</span>function<span class="token punctuation">:</span><span class="token punctuation">:</span>functor_manager<span class="token operator">&lt;</span>Functor<span class="token operator">></span><span class="token punctuation">:</span><span class="token punctuation">:</span>manager<span class="token punctuation">(</span>con
+st pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>detail<span class="token punctuation">:</span><span class="token punctuation">:</span>function<span class="token punctuation">:</span><span class="token punctuation">:</span>function_buffer<span class="token operator">&amp;</span><span class="token punctuation">,</span> pycuda
+boost<span class="token punctuation">:</span><span class="token punctuation">:</span>detail<span class="token punctuation">:</span><span class="token punctuation">:</span>function<span class="token punctuation">:</span><span class="token punctuation">:</span>function_buffer<span class="token operator">&amp;</span><span class="token punctuation">,</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>detail<span class="token punctuation">:</span><span class="token punctuation">:</span>function<span class="token punctuation">:</span><span class="token punctuation">:</span>functor_m
+anager_operation_type<span class="token punctuation">,</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>detail<span class="token punctuation">:</span><span class="token punctuation">:</span>function<span class="token punctuation">:</span><span class="token punctuation">:</span>function_obj_tag<span class="token punctuation">)</span> <span class="token punctuation">[</span><span class="token keyword">with</span> Funct
+<span class="token operator">or</span> <span class="token operator">=</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>_bi<span class="token punctuation">:</span><span class="token punctuation">:</span>bind_t<span class="token operator">&lt;</span>bool<span class="token punctuation">,</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>python<span class="token punctuation">:</span><span class="token punctuation">:</span>d
+etail<span class="token punctuation">:</span><span class="token punctuation">:</span>translate_exception<span class="token operator">&lt;</span>pycuda<span class="token punctuation">:</span><span class="token punctuation">:</span>error<span class="token punctuation">,</span> void <span class="token punctuation">(</span><span class="token operator">*</span><span class="token punctuation">)</span><span class="token punctuation">(</span>const pycuda<span class="token punctuation">:</span><span class="token punctuation">:</span>error<span class="token operator">&amp;</span><span class="token punctuation">)</span><span class="token operator">></span><span class="token punctuation">,</span> pycudabo
+ost<span class="token punctuation">:</span><span class="token punctuation">:</span>_bi<span class="token punctuation">:</span><span class="token punctuation">:</span>list3<span class="token operator">&lt;</span>pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>arg<span class="token operator">&lt;</span><span class="token number">1</span><span class="token operator">></span><span class="token punctuation">,</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>arg<span class="token operator">&lt;</span><span class="token number">2</span><span class="token operator">></span><span class="token punctuation">,</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>_bi<span class="token punctuation">:</span><span class="token punctuation">:</span>value<span class="token operator">&lt;</span>v
+oid <span class="token punctuation">(</span><span class="token operator">*</span><span class="token punctuation">)</span><span class="token punctuation">(</span>const pycuda<span class="token punctuation">:</span><span class="token punctuation">:</span>error<span class="token operator">&amp;</span><span class="token punctuation">)</span><span class="token operator">></span> <span class="token operator">></span> <span class="token operator">></span><span class="token punctuation">]</span>’
+      bpl<span class="token operator">-</span>subset<span class="token operator">/</span>bpl_subset<span class="token operator">/</span>boost<span class="token operator">/</span>function<span class="token operator">/</span>function_base<span class="token punctuation">.</span>hpp<span class="token punctuation">:</span><span class="token number">440</span><span class="token punctuation">:</span><span class="token number">20</span><span class="token punctuation">:</span>   required fro
+m ‘static void pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>detail<span class="token punctuation">:</span><span class="token punctuation">:</span>function<span class="token punctuation">:</span><span class="token punctuation">:</span>functor_manager<span class="token operator">&lt;</span>Functor<span class="token operator">></span><span class="token punctuation">:</span><span class="token punctuation">:</span>manage<span class="token punctuation">(</span>cons
+t pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>detail<span class="token punctuation">:</span><span class="token punctuation">:</span>function<span class="token punctuation">:</span><span class="token punctuation">:</span>function_buffer<span class="token operator">&amp;</span><span class="token punctuation">,</span> pycudab
+oost<span class="token punctuation">:</span><span class="token punctuation">:</span>detail<span class="token punctuation">:</span><span class="token punctuation">:</span>function<span class="token punctuation">:</span><span class="token punctuation">:</span>function_buffer<span class="token operator">&amp;</span><span class="token punctuation">,</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>detail<span class="token punctuation">:</span><span class="token punctuation">:</span>function<span class="token punctuation">:</span><span class="token punctuation">:</span>functor_ma
+nager_operation_type<span class="token punctuation">)</span> <span class="token punctuation">[</span><span class="token keyword">with</span> Functor <span class="token operator">=</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>_bi<span class="token punctuation">:</span><span class="token punctuation">:</span>bind_t<span class="token operator">&lt;</span>bool<span class="token punctuation">,</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>p
+ython<span class="token punctuation">:</span><span class="token punctuation">:</span>detail<span class="token punctuation">:</span><span class="token punctuation">:</span>translate_exception<span class="token operator">&lt;</span>pycuda<span class="token punctuation">:</span><span class="token punctuation">:</span>error<span class="token punctuation">,</span> void <span class="token punctuation">(</span><span class="token operator">*</span><span class="token punctuation">)</span>
+<span class="token punctuation">(</span>const pycuda<span class="token punctuation">:</span><span class="token punctuation">:</span>error<span class="token operator">&amp;</span><span class="token punctuation">)</span><span class="token operator">></span><span class="token punctuation">,</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>_bi<span class="token punctuation">:</span><span class="token punctuation">:</span>list3<span class="token operator">&lt;</span>pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>arg<span class="token operator">&lt;</span><span class="token number">1</span><span class="token operator">></span><span class="token punctuation">,</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>
+arg<span class="token operator">&lt;</span><span class="token number">2</span><span class="token operator">></span><span class="token punctuation">,</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>_bi<span class="token punctuation">:</span><span class="token punctuation">:</span>value<span class="token operator">&lt;</span>void <span class="token punctuation">(</span><span class="token operator">*</span><span class="token punctuation">)</span><span class="token punctuation">(</span>const pycuda<span class="token punctuation">:</span><span class="token punctuation">:</span>error<span class="token operator">&amp;</span><span class="token punctuation">)</span><span class="token operator">></span> <span class="token operator">></span> <span class="token operator">></span><span class="token punctuation">]</span>’
+      bpl<span class="token operator">-</span>subset<span class="token operator">/</span>bpl_subset<span class="token operator">/</span>boost<span class="token operator">/</span>function<span class="token operator">/</span>function_template<span class="token punctuation">.</span>hpp<span class="token punctuation">:</span><span class="token number">934</span><span class="token punctuation">:</span><span class="token number">13</span><span class="token punctuation">:</span>   required
+ <span class="token keyword">from</span> ‘void pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>function2<span class="token operator">&lt;</span>R<span class="token punctuation">,</span> T1<span class="token punctuation">,</span> T2<span class="token operator">></span><span class="token punctuation">:</span><span class="token punctuation">:</span>assign_to<span class="token punctuation">(</span>Functor<span class="token punctuation">)</span> <span class="token punctuation">[</span><span class="token keyword">with</span> Functor <span class="token operator">=</span> p
+ycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>_bi<span class="token punctuation">:</span><span class="token punctuation">:</span>bind_t<span class="token operator">&lt;</span>bool<span class="token punctuation">,</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>python<span class="token punctuation">:</span><span class="token punctuation">:</span>detail<span class="token punctuation">:</span>
+<span class="token punctuation">:</span>translate_exception<span class="token operator">&lt;</span>pycuda<span class="token punctuation">:</span><span class="token punctuation">:</span>error<span class="token punctuation">,</span> void <span class="token punctuation">(</span><span class="token operator">*</span><span class="token punctuation">)</span><span class="token punctuation">(</span>const pycuda<span class="token punctuation">:</span><span class="token punctuation">:</span>error<span class="token operator">&amp;</span><span class="token punctuation">)</span><span class="token operator">></span><span class="token punctuation">,</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>_
+bi<span class="token punctuation">:</span><span class="token punctuation">:</span>list3<span class="token operator">&lt;</span>pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>arg<span class="token operator">&lt;</span><span class="token number">1</span><span class="token operator">></span><span class="token punctuation">,</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>arg<span class="token operator">&lt;</span><span class="token number">2</span><span class="token operator">></span><span class="token punctuation">,</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>_bi<span class="token punctuation">:</span><span class="token punctuation">:</span>value<span class="token operator">&lt;</span>void <span class="token punctuation">(</span><span class="token operator">*</span>
+<span class="token punctuation">)</span><span class="token punctuation">(</span>const pycuda<span class="token punctuation">:</span><span class="token punctuation">:</span>error<span class="token operator">&amp;</span><span class="token punctuation">)</span><span class="token operator">></span> <span class="token operator">></span> <span class="token operator">></span><span class="token punctuation">;</span> R <span class="token operator">=</span> bool<span class="token punctuation">;</span> T0 <span class="token operator">=</span> const pycudab
+oost<span class="token punctuation">:</span><span class="token punctuation">:</span>python<span class="token punctuation">:</span><span class="token punctuation">:</span>detail<span class="token punctuation">:</span><span class="token punctuation">:</span>exception_handler<span class="token operator">&amp;</span><span class="token punctuation">;</span> T1 <span class="token operator">=</span> const pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>function0<span class="token operator">&lt;</span>void<span class="token operator">></span><span class="token operator">&amp;</span><span class="token punctuation">]</span>
+’
+      bpl<span class="token operator">-</span>subset<span class="token operator">/</span>bpl_subset<span class="token operator">/</span>boost<span class="token operator">/</span>function<span class="token operator">/</span>function_template<span class="token punctuation">.</span>hpp<span class="token punctuation">:</span><span class="token number">722</span><span class="token punctuation">:</span><span class="token number">7</span><span class="token punctuation">:</span>   required 
+<span class="token keyword">from</span> ‘pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>function2<span class="token operator">&lt;</span>R<span class="token punctuation">,</span> T1<span class="token punctuation">,</span> T2<span class="token operator">></span><span class="token punctuation">:</span><span class="token punctuation">:</span>function2<span class="token punctuation">(</span>Functor<span class="token punctuation">,</span> typename pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>e
+nable_if_c<span class="token operator">&lt;</span>pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>type_traits<span class="token punctuation">:</span><span class="token punctuation">:</span>ice_not<span class="token operator">&lt;</span>pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>
+is_integral<span class="token operator">&lt;</span>Functor<span class="token operator">></span><span class="token punctuation">:</span><span class="token punctuation">:</span>value<span class="token operator">></span><span class="token punctuation">:</span><span class="token punctuation">:</span>value<span class="token punctuation">,</span> int<span class="token operator">></span><span class="token punctuation">:</span><span class="token punctuation">:</span>type<span class="token punctuation">)</span> <span class="token punctuation">[</span><span class="token keyword">with</span> Functor <span class="token operator">=</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>_bi<span class="token punctuation">:</span><span class="token punctuation">:</span>
+bind_t<span class="token operator">&lt;</span>bool<span class="token punctuation">,</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>python<span class="token punctuation">:</span><span class="token punctuation">:</span>detail<span class="token punctuation">:</span><span class="token punctuation">:</span>translate_exception<span class="token operator">&lt;</span>pycuda<span class="token punctuation">:</span><span class="token punctuation">:</span>error<span class="token punctuation">,</span> void <span class="token punctuation">(</span>
+<span class="token operator">*</span><span class="token punctuation">)</span><span class="token punctuation">(</span>const pycuda<span class="token punctuation">:</span><span class="token punctuation">:</span>error<span class="token operator">&amp;</span><span class="token punctuation">)</span><span class="token operator">></span><span class="token punctuation">,</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>_bi<span class="token punctuation">:</span><span class="token punctuation">:</span>list3<span class="token operator">&lt;</span>pycudab
+oost<span class="token punctuation">:</span><span class="token punctuation">:</span>arg<span class="token operator">&lt;</span><span class="token number">1</span><span class="token operator">></span><span class="token punctuation">,</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>arg<span class="token operator">&lt;</span><span class="token number">2</span><span class="token operator">></span><span class="token punctuation">,</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>_bi<span class="token punctuation">:</span><span class="token punctuation">:</span>value<span class="token operator">&lt;</span>void <span class="token punctuation">(</span><span class="token operator">*</span><span class="token punctuation">)</span><span class="token punctuation">(</span>const pycuda<span class="token punctuation">:</span><span class="token punctuation">:</span>e
+rror<span class="token operator">&amp;</span><span class="token punctuation">)</span><span class="token operator">></span> <span class="token operator">></span> <span class="token operator">></span><span class="token punctuation">;</span> R <span class="token operator">=</span> bool<span class="token punctuation">;</span> T0 <span class="token operator">=</span> const pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>python<span class="token punctuation">:</span><span class="token punctuation">:</span>detail<span class="token punctuation">:</span><span class="token punctuation">:</span>exception_handler<span class="token operator">&amp;</span><span class="token punctuation">;</span> 
+T1 <span class="token operator">=</span> const pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>function0<span class="token operator">&lt;</span>void<span class="token operator">></span><span class="token operator">&amp;</span><span class="token punctuation">;</span> typename pycudab
+oost<span class="token punctuation">:</span><span class="token punctuation">:</span>enable_if_c<span class="token operator">&lt;</span>pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>type_traits<span class="token punctuation">:</span><span class="token punctuation">:</span>ice_not<span class="token operator">&lt;</span>pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>is_integral<span class="token operator">&lt;</span>Functo
+r<span class="token operator">></span><span class="token punctuation">:</span><span class="token punctuation">:</span>value<span class="token operator">></span><span class="token punctuation">:</span><span class="token punctuation">:</span>value<span class="token punctuation">,</span> int<span class="token operator">></span><span class="token punctuation">:</span><span class="token punctuation">:</span>type <span class="token operator">=</span> int<span class="token punctuation">]</span>’
+      bpl<span class="token operator">-</span>subset<span class="token operator">/</span>bpl_subset<span class="token operator">/</span>boost<span class="token operator">/</span>python<span class="token operator">/</span>exception_translator<span class="token punctuation">.</span>hpp<span class="token punctuation">:</span><span class="token number">20</span><span class="token punctuation">:</span><span class="token number">39</span><span class="token punctuation">:</span>   required
+ <span class="token keyword">from</span> ‘void pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>python<span class="token punctuation">:</span><span class="token punctuation">:</span>register_exception_translator<span class="token punctuation">(</span>Translate<span class="token punctuation">,</span> pycudaboo
+st<span class="token punctuation">:</span><span class="token punctuation">:</span>type<span class="token operator">&lt;</span>Target<span class="token operator">></span><span class="token operator">*</span><span class="token punctuation">)</span> <span class="token punctuation">[</span><span class="token keyword">with</span> ExceptionType <span class="token operator">=</span> pycuda<span class="token punctuation">:</span><span class="token punctuation">:</span>error<span class="token punctuation">;</span> Tr
+anslate <span class="token operator">=</span> void <span class="token punctuation">(</span><span class="token operator">*</span><span class="token punctuation">)</span><span class="token punctuation">(</span>const pycuda<span class="token punctuation">:</span><span class="token punctuation">:</span>error<span class="token operator">&amp;</span><span class="token punctuation">)</span><span class="token punctuation">]</span>’
+      src<span class="token operator">/</span>wrapper<span class="token operator">/</span>wrap_cudadrv<span class="token punctuation">.</span>cpp<span class="token punctuation">:</span><span class="token number">691</span><span class="token punctuation">:</span><span class="token number">74</span><span class="token punctuation">:</span>   required <span class="token keyword">from</span> here
+      bpl<span class="token operator">-</span>subset<span class="token operator">/</span>bpl_subset<span class="token operator">/</span>boost<span class="token operator">/</span>function<span class="token operator">/</span>function_base<span class="token punctuation">.</span>hpp<span class="token punctuation">:</span><span class="token number">318</span><span class="token punctuation">:</span><span class="token number">54</span><span class="token punctuation">:</span> warning<span class="token punctuation">:</span> place
+ment new constructing an object of type ‘pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>detail<span class="token punctuation">:</span><span class="token punctuation">:</span>function<span class="token punctuation">:</span><span class="token punctuation">:</span>functor_man
+ager_common<span class="token operator">&lt;</span>pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>_bi<span class="token punctuation">:</span><span class="token punctuation">:</span>bind_t<span class="token operator">&lt;</span>bool<span class="token punctuation">,</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>py
+thon<span class="token punctuation">:</span><span class="token punctuation">:</span>detail<span class="token punctuation">:</span><span class="token punctuation">:</span>translate_exception<span class="token operator">&lt;</span>pycuda<span class="token punctuation">:</span><span class="token punctuation">:</span>error<span class="token punctuation">,</span> void <span class="token punctuation">(</span><span class="token operator">*</span><span class="token punctuation">)</span><span class="token punctuation">(</span>const pycuda<span class="token punctuation">:</span><span class="token punctuation">:</span>error<span class="token operator">&amp;</span><span class="token punctuation">)</span><span class="token operator">></span><span class="token punctuation">,</span> p
+ycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>_bi<span class="token punctuation">:</span><span class="token punctuation">:</span>list3<span class="token operator">&lt;</span>pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>arg<span class="token operator">&lt;</span><span class="token number">1</span><span class="token operator">></span><span class="token punctuation">,</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>arg<span class="token operator">&lt;</span><span class="token number">2</span><span class="token operator">></span><span class="token punctuation">,</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>_bi<span class="token punctuation">:</span><span class="token punctuation">:</span>
+value<span class="token operator">&lt;</span>void <span class="token punctuation">(</span><span class="token operator">*</span><span class="token punctuation">)</span><span class="token punctuation">(</span>const pycuda<span class="token punctuation">:</span><span class="token punctuation">:</span>error<span class="token operator">&amp;</span><span class="token punctuation">)</span><span class="token operator">></span> <span class="token operator">></span> <span class="token operator">></span> <span class="token operator">></span><span class="token punctuation">:</span><span class="token punctuation">:</span>functor_type’
+ <span class="token punctuation">{</span>aka ‘pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>_bi<span class="token punctuation">:</span><span class="token punctuation">:</span>bind_t<span class="token operator">&lt;</span>bool<span class="token punctuation">,</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>python<span class="token punctuation">:</span><span class="token punctuation">:</span>detail<span class="token punctuation">:</span><span class="token punctuation">:</span>translate_except
+ion<span class="token operator">&lt;</span>pycuda<span class="token punctuation">:</span><span class="token punctuation">:</span>error<span class="token punctuation">,</span> void <span class="token punctuation">(</span><span class="token operator">*</span><span class="token punctuation">)</span><span class="token punctuation">(</span>const pycuda<span class="token punctuation">:</span><span class="token punctuation">:</span>error<span class="token operator">&amp;</span><span class="token punctuation">)</span><span class="token operator">></span><span class="token punctuation">,</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>_bi<span class="token punctuation">:</span><span class="token punctuation">:</span>list3<span class="token operator">&lt;</span>pycudab
+oost<span class="token punctuation">:</span><span class="token punctuation">:</span>arg<span class="token operator">&lt;</span><span class="token number">1</span><span class="token operator">></span><span class="token punctuation">,</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>arg<span class="token operator">&lt;</span><span class="token number">2</span><span class="token operator">></span><span class="token punctuation">,</span> pycudaboost<span class="token punctuation">:</span><span class="token punctuation">:</span>_bi<span class="token punctuation">:</span><span class="token punctuation">:</span>value
+<span class="token operator">&lt;</span>void <span class="token punctuation">(</span><span class="token operator">*</span><span class="token punctuation">)</span><span class="token punctuation">(</span>const pycuda<span class="token punctuation">:</span><span class="token punctuation">:</span>error<span class="token operator">&amp;</span><span class="token punctuation">)</span><span class="token operator">></span> <span class="token operator">></span> <span class="token operator">></span>’<span class="token punctuation">}</span> <span class="token operator">and</span> size ‘<span class="token number">16</span>’ <span class="token keyword">in</span> a region of type ‘char’ <span class="token operator">and</span>
+ size ‘<span class="token number">1</span>’ <span class="token punctuation">[</span><span class="token operator">-</span>Wplacement<span class="token operator">-</span>new<span class="token operator">=</span><span class="token punctuation">]</span>
+        <span class="token number">318</span> <span class="token operator">|</span>             new <span class="token punctuation">(</span>reinterpret_cast<span class="token operator">&lt;</span>void<span class="token operator">*</span><span class="token operator">></span><span class="token punctuation">(</span><span class="token operator">&amp;</span>out_buffer<span class="token punctuation">.</span>data<span class="token punctuation">)</span><span class="token punctuation">)</span> functor_t
+ype<span class="token punctuation">(</span><span class="token operator">*</span>in_functor<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token operator">|</span>                                           <span class="token operator">~</span><span class="token operator">~</span><span class="token operator">~</span><span class="token operator">~</span><span class="token operator">~</span><span class="token operator">~</span><span class="token operator">~</span><span class="token operator">~</span><span class="token operator">~</span><span class="token operator">~</span><span class="token operator">~</span><span class="token operator">^</span><span class="token operator">~</span><span class="token operator">~</span><span class="token operator">~</span>
+      error<span class="token punctuation">:</span> command <span class="token string">'/usr/bin/x86_64-linux-gnu-gcc'</span> failed <span class="token keyword">with</span> exit code <span class="token number">1</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>直接使用pip3 install pycuda 即可</p>
+<p>测试代码:</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>driver <span class="token keyword">as</span> drv
+<span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>tools
+<span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>autoinit
+<span class="token keyword">import</span> numpy
+<span class="token keyword">import</span> numpy<span class="token punctuation">.</span>linalg <span class="token keyword">as</span> la
+<span class="token keyword">from</span> pycuda<span class="token punctuation">.</span>compiler <span class="token keyword">import</span> SourceModule
+
+mod <span class="token operator">=</span> SourceModule<span class="token punctuation">(</span><span class="token triple-quoted-string string">"""
+__global__ void multiply_them(float *dest, float *a, float *b)
+{
+  const int i = threadIdx.x;
+  dest[i] = a[i] * b[i];
+}
+"""</span><span class="token punctuation">)</span>
+
+multiply_them <span class="token operator">=</span> mod<span class="token punctuation">.</span>get_function<span class="token punctuation">(</span><span class="token string">"multiply_them"</span><span class="token punctuation">)</span>
+
+a <span class="token operator">=</span> numpy<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span><span class="token number">400</span><span class="token punctuation">)</span><span class="token punctuation">.</span>astype<span class="token punctuation">(</span>numpy<span class="token punctuation">.</span>float32<span class="token punctuation">)</span>
+b <span class="token operator">=</span> numpy<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span><span class="token number">400</span><span class="token punctuation">)</span><span class="token punctuation">.</span>astype<span class="token punctuation">(</span>numpy<span class="token punctuation">.</span>float32<span class="token punctuation">)</span>
+
+dest <span class="token operator">=</span> numpy<span class="token punctuation">.</span>zeros_like<span class="token punctuation">(</span>a<span class="token punctuation">)</span>
+multiply_them<span class="token punctuation">(</span>
+        drv<span class="token punctuation">.</span>Out<span class="token punctuation">(</span>dest<span class="token punctuation">)</span><span class="token punctuation">,</span> drv<span class="token punctuation">.</span>In<span class="token punctuation">(</span>a<span class="token punctuation">)</span><span class="token punctuation">,</span> drv<span class="token punctuation">.</span>In<span class="token punctuation">(</span>b<span class="token punctuation">)</span><span class="token punctuation">,</span>
+        block<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">400</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>dest<span class="token operator">-</span>a<span class="token operator">*</span>b<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>可能会报错：</p>
+<pre><code>$ python3 demo.py 
+ModuleNotFoundError: No module named &#39;numpy.core._multiarray_umath&#39;
+Traceback (most recent call last):
+  File &quot;demo.py&quot;, line 2, in &lt;module&gt;
+    import pycuda.driver as cuda
+  File &quot;/home/yuanbao/.local/lib/python3.8/site-packages/pycuda/driver.py&quot;, line 66
+, in &lt;module&gt;
+    from pycuda._driver import *  # noqa
+SystemError: initialization of _driver raised unreported exception
+</code></pre>
+<p>需要更新numpy:</p>
+<pre><code>sudo pip3 install -U numpy -i https://pypi.tuna.tsinghua.edu.cn/simple/
+</code></pre>
+<p>输出:</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ python3 hello_gpu.py 
+<span class="token punctuation">[</span>0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+ 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+ 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+ 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+ 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+ 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+ 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+ 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+ 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+ 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+ 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+ 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+ 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+ 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+ 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+ 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+ 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.<span class="token punctuation">]</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>表示环境正常。</p>
+<p>获取设备信息:</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> pycuda
+<span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>driver <span class="token keyword">as</span> drv
+drv<span class="token punctuation">.</span>init<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'CUDA device query (PyCUDA version) \n'</span><span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'Detected {} CUDA Capable device(s) \n'</span><span class="token punctuation">.</span>format<span class="token punctuation">(</span>drv<span class="token punctuation">.</span>Device<span class="token punctuation">.</span>count<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span>drv<span class="token punctuation">.</span>Device<span class="token punctuation">.</span>count<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    
+    gpu_device <span class="token operator">=</span> drv<span class="token punctuation">.</span>Device<span class="token punctuation">(</span>i<span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'Device {}: {}'</span><span class="token punctuation">.</span>format<span class="token punctuation">(</span> i<span class="token punctuation">,</span> gpu_device<span class="token punctuation">.</span>name<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">)</span><span class="token punctuation">)</span> 
+    compute_capability <span class="token operator">=</span> float<span class="token punctuation">(</span> <span class="token string">'%d.%d'</span> <span class="token operator">%</span> gpu_device<span class="token punctuation">.</span>compute_capability<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'\t Compute Capability: {}'</span><span class="token punctuation">.</span>format<span class="token punctuation">(</span>compute_capability<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'\t Total Memory: {} megabytes'</span><span class="token punctuation">.</span>format<span class="token punctuation">(</span>gpu_device<span class="token punctuation">.</span>total_memory<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">//</span><span class="token punctuation">(</span><span class="token number">1024</span><span class="token operator">**</span>
+<span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    
+    <span class="token comment" spellcheck="true"># The following will give us all remaining device attributes as seen </span>
+    <span class="token comment" spellcheck="true"># in the original deviceQuery.</span>
+    <span class="token comment" spellcheck="true"># We set up a dictionary as such so that we can easily index</span>
+    <span class="token comment" spellcheck="true"># the values using a string descriptor.</span>
+    
+    device_attributes_tuples <span class="token operator">=</span> gpu_device<span class="token punctuation">.</span>get_attributes<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>items<span class="token punctuation">(</span><span class="token punctuation">)</span> 
+    device_attributes <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+    
+    <span class="token keyword">for</span> k<span class="token punctuation">,</span> v <span class="token keyword">in</span> device_attributes_tuples<span class="token punctuation">:</span>
+        device_attributes<span class="token punctuation">[</span>str<span class="token punctuation">(</span>k<span class="token punctuation">)</span><span class="token punctuation">]</span> <span class="token operator">=</span> v
+    
+    num_mp <span class="token operator">=</span> device_attributes<span class="token punctuation">[</span><span class="token string">'MULTIPROCESSOR_COUNT'</span><span class="token punctuation">]</span>
+    
+    <span class="token comment" spellcheck="true"># Cores per multiprocessor is not reported by the GPU!  </span>
+    <span class="token comment" spellcheck="true"># We must use a lookup table based on compute capability.</span>
+    <span class="token comment" spellcheck="true"># See the following:</span>
+    <span class="token comment" spellcheck="true"># http://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#compute-capab</span>
+ilities
+    
+    cuda_cores_per_mp <span class="token operator">=</span> <span class="token punctuation">{</span> <span class="token number">5.0</span> <span class="token punctuation">:</span> <span class="token number">128</span><span class="token punctuation">,</span> <span class="token number">5.1</span> <span class="token punctuation">:</span> <span class="token number">128</span><span class="token punctuation">,</span> <span class="token number">5.2</span> <span class="token punctuation">:</span> <span class="token number">128</span><span class="token punctuation">,</span> <span class="token number">6.0</span> <span class="token punctuation">:</span> <span class="token number">64</span><span class="token punctuation">,</span> <span class="token number">6.1</span> <span class="token punctuation">:</span> <span class="token number">128</span><span class="token punctuation">,</span> <span class="token number">6.2</span>
+ <span class="token punctuation">:</span> <span class="token number">128</span><span class="token punctuation">,</span> <span class="token number">7.5</span><span class="token punctuation">:</span> <span class="token number">64</span><span class="token punctuation">}</span><span class="token punctuation">[</span>compute_capability<span class="token punctuation">]</span>
+    
+    <span class="token keyword">print</span><span class="token punctuation">(</span>'\t <span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span> Multiprocessors<span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span> CUDA Cores <span class="token operator">/</span> Multiprocessor<span class="token punctuation">:</span> <span class="token punctuation">{</span><span class="token punctuation">}</span> CUDA Cores
+'<span class="token punctuation">.</span>format<span class="token punctuation">(</span>num_mp<span class="token punctuation">,</span> cuda_cores_per_mp<span class="token punctuation">,</span> num_mp<span class="token operator">*</span>cuda_cores_per_mp<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    
+    device_attributes<span class="token punctuation">.</span>pop<span class="token punctuation">(</span><span class="token string">'MULTIPROCESSOR_COUNT'</span><span class="token punctuation">)</span>
+    
+    <span class="token keyword">for</span> k <span class="token keyword">in</span> device_attributes<span class="token punctuation">.</span>keys<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'\t {}: {}'</span><span class="token punctuation">.</span>format<span class="token punctuation">(</span>k<span class="token punctuation">,</span> device_attributes<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-bash"><code class="language-bash">$ python3 query.py
+CUDA device query <span class="token punctuation">(</span>PyCUDA version<span class="token punctuation">)</span> 
+
+Detected 1 CUDA Capable device<span class="token punctuation">(</span>s<span class="token punctuation">)</span> 
+
+Device 0: NVIDIA GeForce GTX 1660
+         Compute Capability: 7.5
+         Total Memory: 5933 megabytes
+         <span class="token punctuation">(</span>22<span class="token punctuation">)</span> Multiprocessors, <span class="token punctuation">(</span>64<span class="token punctuation">)</span> CUDA Cores / Multiprocessor: 1408 CUDA Cores
+         ASYNC_ENGINE_COUNT: 3
+         CAN_MAP_HOST_MEMORY: 1
+         CAN_USE_HOST_POINTER_FOR_REGISTERED_MEM: 1
+         CLOCK_RATE: 1830000
+         COMPUTE_CAPABILITY_MAJOR: 7
+         COMPUTE_CAPABILITY_MINOR: 5
+         COMPUTE_MODE: DEFAULT
+         COMPUTE_PREEMPTION_SUPPORTED: 1
+         CONCURRENT_KERNELS: 1
+         CONCURRENT_MANAGED_ACCESS: 1
+         DIRECT_MANAGED_MEM_ACCESS_FROM_HOST: 0
+         ECC_ENABLED: 0
+         GENERIC_COMPRESSION_SUPPORTED: 0
+         GLOBAL_L1_CACHE_SUPPORTED: 1
+         GLOBAL_MEMORY_BUS_WIDTH: 192
+         GPU_OVERLAP: 1
+         HANDLE_TYPE_POSIX_FILE_DESCRIPTOR_SUPPORTED: 1
+         HANDLE_TYPE_WIN32_HANDLE_SUPPORTED: 0
+         HANDLE_TYPE_WIN32_KMT_HANDLE_SUPPORTED: 0
+         HOST_NATIVE_ATOMIC_SUPPORTED: 0
+         INTEGRATED: 0
+         KERNEL_EXEC_TIMEOUT: 1
+         L2_CACHE_SIZE: 1572864
+         LOCAL_L1_CACHE_SUPPORTED: 1
+         MANAGED_MEMORY: 1
+         MAXIMUM_SURFACE1D_LAYERED_LAYERS: 2048
+         MAXIMUM_SURFACE1D_LAYERED_WIDTH: 32768
+         MAXIMUM_SURFACE1D_WIDTH: 32768
+         MAXIMUM_SURFACE2D_HEIGHT: 65536
+         MAXIMUM_SURFACE2D_LAYERED_HEIGHT: 32768
+         MAXIMUM_SURFACE2D_LAYERED_LAYERS: 2048
+         MAXIMUM_SURFACE2D_LAYERED_WIDTH: 32768
+         MAXIMUM_SURFACE2D_WIDTH: 131072
+         MAXIMUM_SURFACE3D_DEPTH: 16384
+         MAXIMUM_SURFACE3D_HEIGHT: 16384
+         MAXIMUM_SURFACE3D_WIDTH: 16384
+         MAXIMUM_SURFACECUBEMAP_LAYERED_LAYERS: 2046
+         MAXIMUM_SURFACECUBEMAP_LAYERED_WIDTH: 32768
+         MAXIMUM_SURFACECUBEMAP_WIDTH: 32768
+         MAXIMUM_TEXTURE1D_LAYERED_LAYERS: 2048
+         MAXIMUM_TEXTURE1D_LAYERED_WIDTH: 32768
+         MAXIMUM_TEXTURE1D_LINEAR_WIDTH: 268435456
+         MAXIMUM_TEXTURE1D_MIPMAPPED_WIDTH: 32768
+         MAXIMUM_TEXTURE1D_WIDTH: 131072
+         MAXIMUM_TEXTURE2D_ARRAY_HEIGHT: 32768
+         MAXIMUM_TEXTURE2D_ARRAY_NUMSLICES: 2048
+         MAXIMUM_TEXTURE2D_ARRAY_WIDTH: 32768
+         MAXIMUM_TEXTURE2D_GATHER_HEIGHT: 32768
+         MAXIMUM_TEXTURE2D_GATHER_WIDTH: 32768
+         MAXIMUM_TEXTURE2D_HEIGHT: 65536
+         MAXIMUM_TEXTURE2D_LINEAR_HEIGHT: 65000
+         MAXIMUM_TEXTURE2D_LINEAR_PITCH: 2097120
+         MAXIMUM_TEXTURE2D_LINEAR_WIDTH: 131072
+         MAXIMUM_TEXTURE2D_MIPMAPPED_HEIGHT: 32768
+         MAXIMUM_TEXTURE2D_MIPMAPPED_WIDTH: 32768
+         MAXIMUM_TEXTURE2D_WIDTH: 131072
+         MAXIMUM_TEXTURE3D_DEPTH: 16384
+         MAXIMUM_TEXTURE3D_DEPTH_ALTERNATE: 32768
+         MAXIMUM_TEXTURE3D_HEIGHT: 16384
+         MAXIMUM_TEXTURE3D_HEIGHT_ALTERNATE: 8192
+         MAXIMUM_TEXTURE3D_WIDTH: 16384
+         MAXIMUM_TEXTURE3D_WIDTH_ALTERNATE: 8192
+         MAXIMUM_TEXTURECUBEMAP_LAYERED_LAYERS: 2046
+         MAXIMUM_TEXTURECUBEMAP_LAYERED_WIDTH: 32768
+         MAXIMUM_TEXTURECUBEMAP_WIDTH: 32768
+         MAX_BLOCKS_PER_MULTIPROCESSOR: 16
+         MAX_BLOCK_DIM_X: 1024
+         MAX_BLOCK_DIM_Y: 1024
+         MAX_BLOCK_DIM_Z: 64
+         MAX_GRID_DIM_X: 2147483647
+         MAX_GRID_DIM_Y: 65535
+         MAX_GRID_DIM_Z: 65535
+         MAX_PERSISTING_L2_CACHE_SIZE: 0
+         MAX_PITCH: 2147483647
+         MAX_REGISTERS_PER_BLOCK: 65536
+         MAX_REGISTERS_PER_MULTIPROCESSOR: 65536
+         MAX_SHARED_MEMORY_PER_BLOCK: 49152
+         MAX_SHARED_MEMORY_PER_BLOCK_OPTIN: 65536
+         MAX_SHARED_MEMORY_PER_MULTIPROCESSOR: 65536
+         MAX_THREADS_PER_BLOCK: 1024
+         MAX_THREADS_PER_MULTIPROCESSOR: 1024
+         MEMORY_CLOCK_RATE: 4001000
+         MEMORY_POOLS_SUPPORTED: 1
+         MULTI_GPU_BOARD: 0
+         MULTI_GPU_BOARD_GROUP_ID: 0
+         PAGEABLE_MEMORY_ACCESS: 0
+         PAGEABLE_MEMORY_ACCESS_USES_HOST_PAGE_TABLES: 0
+         PCI_BUS_ID: 38
+         PCI_DEVICE_ID: 0
+         PCI_DOMAIN_ID: 0
+         READ_ONLY_HOST_REGISTER_SUPPORTED: 1
+         RESERVED_SHARED_MEMORY_PER_BLOCK: 0
+         SINGLE_TO_DOUBLE_PRECISION_PERF_RATIO: 32
+         STREAM_PRIORITIES_SUPPORTED: 1
+         SURFACE_ALIGNMENT: 512
+         TCC_DRIVER: 0
+         TEXTURE_ALIGNMENT: 512
+         TEXTURE_PITCH_ALIGNMENT: 32
+         TOTAL_CONSTANT_MEMORY: 65536
+         UNIFIED_ADDRESSING: 1
+         WARP_SIZE: 32
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h3><p>还是Ubuntu系统用起来比较简单，对于需要快速启动Cuda环境的场景，还是比较合适的系统。</p>
+
+</article>
+    
+    
+
+</div>
+<div class="trm-post-next-prev row">
+    <div class="col-lg-12">
+        <!-- title -->
+        <h5 class="trm-title-with-divider">
+            其他文章
+            <span data-number="02"></span>
+        </h5>
+    </div>
+    
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/05/09/AI%E5%A4%A7%E6%A8%A1%E5%9E%8B%E7%AC%94%E8%AE%B0%E4%B8%80/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" #.">
+                    未分类
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/05/09/AI%E5%A4%A7%E6%A8%A1%E5%9E%8B%E7%AC%94%E8%AE%B0%E4%B8%80/" class="trm-anima-link">
+                    AI大模型笔记一
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/05/09</li>
+                <li>17:08</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+</div>
+
+    
+
+
+
+                    <div class="trm-divider footer-divider"></div>
+
+                    <!-- footer -->
+                    <footer class="trm-scroll-animation">
+
+    
+
+    
+
+    
+        <div class="trm-footer-item">
+            <span>
+                由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v7.0.0
+            </span>
+            <span class="footer-separator" data-separator=" | "></span>
+            <span> 
+                主题 - 
+                <a rel="noopener" href='https://github.com/MaLuns/hexo-theme-async' target='_blank'>Async</a>
+                v2.1.8
+            </span>
+        </div>
+      
+
+     
+
+     
+</footer>
+ 
+                    <!-- footer end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- body end -->
+
+            
+
+            
+<div class="trm-fixed-container">
+    
+    
+        <div class="trm-fixed-btn" data-title="阅读模式" onclick="asyncFun.switchReadMode()">
+            <i class="iconfont fas fa-book-reader"></i>
+        </div>
+    
+    
+    <div id="trm-back-top" class="trm-fixed-btn" data-title="回到顶部">
+        <i class="iconfont fas fa-arrow-up"></i>
+    </div>
+</div>
+        </div>
+      </div>
+      <!-- scroll container end -->
+  </div>
+  <!-- app wrapper end -->
+
+  
+  <!-- Plugin -->
+
+
+
+
+    
+    
+<script src="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+
+    
+
+    
+
+    
+
+    <!-- 数学公式 -->
+    
+
+    <!-- 评论插件 -->
+    
+        
+
+        
+    
+
+
+
+<!-- CDN -->
+
+
+    
+
+    
+
+    
+
+
+
+
+    <!-- Service Worker -->
+    
+    <!-- baidu push -->
+    
+
+
+<script id="async-script" src="/js/main.js?v=2.1.8"></script>
+
+</body>
+
+</html>
