@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="x5-fullscreen" content="true">
+<meta name="full-screen" content="yes">
+<meta name="theme-color" content="#317EFB" />
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
+<meta name="description" content="本文主要记录GPU和GPGPU的基本知识，为学习Cuda打下认知基础。主要来源于书籍《通用图形处理器设计》和微信公众号相关内容。 背景之前听说过CPU相当于老教授，会做复杂的高数题，但是价格贵，数量少，GPU相当于中小学生，只会做简单的算术题，但是数量多，所以可以用来挖矿。不是很理解显卡(GPU)是显示图形用的，为什么也可以用来做计算，那么和CPU又有什么关系？GPGPU又和GPU有什么关系？ G">
+<meta property="og:type" content="article">
+<meta property="og:title" content="GPGPU概述">
+<meta property="og:url" content="http://example.com/2024/05/16/GPGPU%E6%A6%82%E8%BF%B0/index.html">
+<meta property="og:site_name" content="Cat YuanBao">
+<meta property="og:description" content="本文主要记录GPU和GPGPU的基本知识，为学习Cuda打下认知基础。主要来源于书籍《通用图形处理器设计》和微信公众号相关内容。 背景之前听说过CPU相当于老教授，会做复杂的高数题，但是价格贵，数量少，GPU相当于中小学生，只会做简单的算术题，但是数量多，所以可以用来挖矿。不是很理解显卡(GPU)是显示图形用的，为什么也可以用来做计算，那么和CPU又有什么关系？GPGPU又和GPU有什么关系？ G">
+<meta property="og:locale">
+<meta property="article:published_time" content="2024-05-15T17:34:42.000Z">
+<meta property="article:modified_time" content="2024-05-15T17:36:03.672Z">
+<meta property="article:author" content="橘猫元宝">
+<meta property="article:tag" content="cat">
+<meta name="twitter:card" content="summary">
+
+    <meta name="keywords" content="cat">
+
+
+<title >GPGPU概述</title>
+
+<!-- Favicon -->
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='16x16' ></link>
+
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='32x32' ></link>
+
+
+
+
+<!-- Plugin -->
+
+
+
+
+    
+<link rel="stylesheet" href="/css/plugins/bootstrap.row.css">
+
+    
+<link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.css">
+
+    
+    
+
+
+
+
+<!-- Icon -->
+
+    
+<link rel="stylesheet" href="/css/plugins/font-awesome.min.css">
+
+
+
+
+<!-- Variable -->
+<script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-05-16 01:36:03"};</script>
+
+<!-- Theme mode css -->
+<link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
+<script>
+    let defaultMode = ASYNC_CONFIG.theme.default !=='auto' ?  ASYNC_CONFIG.theme.default : (window.matchMedia("(prefers-color-scheme: light)").matches ? 'style-light' : 'style-dark')
+    let catchMode = localStorage.getItem('theme-mode') || defaultMode;
+    let type = catchMode === 'style-dark' ? 'add' : 'remove';
+    document.documentElement.classList[type]('dark')
+</script>
+
+<!-- CDN -->
+
+
+    
+    
+
+
+
+<!-- Site Analytics -->
+ 
+<meta name="generator" content="Hexo 7.0.0"><link rel="stylesheet" href="/css/prism.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+<body>
+
+  <!-- app wrapper -->
+  <div class="trm-app-frame">
+
+    <!-- page preloader -->
+    <div class="trm-preloader">
+    <div class="trm-holder">
+        <div class="preloader">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+    <!-- page preloader end -->
+
+    <!-- change mode preloader -->
+    <div class="trm-mode-swich-animation-frame">
+    <div class="trm-mode-swich-animation">
+        <i class="i-sun"><i class="iconfont far fa-sun"></i></i>
+        <div class="trm-horizon"></div>
+        <i class="i-moon"><i class="iconfont far fa-moon"></i></i>
+    </div>
+</div>
+    <!-- change mode preloader end -->
+
+      <!-- scroll container -->
+      <div id="trm-dynamic-content" class="trm-swup-animation">
+        <div id="trm-scroll-container" class="trm-scroll-container" style="opacity: 0">
+            <!-- top bar -->
+            <header class="trm-top-bar">
+	<div class="container">
+		<div class="trm-left-side">
+			<!-- logo -->
+<a href="/" class="trm-logo-frame trm-anima-link">
+    
+        <img alt="logo" src="/img/favicon.svg">
+    
+    
+        <div class="trm-logo-text">
+            元宝<span>橘猫</span>
+        </div>
+    
+</a>
+<!-- logo end -->
+		</div>
+		<div class="trm-right-side">
+			<!-- menu -->
+<div class="trm-menu">
+    <nav>
+        <ul>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/" target="">
+                    首页
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/archives/" target="">
+                    归档
+                </a>
+                
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+<!-- menu end -->
+			
+    <!-- mode switcher place -->
+    <div class="trm-mode-switcher-place">
+        <div class="trm-mode-switcher">
+            <i class="iconfont far fa-sun"></i>
+            <input class="tgl tgl-light" id="trm-swich" type="checkbox">
+            <label class="trm-swich" for="trm-swich"></label>
+            <i class="iconfont far fa-moon"></i>
+        </div>
+    </div>
+    <!-- mode switcher place end -->
+
+			
+		</div>
+		<div class="trm-menu-btn">
+			<span></span>
+		</div>
+	</div>
+</header>
+            <!-- top bar end -->
+
+            <!-- body -->
+            
+<div class="trm-content-start">
+    <!-- banner -->
+    <div class="trm-banner">
+    
+    <!-- banner cover -->
+    <img style="object-position:top;object-fit:cover;" alt="banner" class="trm-banner-cover" src="/img/banner.png">
+    <!-- banner cover end -->
+    
+
+    <!-- banner content -->
+    <div class="trm-banner-content trm-overlay">
+        <div class="container">
+            <div class="row">
+                
+                <div class="col-lg-4"></div>
+                
+                <div class="col-lg-8">
+
+                    <!-- banner title -->
+                    <div class="trm-banner-text ">
+                        <div class="trm-label trm-mb-20">
+                            NEWS LETTER
+                        </div>
+                        <h1 class="trm-mb-30 trm-hsmb-font">
+                            GPGPU概述
+                        </h1>
+
+                        
+                            <ul class="trm-breadcrumbs trm-label">
+                                <li>
+                                    <a href="/" class="trm-anima-link">Home</a>
+                                </li>
+                                <li>
+                                    <span>
+                                        2024
+                                    </span>
+                                </li>
+                            </ul>
+                        
+                    </div>
+                    <!-- banner title end -->
+
+                    <!-- scroll hint -->
+                    <span id="scroll-triger" class="trm-scroll-hint-frame">
+                        <div class="trm-scroll-hint"></div>
+                        <span class="trm-label">Scroll down</span>
+                    </span>
+                    <!-- scroll hint end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- banner content end -->
+</div>
+    <!-- banner end -->
+    <div class="container">
+        <div class="row">
+            
+                <div class="trm-page-sidebar col-lg-4 hidden-sm">
+                    <!-- main card -->
+                    <div class="trm-main-card-frame trm-sidebar">
+    <div class="trm-main-card"> 
+        <!-- card header -->
+<div class="trm-mc-header">
+    <div class="trm-avatar-frame trm-mb-20">
+        <img alt="Avatar" class="trm-avatar" src="/img/cat.jpg">
+    </div>
+    <h5 class="trm-name trm-mb-15">
+        橘猫元宝
+    </h5>
+    
+</div>
+<!-- card header end -->
+        <!-- sidebar social -->
+
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<div class="trm-social">
+    
+        <a href="https://github.com" title="Github" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-github"></i>
+        </a>
+    
+</div>
+
+<!-- sidebar social end -->
+        <!-- info -->
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<ul class="trm-table trm-mb-20">
+    
+        <li>
+            <div class="trm-label">
+                Residence:
+            </div>
+            <div class="trm-label trm-label-light">
+                Mars
+            </div>
+        </li>
+    
+</ul>
+<!-- info end -->
+
+        
+    </div>
+</div>
+                    <!-- main card end -->
+                </div>
+            
+            <div class="trm-page-content col-lg-8">
+                <div id="trm-content" class="trm-content">
+                    <div class="trm-post-info row hidden-sm">
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-calendar-alt trm-icon"></i><br>
+            05/16
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-clock trm-icon"></i><br>
+            01:34
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div id="post-author" class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-user trm-icon"></i><br>
+            橘猫元宝
+        </div>
+    </div>
+</div>
+<div class="trm-card ">
+    <article id="article-container" class="trm-publication">
+    <p>本文主要记录GPU和GPGPU的基本知识，为学习Cuda打下认知基础。<br>主要来源于书籍《通用图形处理器设计》和微信公众号相关内容。</p>
+<h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>之前听说过CPU相当于老教授，会做复杂的高数题，但是价格贵，数量少，<br>GPU相当于中小学生，只会做简单的算术题，但是数量多，所以可以用来挖矿。<br>不是很理解显卡(GPU)是显示图形用的，为什么也可以用来做计算，那么和CPU又有什么关系？<br>GPGPU又和GPU有什么关系？</p>
+<h3 id="GPGPU简介"><a href="#GPGPU简介" class="headerlink" title="GPGPU简介"></a>GPGPU简介</h3><p>GPGPU是(Gerneral Purpose Graphics Processing Unit通用图形处理器)的简写。<br>脱胎于GPU(Graphics Processing Unit图形处理器)。GPU的发展主要是从游戏和图形图像处理<br>领域开始，后来逐渐发展成为并行计算加上的通用处理器，即GPGPU。</p>
+<h3 id="GPGPU与并行计算"><a href="#GPGPU与并行计算" class="headerlink" title="GPGPU与并行计算"></a>GPGPU与并行计算</h3><p>什么是并行计算？并行计算机是一些处理单元的集合，他们通过通信和协作的快速解决一个大<br>的问题。这里的关键词就是处理单元，通信，协作，大的问题。</p>
+<p>处理单元是什么？如何通信与协作？什么样规模的问题算大的问题？</p>
+<h4 id="并行体系结构"><a href="#并行体系结构" class="headerlink" title="并行体系结构"></a>并行体系结构</h4><p>并行计算可以分为4类：</p>
+<ol>
+<li>单指令流单数据流(SISD)，主要是传统单核CPU，一般是嵌入式系统使用的；</li>
+<li>单指令流多数据流(SIMD)，是一种典型的并行体系结构，采用一条指令对多个数据进行操作<br>, GPGPU也借鉴了这个方式；</li>
+<li>多指令流单数据流(MISD)，指的是多条指令来处理单条数据流，数据可以从一条处理单元传<br>到其他处理单元实现并行；</li>
+<li>多指令流多数据流(MIMD)，最为通用的并行体系结构。比如常见的多核处理器就是这种模式<br>，它的通用性最高，但是复杂度也高，可能导致简单计算的效率低。</li>
+</ol>
+<h3 id="GPU和CPU的体系结构对比"><a href="#GPU和CPU的体系结构对比" class="headerlink" title="GPU和CPU的体系结构对比"></a>GPU和CPU的体系结构对比</h3><p>面对并行计算时，CPU和GPU在设计理念上有根本区别。CPU注重通用性来处理不同的数据类型，<br>同时支持各种复杂的指令，比如条件转移，分支，循环，逻辑判断子程序等。<br>因此设计复杂度较高，是为了面向指令执行的高效率而设计的。</p>
+<p>而GPU则相反，一开始的用途就图形领域，图形运算的特点是大量的同类型数据计算（一般是浮<br>点数），因此设计初衷就比较纯粹，降低通用性。</p>
+<p>设计目的的不同导致了CPU和GPU的架构上差距较大，CPU内核数量较少，常见的配置比如4核，8<br>核，16核等。而GPU的核心数以千计算，这些核心专为同时处理多任务而设计的。<br>因此GPU也属于众核处理器。</p>
+<p>如何查看CPU核心数,可以使用lscpu命令</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ lscpu
+架构：                              x86_64
+CPU 运行模式：                      32-bit, 64-bit
+字节序：                            Little Endian
+Address sizes:                      43 bits physical, 48 bits virtual
+CPU:                                12
+在线 CPU 列表：                     0-11
+每个核的线程数：                    2
+每个座的核数：                      6
+座：                                1
+NUMA 节点：                         1
+厂商 ID：                           AuthenticAMD
+CPU 系列：                          23
+型号：                              113
+型号名称：                          AMD Ryzen 5 3600 6-Core Processor
+步进：                              0
+Frequency boost:                    enabled
+CPU MHz：                           2200.000
+CPU 最大 MHz：                      3600.0000
+CPU 最小 MHz：                      2200.0000
+BogoMIPS：                          7200.24
+虚拟化：                            AMD-V
+L1d 缓存：                          192 KiB
+L1i 缓存：                          192 KiB
+L2 缓存：                           3 MiB
+L3 缓存：                           32 MiB
+NUMA 节点0 CPU：                    0-11
+Vulnerability Gather data sampling: Not affected
+Vulnerability Itlb multihit:        Not affected
+Vulnerability L1tf:                 Not affected
+Vulnerability Mds:                  Not affected
+Vulnerability Meltdown:             Not affected
+Vulnerability Mmio stale data:      Not affected
+Vulnerability Retbleed:             Mitigation<span class="token punctuation">;</span> untrained <span class="token keyword">return</span> thunk<span class="token punctuation">;</span> SMT enabled
+ with STIBP protection
+Vulnerability Spec rstack overflow: Mitigation<span class="token punctuation">;</span> safe RET
+Vulnerability Spec store bypass:    Mitigation<span class="token punctuation">;</span> Speculative Store Bypass disabled <span class="token function">v</span>
+ia prctl and seccomp
+Vulnerability Spectre v1:           Mitigation<span class="token punctuation">;</span> usercopy/swapgs barriers and __user
+ pointer sanitization
+Vulnerability Spectre v2:           Mitigation<span class="token punctuation">;</span> Retpolines<span class="token punctuation">;</span> IBPB conditional<span class="token punctuation">;</span> STIBP
+ always-on<span class="token punctuation">;</span> RSB filling<span class="token punctuation">;</span> PBRSB-eIBRS Not affected<span class="token punctuation">;</span> BHI Not affected
+Vulnerability Srbds:                Not affected
+Vulnerability Tsx async abort:      Not affected
+标记：                              fpu vme de pse tsc msr pae mce cx8 apic sep <span class="token function">mtr</span>
+r pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pd
+pe1gb rdtscp lm constant_tsc rep_good nopl nonstop_tsc cpu
+                                    <span class="token function">id</span> extd_apicid aperfmperf rapl pni pclmulqdq mo
+nitor ssse3 fma cx16 sse4_1 sse4_2 movbe popcnt aes xsave avx f16c rdrand lahf_lm c
+mp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dn
+                                    owprefetch osvw ibs skinit wdt tce topoext perf
+ctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba i
+bpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 cqm rdt_a r
+                                    dseed adx smap clflushopt clwb sha_ni xsaveopt 
+xsavec xgetbv1 cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local clzero irperf xsav
+eerptr rdpru wbnoinvd arat npt lbrv svm_lock nrip_save tsc
+                                    _scale vmcb_clean flushbyasid decodeassists pau
+sefilter pfthreshold avic v_vmsave_vmload vgif v_spec_ctrl umip rdpid overflow_reco
+<span class="token function">v</span> succor smca sme sev sev_es
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>可以看到，目前的CPU逻辑核心数只有12个，包括了三级的缓存L1,L2,L3,分别是192KB, 3MB 32<br>MB CPU由多级缓存组成。</p>
+<p>如何获取GPU的核心数:</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">from</span> numba <span class="token keyword">import</span> cuda
+cc_cores_per_SM_dict <span class="token operator">=</span> <span class="token punctuation">{</span>
+    <span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">:</span> <span class="token number">32</span><span class="token punctuation">,</span>
+    <span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span> <span class="token punctuation">:</span> <span class="token number">48</span><span class="token punctuation">,</span>
+    <span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">:</span> <span class="token number">192</span><span class="token punctuation">,</span>
+    <span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">5</span><span class="token punctuation">)</span> <span class="token punctuation">:</span> <span class="token number">192</span><span class="token punctuation">,</span>
+    <span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">7</span><span class="token punctuation">)</span> <span class="token punctuation">:</span> <span class="token number">192</span><span class="token punctuation">,</span>
+    <span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">:</span> <span class="token number">128</span><span class="token punctuation">,</span>
+    <span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">)</span> <span class="token punctuation">:</span> <span class="token number">128</span><span class="token punctuation">,</span>
+    <span class="token punctuation">(</span><span class="token number">6</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">:</span> <span class="token number">64</span><span class="token punctuation">,</span>
+    <span class="token punctuation">(</span><span class="token number">6</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span> <span class="token punctuation">:</span> <span class="token number">128</span><span class="token punctuation">,</span>
+    <span class="token punctuation">(</span><span class="token number">7</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">:</span> <span class="token number">64</span><span class="token punctuation">,</span>
+    <span class="token punctuation">(</span><span class="token number">7</span><span class="token punctuation">,</span><span class="token number">5</span><span class="token punctuation">)</span> <span class="token punctuation">:</span> <span class="token number">64</span><span class="token punctuation">,</span>
+    <span class="token punctuation">(</span><span class="token number">8</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">:</span> <span class="token number">64</span><span class="token punctuation">,</span>
+    <span class="token punctuation">(</span><span class="token number">8</span><span class="token punctuation">,</span><span class="token number">6</span><span class="token punctuation">)</span> <span class="token punctuation">:</span> <span class="token number">128</span>
+    <span class="token punctuation">}</span>
+d <span class="token operator">=</span> cuda<span class="token punctuation">.</span>get_current_device<span class="token punctuation">(</span><span class="token punctuation">)</span>
+my_sms <span class="token operator">=</span> getattr<span class="token punctuation">(</span>d<span class="token punctuation">,</span> <span class="token string">'MULTIPROCESSOR_COUNT'</span><span class="token punctuation">)</span>
+my_cc <span class="token operator">=</span> getattr<span class="token punctuation">(</span>d<span class="token punctuation">,</span> <span class="token string">'compute_capability'</span><span class="token punctuation">)</span>
+cores_per_sm <span class="token operator">=</span> cc_cores_per_SM_dict<span class="token punctuation">.</span>get<span class="token punctuation">(</span>my_cc<span class="token punctuation">)</span>
+total_cores <span class="token operator">=</span> cores_per_sm<span class="token operator">*</span>my_sms
+<span class="token keyword">print</span><span class="token punctuation">(</span>total_cores<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果是1408，和网络搜索查询到的1660显卡核心数一致。</p>
+<p>可以看出CPU的设计引入的多级缓存机制，同时核心数比较少，而GPU的核心数比较多，缓存也<br>比较少。</p>
+<p>在擅长领域上，CPU作为通用计算单位，对各种类型的数据都游刃有余，但是GPU擅长的就是一<br>个浮点数。（后面学习Cuda时候可以测试一下是否是这样的）。</p>
+<h3 id="GPU的计算原理和GPU到GPGPU的演化"><a href="#GPU的计算原理和GPU到GPGPU的演化" class="headerlink" title="GPU的计算原理和GPU到GPGPU的演化"></a>GPU的计算原理和GPU到GPGPU的演化</h3><h4 id="GPU的工作原理"><a href="#GPU的工作原理" class="headerlink" title="GPU的工作原理"></a>GPU的工作原理</h4><p>图形图像相关的任务，在处理时，会将三维的立体模型专为二维图像，这个过程需要流水线计<br>算，主要有两种标准OpenGL和Direct3D。<br>处理步骤如下：</p>
+<ol>
+<li>输入阶段：构建基本都几何图形，如点、线、三角形、四边形等；</li>
+<li>顶点处理：顶点着色器对每个顶点数据做变换；</li>
+<li>几何处理：对多个顶点和几何图形做着色；</li>
+<li>光栅化处理：可以理解为主要就是处理投影；</li>
+<li>像素处理：通过像素着色器对片段做颜色，纹理的添加处理计算；</li>
+<li>输出合并：可以理解为对细节的优化过程。</li>
+</ol>
+<h4 id="从GPU到GPGPU"><a href="#从GPU到GPGPU" class="headerlink" title="从GPU到GPGPU"></a>从GPU到GPGPU</h4><p>分为4个阶段：</p>
+<ol>
+<li>1980-2000 GPU只做运算，不支持编程；</li>
+<li>2001-2006 可编程GPU的诞生，表示GPU的能力可以不被浪费；</li>
+<li>2007年以后，Cuda的出现，使得对GPU的编程门槛的降低，使用C语言就可以操作GPU。</li>
+<li>2008年，大科技公司推出的OpenCL标准，GPGPU的时代开启。</li>
+</ol>
+<h4 id="GPGPU的产品"><a href="#GPGPU的产品" class="headerlink" title="GPGPU的产品"></a>GPGPU的产品</h4><ol>
+<li>NVIDIA GPGPU</li>
+</ol>
+<p>主要有三大系列：GeForce 家庭娱乐版本 Tesla 专业的GPGPU（没有显示输出接口，专注于数<br>据计算，而不是图形显示，最贵的是A100，有6912个核心），Quadro 专业用途的显卡。</p>
+<ol start="2">
+<li><p>ADM GPGPU</p>
+</li>
+<li><p>Intel GPGPU</p>
+</li>
+<li><p>其他 GPGPU</p>
+</li>
+</ol>
+<h4 id="实例说明GPU运算浮点数更快"><a href="#实例说明GPU运算浮点数更快" class="headerlink" title="实例说明GPU运算浮点数更快"></a>实例说明GPU运算浮点数更快</h4><p>以下是一段简单的代码,运行在CPU和GPU上面,主要是浮点数的乘法:</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>autoinit
+<span class="token keyword">from</span> pycuda <span class="token keyword">import</span> gpuarray
+<span class="token keyword">from</span> time <span class="token keyword">import</span> time
+
+
+host_data <span class="token operator">=</span> np<span class="token punctuation">.</span>float32<span class="token punctuation">(</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>random<span class="token punctuation">(</span><span class="token number">500000000</span><span class="token punctuation">)</span> <span class="token punctuation">)</span>
+
+t1 <span class="token operator">=</span> time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+host_data_2x <span class="token operator">=</span>  host_data <span class="token operator">*</span> np<span class="token punctuation">.</span>float32<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span>
+t2 <span class="token operator">=</span> time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 输出CPU计算时间</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'total time to compute on CPU: %f'</span> <span class="token operator">%</span> <span class="token punctuation">(</span>t2 <span class="token operator">-</span> t1<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 放在GPU运行</span>
+device_data <span class="token operator">=</span> gpuarray<span class="token punctuation">.</span>to_gpu<span class="token punctuation">(</span>host_data<span class="token punctuation">)</span>
+
+t1 <span class="token operator">=</span> time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+device_data_2x <span class="token operator">=</span>  device_data <span class="token operator">*</span> np<span class="token punctuation">.</span>float32<span class="token punctuation">(</span> <span class="token number">2</span> <span class="token punctuation">)</span>
+t2 <span class="token operator">=</span> time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+from_device <span class="token operator">=</span> device_data_2x<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 统计计算时间</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'total time to compute on GPU: %f'</span> <span class="token operator">%</span> <span class="token punctuation">(</span>t2 <span class="token operator">-</span> t1<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'Is the host computation the same as the GPU computation? : {}'</span><span class="token punctuation">.</span>format<span class="token punctuation">(</span>np<span class="token punctuation">.</span>all
+close<span class="token punctuation">(</span>from_device<span class="token punctuation">,</span> host_data_2x<span class="token punctuation">)</span> <span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果:</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ python3 gpuarray.py
+total <span class="token function">time</span> to compute on CPU: 0.301246
+total <span class="token function">time</span> to compute on GPU: 0.097728
+Is the host computation the same as the GPU computation? <span class="token keyword">:</span> True
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这段代码运行时,主机会发出滴滴的电流声,不知道是否有问题,可能是计算时风扇转动比较快,<br>机箱里的灰尘比较多.</p>
+<p>目前为止，基本了解了CPU和GPU的区别，以及为什么CPU可以比喻为老教授，GPU是中小学生的<br>概念。并通过测试代码验证了性能差异. 为学习Cuda编程打下认知基础。</p>
+
+</article>
+    
+    
+
+</div>
+<div class="trm-post-next-prev row">
+    <div class="col-lg-12">
+        <!-- title -->
+        <h5 class="trm-title-with-divider">
+            其他文章
+            <span data-number="02"></span>
+        </h5>
+    </div>
+    
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/05/16/Linux-Cuda%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" #.">
+                    未分类
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/05/16/Linux-Cuda%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/" class="trm-anima-link">
+                    Linux Cuda环境搭建
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/05/16</li>
+                <li>01:23</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+</div>
+
+    
+
+
+
+                    <div class="trm-divider footer-divider"></div>
+
+                    <!-- footer -->
+                    <footer class="trm-scroll-animation">
+
+    
+
+    
+
+    
+        <div class="trm-footer-item">
+            <span>
+                由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v7.0.0
+            </span>
+            <span class="footer-separator" data-separator=" | "></span>
+            <span> 
+                主题 - 
+                <a rel="noopener" href='https://github.com/MaLuns/hexo-theme-async' target='_blank'>Async</a>
+                v2.1.8
+            </span>
+        </div>
+      
+
+     
+
+     
+</footer>
+ 
+                    <!-- footer end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- body end -->
+
+            
+
+            
+<div class="trm-fixed-container">
+    
+    
+        <div class="trm-fixed-btn" data-title="阅读模式" onclick="asyncFun.switchReadMode()">
+            <i class="iconfont fas fa-book-reader"></i>
+        </div>
+    
+    
+    <div id="trm-back-top" class="trm-fixed-btn" data-title="回到顶部">
+        <i class="iconfont fas fa-arrow-up"></i>
+    </div>
+</div>
+        </div>
+      </div>
+      <!-- scroll container end -->
+  </div>
+  <!-- app wrapper end -->
+
+  
+  <!-- Plugin -->
+
+
+
+
+    
+    
+<script src="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+
+    
+
+    
+
+    
+
+    <!-- 数学公式 -->
+    
+
+    <!-- 评论插件 -->
+    
+        
+
+        
+    
+
+
+
+<!-- CDN -->
+
+
+    
+
+    
+
+    
+
+
+
+
+    <!-- Service Worker -->
+    
+    <!-- baidu push -->
+    
+
+
+<script id="async-script" src="/js/main.js?v=2.1.8"></script>
+
+</body>
+
+</html>
