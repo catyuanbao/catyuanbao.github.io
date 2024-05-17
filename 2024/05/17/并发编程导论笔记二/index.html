@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="x5-fullscreen" content="true">
+<meta name="full-screen" content="yes">
+<meta name="theme-color" content="#317EFB" />
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
+<meta name="description" content="背景本文主要记录《An Introduction to Parallel Programming 》第二版 一书 第三章 Distributed memory programming with MPI，这部分主要是学习使用MPI编程接口，做简单的多进程并行计算应用程序开发。 MPI简介Recall that in message-passing programs, a program runnin">
+<meta property="og:type" content="article">
+<meta property="og:title" content="并发编程导论笔记二">
+<meta property="og:url" content="http://example.com/2024/05/17/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E5%AF%BC%E8%AE%BA%E7%AC%94%E8%AE%B0%E4%BA%8C/index.html">
+<meta property="og:site_name" content="Cat YuanBao">
+<meta property="og:description" content="背景本文主要记录《An Introduction to Parallel Programming 》第二版 一书 第三章 Distributed memory programming with MPI，这部分主要是学习使用MPI编程接口，做简单的多进程并行计算应用程序开发。 MPI简介Recall that in message-passing programs, a program runnin">
+<meta property="og:locale">
+<meta property="article:published_time" content="2024-05-17T09:27:17.000Z">
+<meta property="article:modified_time" content="2024-05-17T09:27:46.483Z">
+<meta property="article:author" content="橘猫元宝">
+<meta property="article:tag" content="cat">
+<meta name="twitter:card" content="summary">
+
+    <meta name="keywords" content="cat">
+
+
+<title >并发编程导论笔记二</title>
+
+<!-- Favicon -->
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='16x16' ></link>
+
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='32x32' ></link>
+
+
+
+
+<!-- Plugin -->
+
+
+
+
+    
+<link rel="stylesheet" href="/css/plugins/bootstrap.row.css">
+
+    
+<link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.css">
+
+    
+    
+
+
+
+
+<!-- Icon -->
+
+    
+<link rel="stylesheet" href="/css/plugins/font-awesome.min.css">
+
+
+
+
+<!-- Variable -->
+<script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-05-17 17:27:46"};</script>
+
+<!-- Theme mode css -->
+<link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
+<script>
+    let defaultMode = ASYNC_CONFIG.theme.default !=='auto' ?  ASYNC_CONFIG.theme.default : (window.matchMedia("(prefers-color-scheme: light)").matches ? 'style-light' : 'style-dark')
+    let catchMode = localStorage.getItem('theme-mode') || defaultMode;
+    let type = catchMode === 'style-dark' ? 'add' : 'remove';
+    document.documentElement.classList[type]('dark')
+</script>
+
+<!-- CDN -->
+
+
+    
+    
+
+
+
+<!-- Site Analytics -->
+ 
+<meta name="generator" content="Hexo 7.0.0"><link rel="stylesheet" href="/css/prism.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+<body>
+
+  <!-- app wrapper -->
+  <div class="trm-app-frame">
+
+    <!-- page preloader -->
+    <div class="trm-preloader">
+    <div class="trm-holder">
+        <div class="preloader">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+    <!-- page preloader end -->
+
+    <!-- change mode preloader -->
+    <div class="trm-mode-swich-animation-frame">
+    <div class="trm-mode-swich-animation">
+        <i class="i-sun"><i class="iconfont far fa-sun"></i></i>
+        <div class="trm-horizon"></div>
+        <i class="i-moon"><i class="iconfont far fa-moon"></i></i>
+    </div>
+</div>
+    <!-- change mode preloader end -->
+
+      <!-- scroll container -->
+      <div id="trm-dynamic-content" class="trm-swup-animation">
+        <div id="trm-scroll-container" class="trm-scroll-container" style="opacity: 0">
+            <!-- top bar -->
+            <header class="trm-top-bar">
+	<div class="container">
+		<div class="trm-left-side">
+			<!-- logo -->
+<a href="/" class="trm-logo-frame trm-anima-link">
+    
+        <img alt="logo" src="/img/favicon.svg">
+    
+    
+        <div class="trm-logo-text">
+            元宝<span>橘猫</span>
+        </div>
+    
+</a>
+<!-- logo end -->
+		</div>
+		<div class="trm-right-side">
+			<!-- menu -->
+<div class="trm-menu">
+    <nav>
+        <ul>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/" target="">
+                    首页
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/archives/" target="">
+                    归档
+                </a>
+                
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+<!-- menu end -->
+			
+    <!-- mode switcher place -->
+    <div class="trm-mode-switcher-place">
+        <div class="trm-mode-switcher">
+            <i class="iconfont far fa-sun"></i>
+            <input class="tgl tgl-light" id="trm-swich" type="checkbox">
+            <label class="trm-swich" for="trm-swich"></label>
+            <i class="iconfont far fa-moon"></i>
+        </div>
+    </div>
+    <!-- mode switcher place end -->
+
+			
+		</div>
+		<div class="trm-menu-btn">
+			<span></span>
+		</div>
+	</div>
+</header>
+            <!-- top bar end -->
+
+            <!-- body -->
+            
+<div class="trm-content-start">
+    <!-- banner -->
+    <div class="trm-banner">
+    
+    <!-- banner cover -->
+    <img style="object-position:top;object-fit:cover;" alt="banner" class="trm-banner-cover" src="/img/banner.png">
+    <!-- banner cover end -->
+    
+
+    <!-- banner content -->
+    <div class="trm-banner-content trm-overlay">
+        <div class="container">
+            <div class="row">
+                
+                <div class="col-lg-4"></div>
+                
+                <div class="col-lg-8">
+
+                    <!-- banner title -->
+                    <div class="trm-banner-text ">
+                        <div class="trm-label trm-mb-20">
+                            NEWS LETTER
+                        </div>
+                        <h1 class="trm-mb-30 trm-hsmb-font">
+                            并发编程导论笔记二
+                        </h1>
+
+                        
+                            <ul class="trm-breadcrumbs trm-label">
+                                <li>
+                                    <a href="/" class="trm-anima-link">Home</a>
+                                </li>
+                                <li>
+                                    <span>
+                                        2024
+                                    </span>
+                                </li>
+                            </ul>
+                        
+                    </div>
+                    <!-- banner title end -->
+
+                    <!-- scroll hint -->
+                    <span id="scroll-triger" class="trm-scroll-hint-frame">
+                        <div class="trm-scroll-hint"></div>
+                        <span class="trm-label">Scroll down</span>
+                    </span>
+                    <!-- scroll hint end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- banner content end -->
+</div>
+    <!-- banner end -->
+    <div class="container">
+        <div class="row">
+            
+                <div class="trm-page-sidebar col-lg-4 hidden-sm">
+                    <!-- main card -->
+                    <div class="trm-main-card-frame trm-sidebar">
+    <div class="trm-main-card"> 
+        <!-- card header -->
+<div class="trm-mc-header">
+    <div class="trm-avatar-frame trm-mb-20">
+        <img alt="Avatar" class="trm-avatar" src="/img/cat.jpg">
+    </div>
+    <h5 class="trm-name trm-mb-15">
+        橘猫元宝
+    </h5>
+    
+</div>
+<!-- card header end -->
+        <!-- sidebar social -->
+
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<div class="trm-social">
+    
+        <a href="https://github.com" title="Github" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-github"></i>
+        </a>
+    
+</div>
+
+<!-- sidebar social end -->
+        <!-- info -->
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<ul class="trm-table trm-mb-20">
+    
+        <li>
+            <div class="trm-label">
+                Residence:
+            </div>
+            <div class="trm-label trm-label-light">
+                Mars
+            </div>
+        </li>
+    
+</ul>
+<!-- info end -->
+
+        
+    </div>
+</div>
+                    <!-- main card end -->
+                </div>
+            
+            <div class="trm-page-content col-lg-8">
+                <div id="trm-content" class="trm-content">
+                    <div class="trm-post-info row hidden-sm">
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-calendar-alt trm-icon"></i><br>
+            05/17
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-clock trm-icon"></i><br>
+            17:27
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div id="post-author" class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-user trm-icon"></i><br>
+            橘猫元宝
+        </div>
+    </div>
+</div>
+<div class="trm-card ">
+    <article id="article-container" class="trm-publication">
+    <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>本文主要记录《An Introduction to Parallel Programming 》第二版 一书 第三章 Distributed memory programming with MPI，这部分主要是学习使用MPI编程接口，做简单的多进程并行计算应用程序开发。</p>
+<h3 id="MPI简介"><a href="#MPI简介" class="headerlink" title="MPI简介"></a>MPI简介</h3><pre class="line-numbers language-bash"><code class="language-bash">Recall that <span class="token keyword">in</span> message-passing programs, a program running on one core-memory
+pair is usually called a process, and two processes can communicate by calling func-
+tions: one process calls a send <span class="token keyword">function</span> and the other calls a receive function. The
+implementation of message-passing that we’ll be using is called MPI, <span class="token function">which</span> is an ab-
+breviation of Message-Passing Interface. MPI is not a new programming language.
+It defines a library of functions that can be called from C and Fortran programs
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>MPI不是一个新的语言，而是一种并行计算编程模型和标准，用于编写并行程序，特别是在分布式内存系统中。MPI 提供了一组函数和语义，允许程序员在多个进程之间传递消息和执行同步操作。MPI 编程接口可以用于跨主机的并行计算。MPI 是为分布式内存系统设计的，因此它可以在网络连接的多台计算机上运行并协同工作。</p>
+<p>可以简单理解为基于消息的一个编程框架。</p>
+<p>MPI 编程接口跨主机的底层原理通常涉及网络通信，而不是直接使用 sockets。</p>
+<p>MPI 实现会使用一些底层的通信库来管理跨主机通信，这些库可能会使用 sockets 或者其他底层的网络通信机制。</p>
+<p>MPI 编程接口和进程间通信都使用消息传递作为基本的通信模型，因此它们之间有相似之处。</p>
+<p>在 MPI 编程中，消息传递是通过调用 MPI 提供的函数来实现的，例如 <code>MPI_Send</code> 和 <code>MPI_Recv</code>。这些函数允许程序员在不同的 MPI 进程之间发送和接收消息。</p>
+<h3 id="hello-MPI"><a href="#hello-MPI" class="headerlink" title="hello, MPI"></a>hello, MPI</h3><p>关于MPI编译环境的搭建，暂不做说明，基本就是常见的C程序安装套路。</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;string.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdlib.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;mpi.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;time.h></span></span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">char</span> greeting<span class="token punctuation">[</span><span class="token number">100</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> comm_sz<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> my_rank<span class="token punctuation">;</span>
+
+    <span class="token function">MPI_Init</span><span class="token punctuation">(</span><span class="token constant">NULL</span><span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">MPI_Comm_size</span><span class="token punctuation">(</span>MPI_COMM_WORLD<span class="token punctuation">,</span> <span class="token operator">&amp;</span>comm_sz<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">MPI_Comm_rank</span><span class="token punctuation">(</span>MPI_COMM_WORLD<span class="token punctuation">,</span> <span class="token operator">&amp;</span>my_rank<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>my_rank <span class="token operator">!=</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">sprintf</span><span class="token punctuation">(</span>greeting<span class="token punctuation">,</span> <span class="token string">"Greeting from process %d of %d!\n"</span><span class="token punctuation">,</span> my_rank<span class="token punctuation">,</span> comm_sz<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">MPI_Send</span><span class="token punctuation">(</span>greeting<span class="token punctuation">,</span> <span class="token function">strlen</span><span class="token punctuation">(</span>greeting<span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">,</span> MPI_CHAR<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> MPI_COMM_WORLD<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Greetings from porcess %d of %d\n"</span><span class="token punctuation">,</span> my_rank<span class="token punctuation">,</span> comm_sz<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">int</span> q <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span>q <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span> q <span class="token operator">&lt;</span> comm_sz<span class="token punctuation">;</span> q<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token function">MPI_Recv</span><span class="token punctuation">(</span>greeting<span class="token punctuation">,</span> <span class="token number">100</span><span class="token punctuation">,</span> MPI_CHAR<span class="token punctuation">,</span> q<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> MPI_COMM_WORLD<span class="token punctuation">,</span> MPI_STATUS_IGNORE<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"%s\n"</span><span class="token punctuation">,</span> greeting<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">MPI_Finalize</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">exit</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>编译需要使用mpicc命令：</p>
+<pre><code>mpicc ./hello.c
+</code></pre>
+<p>运行 需要使用mpiexec命令：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ mpiexec -n 10 ./hello
+Greetings from porcess 0 of 10
+Greeting from process 1 of 10<span class="token operator">!</span>
+Greeting from process 2 of 10<span class="token operator">!</span>
+Greeting from process 3 of 10<span class="token operator">!</span>
+Greeting from process 4 of 10<span class="token operator">!</span>
+Greeting from process 5 of 10<span class="token operator">!</span>
+Greeting from process 6 of 10<span class="token operator">!</span>
+Greeting from process 7 of 10<span class="token operator">!</span>
+Greeting from process 8 of 10<span class="token operator">!</span>
+Greeting from process 9 of 10<span class="token operator">!</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>下面主要通过和ChatGPT对话对这个代码做下分析，提出几个关心的问题：</p>
+<h4 id="问题1"><a href="#问题1" class="headerlink" title="问题1"></a>问题1</h4><p>mpiexec -n 10 会新建10个进程嘛？</p>
+<pre class="line-numbers language-bash"><code class="language-bash">是的，mpiexec -n 10 命令会创建 10 个 MPI 进程。MPI 是一种并行计算编程模型，它允许程序在多个进程之间并行执行。mpiexec 是用于启动 MPI 程序的命令行工具，-n 选项用于指定要创建的 MPI 进程数量。
+
+因此，当你运行 mpiexec -n 10 命令时，它会启动 10 个 MPI 进程，这些进程将在不同的计算节点上并行执行。这些进程可以通过 MPI 提供的通信函数来进行相互通信和协作，以完成并行计算任务。
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<h4 id="问题2"><a href="#问题2" class="headerlink" title="问题2"></a>问题2</h4><p>my_rank &#x3D; 0的进程是父进程嘛？</p>
+<pre class="line-numbers language-bash"><code class="language-bash">在 MPI 中，并没有父子进程的概念。MPI 是一种并行计算编程模型，它是基于消息传递的，并且通常在分布式内存系统中运行。
+
+在一个 MPI 程序中，所有的进程都是平等的，并且每个进程都有一个唯一的标识符，称为 rank。这个 rank 可以在程序中用来区分不同的进程。
+
+在你的示例代码中，my_rank 代表了当前进程的 rank。当 my_rank 等于 0 时，并不表示这个进程是父进程，而只是表示这个进程的 rank 是 0。在 MPI 中，通常把 rank 为 0 的进程称为根节点或者主节点，因为它通常负责一些整体性的操作，比如集合通信中的广播、聚集等。但它不是父进程，它和其他进程是平级的。
+
+MPI 中的进程通常都是在启动 MPI 程序时一起创建的，并且它们之间没有父子关系。每个进程独立地执行自己的代码，并且通过 MPI 提供的通信机制来进行相互通信和协作。
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="问题3"><a href="#问题3" class="headerlink" title="问题3"></a>问题3</h4><p>怎么确认启动了10个进程呢？ps中并没有看到10个hello进程运行？</p>
+<pre class="line-numbers language-bash"><code class="language-bash">在 MPI 程序中，MPI 进程并不一定对应于操作系统中的实际进程，而是由 MPI 运行时环境管理的。因此，即使 MPI 程序启动了多个 MPI 进程，它们可能不会在操作系统中显示为独立的进程。
+
+MPI 运行时环境会在启动时创建所有的 MPI 进程，并在程序执行结束后将它们销毁。这些 MPI 进程可能会在同一个物理节点上运行，也可能会分布在多个物理节点上，具体取决于 MPI 运行时环境的配置和调度策略。
+
+因此，即使你的 MPI 程序启动了 10 个 MPI 进程，它们可能不会在操作系统的进程列表中显示为独立的进程。你可以通过 MPI 提供的函数来获取 MPI 进程的数量和标识，而不是通过操作系统的进程列表来确认 MPI 进程的数量。
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>comm_sz 的值，就是启动进程的值：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;string.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdlib.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;mpi.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;time.h></span></span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">char</span> greeting<span class="token punctuation">[</span><span class="token number">100</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> comm_sz<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> my_rank<span class="token punctuation">;</span>
+
+    <span class="token function">MPI_Init</span><span class="token punctuation">(</span><span class="token constant">NULL</span><span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">MPI_Comm_size</span><span class="token punctuation">(</span>MPI_COMM_WORLD<span class="token punctuation">,</span> <span class="token operator">&amp;</span>comm_sz<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">MPI_Comm_rank</span><span class="token punctuation">(</span>MPI_COMM_WORLD<span class="token punctuation">,</span> <span class="token operator">&amp;</span>my_rank<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>my_rank <span class="token operator">!=</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">sprintf</span><span class="token punctuation">(</span>greeting<span class="token punctuation">,</span> <span class="token string">"Greeting from process %d of %d!\n"</span><span class="token punctuation">,</span> my_rank<span class="token punctuation">,</span> comm_sz<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">MPI_Send</span><span class="token punctuation">(</span>greeting<span class="token punctuation">,</span> <span class="token function">strlen</span><span class="token punctuation">(</span>greeting<span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">,</span> MPI_CHAR<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> MPI_COMM_WORLD<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"There are %d processes\n"</span><span class="token punctuation">,</span> comm_sz<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Greetings from porcess %d of %d\n"</span><span class="token punctuation">,</span> my_rank<span class="token punctuation">,</span> comm_sz<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">int</span> q <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span>q <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span> q <span class="token operator">&lt;</span> comm_sz<span class="token punctuation">;</span> q<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token function">MPI_Recv</span><span class="token punctuation">(</span>greeting<span class="token punctuation">,</span> <span class="token number">100</span><span class="token punctuation">,</span> MPI_CHAR<span class="token punctuation">,</span> q<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> MPI_COMM_WORLD<span class="token punctuation">,</span> MPI_STATUS_IGNORE<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"%s\n"</span><span class="token punctuation">,</span> greeting<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">MPI_Finalize</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">exit</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>就可以把进程数量输出出来。</p>
+<h4 id="问题4"><a href="#问题4" class="headerlink" title="问题4"></a>问题4</h4><p>MPI的编程模型和API主要有什么？</p>
+<pre class="line-numbers language-bash"><code class="language-bash">MPI（Message Passing Interface）是一种并行计算编程模型和标准，用于编写并行程序，特别是在分布式内存系统中。MPI 提供了一组函数和语义，允许程序员在多个进程之间传递消息和执行同步操作。下面是 MPI 编程模型和 API 的主要特点：
+
+    并行编程模型： MPI 是一种分布式内存并行编程模型，其中的进程可以在不同的计算节点上运行，并通过消息传递进行通信。MPI 中的进程是平等的，它们之间通过唯一的标识符（称为 rank）来区分。
+
+    点对点通信： MPI 提供了一系列函数，允许程序员在不同的进程之间直接发送和接收消息。这些函数包括 MPI_Send、MPI_Recv、MPI_Isend、MPI_Irecv 等。
+
+    集体通信： MPI 提供了一组函数，允许进程组中的多个进程协同工作以执行集体操作，如广播、散射、聚集等。这些函数包括 MPI_Bcast、MPI_Scatter、MPI_Gather、MPI_Reduce 等。
+
+    数据类型： MPI 允许用户定义自定义数据类型，以便在消息传递中传输复杂的数据结构。这些数据类型可以是简单的基本数据类型，也可以是复杂的结构体。
+
+    同步和异步通信： MPI 提供了同步和异步通信的支持。在同步通信中，发送和接收操作会阻塞进程，直到消息传递完成；而在异步通信中，发送和接收操作可以立即返回，进程可以继续执行其他任务。
+
+    进程管理： MPI 提供了一些函数，用于管理 MPI 程序的进程。例如，MPI_Init 用于初始化 MPI 环境，MPI_Finalize 用于结束 MPI 环境，MPI_Comm_size 和 MPI_Comm_rank 用于获取进程数量和进程标识符等。
+
+    错误处理： MPI 提供了一些函数和错误码，用于处理 MPI 操作中可能发生的错误。这些函数允许程序员检测和处理 MPI 操作的异常情况。
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="问题5"><a href="#问题5" class="headerlink" title="问题5"></a>问题5</h4><p>MPI的程序如何不通过mpiexec运行？</p>
+<pre class="line-numbers language-bash"><code class="language-bash">在 MPI 程序中，如果不通过 mpiexec 运行，而是直接运行可执行文件，通常会导致每个 MPI 进程都在单独的节点上启动，而这并不是我们通常想要的行为，因为 MPI 程序的目的之一是利用多个节点上的多个进程并行执行。
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h4 id="问题6"><a href="#问题6" class="headerlink" title="问题6"></a>问题6</h4><p>MPI_Send和MPI_Recv都是阻塞的嘛？</p>
+<pre class="line-numbers language-bash"><code class="language-bash">MPI_Send 和 MPI_Recv 都可以以阻塞或非阻塞的方式进行通信，这取决于它们的调用方式以及是否指定了阻塞或非阻塞的参数。
+
+    阻塞模式： 默认情况下，MPI_Send 和 MPI_Recv 都是阻塞的。这意味着当调用 MPI_Send 或 MPI_Recv 时，程序将会阻塞在该调用处，直到消息发送或接收完成才会继续执行后续的代码。
+
+
+MPI_Send<span class="token punctuation">(</span>buffer, count, MPI_INT, dest, tag, MPI_COMM_WORLD<span class="token punctuation">)</span><span class="token punctuation">;</span>
+MPI_Recv<span class="token punctuation">(</span>buffer, count, MPI_INT, source, tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+非阻塞模式： 如果希望 MPI_Send 和 MPI_Recv 在发送或接收消息时不阻塞程序的执行，可以使用 MPI_Isend 和 MPI_Irecv 函数，它们是 MPI_Send 和 MPI_Recv 的非阻塞版本。
+
+    MPI_Isend<span class="token punctuation">(</span>buffer, count, MPI_INT, dest, tag, MPI_COMM_WORLD, <span class="token operator">&amp;</span>request<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    MPI_Irecv<span class="token punctuation">(</span>buffer, count, MPI_INT, source, tag, MPI_COMM_WORLD, <span class="token operator">&amp;</span>request<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    非阻塞通信函数会立即返回，不会等待消息的发送或接收完成。如果需要等待消息的完成，可以调用 MPI_Wait 或 MPI_Waitall 函数来等待请求完成。
+
+因此，MPI_Send 和 MPI_Recv 可以以阻塞或非阻塞的方式进行通信，根据具体的需求和调用方式来决定使用哪种模式。
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="MPI-API说明"><a href="#MPI-API说明" class="headerlink" title="MPI API说明"></a>MPI API说明</h3><h4 id="MPI-init"><a href="#MPI-init" class="headerlink" title="MPI_init"></a>MPI_init</h4><pre class="line-numbers language-c"><code class="language-c"><span class="token function">MPI_Init</span><span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span>                                             MPI                                            <span class="token function">MPI_Init</span><span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span>
+
+NAME
+       MPI_Init <span class="token operator">-</span>  Initialize the MPI execution environment
+
+SYNOPSIS
+       <span class="token keyword">int</span> <span class="token function">MPI_Init</span><span class="token punctuation">(</span><span class="token keyword">int</span> <span class="token operator">*</span>argc<span class="token punctuation">,</span> <span class="token keyword">char</span> <span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span>argv<span class="token punctuation">)</span>
+
+INPUT<span class="token operator">/</span>OUTPUT PARAMETERS
+       argc   <span class="token operator">-</span> <span class="token function">argc</span> <span class="token punctuation">(</span>None<span class="token punctuation">)</span>
+       argv   <span class="token operator">-</span> <span class="token function">argv</span> <span class="token punctuation">(</span>None<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>主要是用来接收命令行参数。</p>
+<h4 id="MPI-Finalize"><a href="#MPI-Finalize" class="headerlink" title="MPI_Finalize"></a>MPI_Finalize</h4><p>程序结束前，清理资源，后面不应该还有其他语句。</p>
+<h4 id="MPI-Comm-size-和-MPI-Comm-rank"><a href="#MPI-Comm-size-和-MPI-Comm-rank" class="headerlink" title="MPI_Comm_size 和 MPI_Comm_rank"></a>MPI_Comm_size 和 MPI_Comm_rank</h4><p>用于获取进程数量和进程标识符</p>
+<h4 id="MPI-Send"><a href="#MPI-Send" class="headerlink" title="MPI_Send"></a>MPI_Send</h4><pre class="line-numbers language-c"><code class="language-c"><span class="token function">MPI_Send</span><span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span>                                             MPI                                            <span class="token function">MPI_Send</span><span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span>
+
+NAME
+       MPI_Send <span class="token operator">-</span>  Performs a blocking send
+
+SYNOPSIS
+       <span class="token keyword">int</span> <span class="token function">MPI_Send</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">void</span> <span class="token operator">*</span>buf<span class="token punctuation">,</span> <span class="token keyword">int</span> count<span class="token punctuation">,</span> MPI_Datatype datatype<span class="token punctuation">,</span> <span class="token keyword">int</span> dest<span class="token punctuation">,</span>
+       <span class="token keyword">int</span> tag<span class="token punctuation">,</span> MPI_Comm comm<span class="token punctuation">)</span>
+
+       <span class="token keyword">int</span> <span class="token function">MPI_Send_c</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">void</span> <span class="token operator">*</span>buf<span class="token punctuation">,</span> MPI_Count count<span class="token punctuation">,</span> MPI_Datatype datatype<span class="token punctuation">,</span>
+       <span class="token keyword">int</span> dest<span class="token punctuation">,</span> <span class="token keyword">int</span> tag<span class="token punctuation">,</span> MPI_Comm comm<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里可以看出发送是阻塞的。</p>
+<h4 id="MPI-Recv"><a href="#MPI-Recv" class="headerlink" title="MPI_Recv"></a>MPI_Recv</h4><pre class="line-numbers language-c"><code class="language-c"><span class="token function">MPI_Recv</span><span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span>                                             MPI                                            <span class="token function">MPI_Recv</span><span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span>
+
+NAME
+       MPI_Recv <span class="token operator">-</span>  Blocking receive <span class="token keyword">for</span> a message
+
+SYNOPSIS
+       <span class="token keyword">int</span> <span class="token function">MPI_Recv</span><span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span>buf<span class="token punctuation">,</span> <span class="token keyword">int</span> count<span class="token punctuation">,</span> MPI_Datatype datatype<span class="token punctuation">,</span> <span class="token keyword">int</span> source<span class="token punctuation">,</span> <span class="token keyword">int</span> tag<span class="token punctuation">,</span>
+       MPI_Comm comm<span class="token punctuation">,</span> MPI_Status <span class="token operator">*</span>status<span class="token punctuation">)</span>
+
+       <span class="token keyword">int</span> <span class="token function">MPI_Recv_c</span><span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span>buf<span class="token punctuation">,</span> MPI_Count count<span class="token punctuation">,</span> MPI_Datatype datatype<span class="token punctuation">,</span> <span class="token keyword">int</span> source<span class="token punctuation">,</span>
+       <span class="token keyword">int</span> tag<span class="token punctuation">,</span> MPI_Comm comm<span class="token punctuation">,</span> MPI_Status <span class="token operator">*</span>status<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里接收也是阻塞的。</p>
+<h4 id="消息匹配机制"><a href="#消息匹配机制" class="headerlink" title="消息匹配机制"></a>消息匹配机制</h4><pre class="line-numbers language-bash"><code class="language-bash">Suppose process q calls MPI_Send with:
+
+MPI_Send<span class="token punctuation">(</span>send_buf_p, send_buf_sze, send_type, dest, send_tag, send_comm<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+Also suppose that process r calls MPI_Recv with:
+MPI_Recv<span class="token punctuation">(</span>recv_buf_p, recv_buf_sz, recv_type, src, recv_tag, recv_comm, <span class="token operator">&amp;</span>status<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+Then the message sent by q with the above call to MPI_Send can be received by r with
+the call to MPI_Recv if:
+
+1. recv_comm <span class="token operator">==</span> send_comm
+2. recv_tag <span class="token operator">==</span> send_tag
+3. dest <span class="token operator">==</span> r and src <span class="token operator">==</span> q
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里可以看出，有点类似消息队列的分队列模式，需要匹配到才会调用。</p>
+<h4 id="Semantics-of-MPI-Send-and-MPI-Recv"><a href="#Semantics-of-MPI-Send-and-MPI-Recv" class="headerlink" title="Semantics of MPI_Send and MPI_Recv"></a>Semantics of MPI_Send and MPI_Recv</h4><pre class="line-numbers language-bash"><code class="language-bash">MPI requires that messages be non-overtaking. This means that <span class="token keyword">if</span> process q sends
+two messages to process r, <span class="token keyword">then</span> the first message sent by q must be available to r
+before the second message. 
+However, there is no restriction on the arrival of messages
+sent from different processes. That is, <span class="token keyword">if</span> q and t both send messages to r, <span class="token keyword">then</span> even
+<span class="token keyword">if</span> q sends its message before t sends its message, there is no requirement that q’s
+message become available to r before t’s message. 
+
+This is essentially because MPI
+can’t impose performance on a network. For example, <span class="token keyword">if</span> q happens to be running
+on a machine on Mars, <span class="token keyword">while</span> r and t are both running on the same machine <span class="token keyword">in</span> San
+Francisco, and <span class="token keyword">if</span> q sends its message a nanosecond before t sends its message, it
+would be extremely unreasonable to require that q’s message arrive before t’s.
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="潜在的陷阱"><a href="#潜在的陷阱" class="headerlink" title="潜在的陷阱"></a>潜在的陷阱</h4><pre class="line-numbers language-bash"><code class="language-bash">Note that the semantics of MPI_Recv suggests a potential pitfall <span class="token keyword">in</span> MPI programming:
+If a process tries to receive a message and there’s no matching send, <span class="token keyword">then</span> the process
+will block forever. That is, the process will hang. So when we design our programs,
+we need to be sure that every receive has a matching send. Perhaps even <span class="token function">more</span> im-
+portant, we need to be very careful when we’re coding that there are no inadvertent
+mistakes <span class="token keyword">in</span> our calls to MPI_Send and MPI_Recv. For example, <span class="token keyword">if</span> the tags don’t match,
+or <span class="token keyword">if</span> the rank of the destination process is the same as the rank of the <span class="token function">source</span> process,
+the receive won’t match the send, and either a process will hang, or, perhaps worse,
+the receive may match another send.
+
+Similarly, <span class="token keyword">if</span> a call to MPI_Send blocks and there’s no matching receive, <span class="token keyword">then</span> the
+sending process can hang. If, on the other hand, a call to MPI_Send is buffered and
+there’s no matching receive, <span class="token keyword">then</span> the message will be lost
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>对于接收者，必须保证有匹配到的发送消息，不然整个程序就hang住了，对于发送者也是这样。</p>
+<h4 id="执行顺序是不固定的"><a href="#执行顺序是不固定的" class="headerlink" title="执行顺序是不固定的"></a>执行顺序是不固定的</h4><p>类似多线程，MPI多个进程执行的顺序也是不固定的，比如以下代码：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;mpi.h></span></span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> my_rank<span class="token punctuation">,</span> comm_sz<span class="token punctuation">;</span>
+
+    <span class="token function">MPI_Init</span><span class="token punctuation">(</span><span class="token constant">NULL</span><span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">MPI_Comm_size</span><span class="token punctuation">(</span>MPI_COMM_WORLD<span class="token punctuation">,</span> <span class="token operator">&amp;</span>comm_sz<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">MPI_Comm_rank</span><span class="token punctuation">(</span>MPI_COMM_WORLD<span class="token punctuation">,</span> <span class="token operator">&amp;</span>my_rank<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Process %d of %d > Greeting here\n"</span><span class="token punctuation">,</span> my_rank<span class="token punctuation">,</span> comm_s
+z<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">MPI_Finalize</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ mpiexec -n 10 ./hello
+Process 0 of 10 <span class="token operator">></span> Greeting here
+Process 4 of 10 <span class="token operator">></span> Greeting here
+Process 1 of 10 <span class="token operator">></span> Greeting here
+Process 6 of 10 <span class="token operator">></span> Greeting here
+Process 7 of 10 <span class="token operator">></span> Greeting here
+Process 2 of 10 <span class="token operator">></span> Greeting here
+Process 5 of 10 <span class="token operator">></span> Greeting here
+Process 8 of 10 <span class="token operator">></span> Greeting here
+Process 3 of 10 <span class="token operator">></span> Greeting here
+Process 9 of 10 <span class="token operator">></span> Greeting here
+
+$ mpiexec -n 10 ./hello
+Process 0 of 10 <span class="token operator">></span> Greeting here
+Process 2 of 10 <span class="token operator">></span> Greeting here
+Process 8 of 10 <span class="token operator">></span> Greeting here
+Process 1 of 10 <span class="token operator">></span> Greeting here
+Process 4 of 10 <span class="token operator">></span> Greeting here
+Process 9 of 10 <span class="token operator">></span> Greeting here
+Process 6 of 10 <span class="token operator">></span> Greeting here
+Process 3 of 10 <span class="token operator">></span> Greeting here
+Process 5 of 10 <span class="token operator">></span> Greeting here
+Process 7 of 10 <span class="token operator">></span> Greeting here
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="SPMD-programs"><a href="#SPMD-programs" class="headerlink" title="SPMD programs"></a>SPMD programs</h3><pre class="line-numbers language-bash"><code class="language-bash">This is quite common <span class="token keyword">in</span> parallel programming. In fact, <span class="token function">most</span> MPI programs are
+written <span class="token keyword">in</span> this way. That is, a single program is written so that different processes
+carry out different actions, and this can be achieved by simply having the processes
+branch on the basis of their process rank. Recall that this approach to parallel pro-
+gramming is called single program, multiple data or SPMD. 
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>MPI属于单个程序，多个数据的设计。</p>
+<h3 id="并行计算trapezoidal-rule"><a href="#并行计算trapezoidal-rule" class="headerlink" title="并行计算trapezoidal rule"></a>并行计算trapezoidal rule</h3><h4 id="trapezoidal-rule算法解释"><a href="#trapezoidal-rule算法解释" class="headerlink" title="trapezoidal rule算法解释"></a>trapezoidal rule算法解释</h4><pre class="line-numbers language-bash"><code class="language-bash">梯形法则（Trapezoidal Rule）是一种数值积分方法，用于估计定积分的值。它通过将积分区间分成若干个小区间，并在每个小区间上使用梯形面积来近似曲线下的面积。
+
+梯形法则的基本思想是将积分区间 <span class="token punctuation">[</span>a, b<span class="token punctuation">]</span> 分成 n 个子区间，每个子区间的宽度为 Δx<span class="token operator">=</span>b−anΔx<span class="token operator">=</span>nb−a​。然后在每个子区间上，通过线性插值得到曲线在该区间上的梯形面积，最后将所有梯形面积相加，即可得到整个积分区间上的近似值。
+
+梯形法则是一种简单而有效的数值积分方法，尤其适用于在计算机程序中实现。它的精度取决于子区间的数量，通常情况下，增加子区间的数量可以提高积分的精度，但也会增加计算量。
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>可以理解为一种求面积的近似算法。</p>
+<h4 id="算法描述"><a href="#算法描述" class="headerlink" title="算法描述"></a>算法描述</h4><p>以简单函数f(x) &#x3D; x * x 为例：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+
+<span class="token keyword">double</span> <span class="token function">f</span><span class="token punctuation">(</span><span class="token keyword">double</span> x<span class="token punctuation">)</span><span class="token punctuation">;</span>    <span class="token comment" spellcheck="true">/* Function we're integrating */</span>
+<span class="token keyword">double</span> <span class="token function">Trap</span><span class="token punctuation">(</span><span class="token keyword">double</span> a<span class="token punctuation">,</span> <span class="token keyword">double</span> b<span class="token punctuation">,</span> <span class="token keyword">int</span> n<span class="token punctuation">,</span> <span class="token keyword">double</span> h<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+   <span class="token keyword">double</span>  integral<span class="token punctuation">;</span>   <span class="token comment" spellcheck="true">/* Store result in integral   */</span>
+   <span class="token keyword">double</span>  a<span class="token punctuation">,</span> b<span class="token punctuation">;</span>       <span class="token comment" spellcheck="true">/* Left and right endpoints   */</span>
+   <span class="token keyword">int</span>     n<span class="token punctuation">;</span>          <span class="token comment" spellcheck="true">/* Number of trapezoids       */</span>
+   <span class="token keyword">double</span>  h<span class="token punctuation">;</span>          <span class="token comment" spellcheck="true">/* Height of trapezoids       */</span>
+
+   <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Enter a, b, and n\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token function">scanf</span><span class="token punctuation">(</span><span class="token string">"%lf"</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>a<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token function">scanf</span><span class="token punctuation">(</span><span class="token string">"%lf"</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>b<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token function">scanf</span><span class="token punctuation">(</span><span class="token string">"%d"</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>n<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   h <span class="token operator">=</span> <span class="token punctuation">(</span>b<span class="token operator">-</span>a<span class="token punctuation">)</span><span class="token operator">/</span>n<span class="token punctuation">;</span>
+   integral <span class="token operator">=</span> <span class="token function">Trap</span><span class="token punctuation">(</span>a<span class="token punctuation">,</span> b<span class="token punctuation">,</span> n<span class="token punctuation">,</span> h<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"With n = %d trapezoids, our estimate\n"</span><span class="token punctuation">,</span> n<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"of the integral from %f to %f = %.15f\n"</span><span class="token punctuation">,</span>
+      a<span class="token punctuation">,</span> b<span class="token punctuation">,</span> integral<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>  <span class="token comment" spellcheck="true">/* main */</span>
+
+<span class="token comment" spellcheck="true">/*------------------------------------------------------------------
+ * Function:    Trap
+ * Purpose:     Estimate integral from a to b of f using trap rule and
+ *              n trapezoids
+ * Input args:  a, b, n, h
+ * Return val:  Estimate of the integral
+ */</span>
+<span class="token keyword">double</span> <span class="token function">Trap</span><span class="token punctuation">(</span><span class="token keyword">double</span> a<span class="token punctuation">,</span> <span class="token keyword">double</span> b<span class="token punctuation">,</span> <span class="token keyword">int</span> n<span class="token punctuation">,</span> <span class="token keyword">double</span> h<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+   <span class="token keyword">double</span> integral<span class="token punctuation">;</span>
+   <span class="token keyword">int</span> k<span class="token punctuation">;</span>
+
+   integral <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token function">f</span><span class="token punctuation">(</span>a<span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token function">f</span><span class="token punctuation">(</span>b<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token operator">/</span><span class="token number">2.0</span><span class="token punctuation">;</span>
+   <span class="token keyword">for</span> <span class="token punctuation">(</span>k <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span> k <span class="token operator">&lt;=</span> n<span class="token number">-1</span><span class="token punctuation">;</span> k<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+     integral <span class="token operator">+</span><span class="token operator">=</span> <span class="token function">f</span><span class="token punctuation">(</span>a<span class="token operator">+</span>k<span class="token operator">*</span>h<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token punctuation">}</span>
+   integral <span class="token operator">=</span> integral<span class="token operator">*</span>h<span class="token punctuation">;</span>
+
+   <span class="token keyword">return</span> integral<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>  <span class="token comment" spellcheck="true">/* Trap */</span>
+
+<span class="token comment" spellcheck="true">/*------------------------------------------------------------------
+ * Function:    f
+ * Purpose:     Compute value of function to be integrated
+ * Input args:  x
+ */</span>
+<span class="token keyword">double</span> <span class="token function">f</span><span class="token punctuation">(</span><span class="token keyword">double</span> x<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+   <span class="token keyword">double</span> return_val<span class="token punctuation">;</span>
+
+   return_val <span class="token operator">=</span> x<span class="token operator">*</span>x<span class="token punctuation">;</span>
+   <span class="token keyword">return</span> return_val<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>  <span class="token comment" spellcheck="true">/* f */</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="划分子任务"><a href="#划分子任务" class="headerlink" title="划分子任务"></a>划分子任务</h4><p>给定区间[A,B],将A-&gt;B分为N份，每个工作进程执行N&#x2F;comm_sz个任务量的计算，最后0号进程接收到每个工作进程的计算结果加和。</p>
+<p>mpi_trap1.c:</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+
+<span class="token comment" spellcheck="true">/* We'll be using MPI routines, definitions, etc. */</span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;mpi.h></span></span>
+
+<span class="token comment" spellcheck="true">/* Calculate local integral  */</span>
+<span class="token keyword">double</span> <span class="token function">Trap</span><span class="token punctuation">(</span><span class="token keyword">double</span> left_endpt<span class="token punctuation">,</span> <span class="token keyword">double</span> right_endpt<span class="token punctuation">,</span> <span class="token keyword">int</span> trap_count<span class="token punctuation">,</span>
+   <span class="token keyword">double</span> base_len<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment" spellcheck="true">/* Function we're integrating */</span>
+<span class="token keyword">double</span> <span class="token function">f</span><span class="token punctuation">(</span><span class="token keyword">double</span> x<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+   <span class="token keyword">int</span> my_rank<span class="token punctuation">,</span> comm_sz<span class="token punctuation">,</span> n <span class="token operator">=</span> <span class="token number">1024</span><span class="token punctuation">,</span> local_n<span class="token punctuation">;</span>
+   <span class="token keyword">double</span> a <span class="token operator">=</span> <span class="token number">0.0</span><span class="token punctuation">,</span> b <span class="token operator">=</span> <span class="token number">3.0</span><span class="token punctuation">,</span> h<span class="token punctuation">,</span> local_a<span class="token punctuation">,</span> local_b<span class="token punctuation">;</span>
+   <span class="token keyword">double</span> local_int<span class="token punctuation">,</span> total_int<span class="token punctuation">;</span>
+   <span class="token keyword">int</span> source<span class="token punctuation">;</span>
+
+   <span class="token comment" spellcheck="true">/* Let the system do what it needs to start up MPI */</span>
+   <span class="token function">MPI_Init</span><span class="token punctuation">(</span><span class="token constant">NULL</span><span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   <span class="token comment" spellcheck="true">/* Get my process rank */</span>
+   <span class="token function">MPI_Comm_rank</span><span class="token punctuation">(</span>MPI_COMM_WORLD<span class="token punctuation">,</span> <span class="token operator">&amp;</span>my_rank<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   <span class="token comment" spellcheck="true">/* Find out how many processes are being used */</span>
+   <span class="token function">MPI_Comm_size</span><span class="token punctuation">(</span>MPI_COMM_WORLD<span class="token punctuation">,</span> <span class="token operator">&amp;</span>comm_sz<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   h <span class="token operator">=</span> <span class="token punctuation">(</span>b<span class="token operator">-</span>a<span class="token punctuation">)</span><span class="token operator">/</span>n<span class="token punctuation">;</span>          <span class="token comment" spellcheck="true">/* h is the same for all processes */</span>
+   local_n <span class="token operator">=</span> n<span class="token operator">/</span>comm_sz<span class="token punctuation">;</span>  <span class="token comment" spellcheck="true">/* So is the number of trapezoids 每个工作线程的local_n都一样 */</span>
+
+   <span class="token comment" spellcheck="true">/* Length of each process' interval of
+    * integration = local_n*h.  So my interval
+    * starts at: */</span>
+   local_a <span class="token operator">=</span> a <span class="token operator">+</span> my_rank<span class="token operator">*</span>local_n<span class="token operator">*</span>h<span class="token punctuation">;</span>
+   local_b <span class="token operator">=</span> local_a <span class="token operator">+</span> local_n<span class="token operator">*</span>h<span class="token punctuation">;</span>
+   local_int <span class="token operator">=</span> <span class="token function">Trap</span><span class="token punctuation">(</span>local_a<span class="token punctuation">,</span> local_b<span class="token punctuation">,</span> local_n<span class="token punctuation">,</span> h<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   <span class="token comment" spellcheck="true">/* Add up the integrals calculated by each process */</span>
+   <span class="token keyword">if</span> <span class="token punctuation">(</span>my_rank <span class="token operator">!=</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token function">MPI_Send</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>local_int<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> MPI_DOUBLE<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span>
+            MPI_COMM_WORLD<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+      total_int <span class="token operator">=</span> local_int<span class="token punctuation">;</span>
+      <span class="token keyword">for</span> <span class="token punctuation">(</span>source <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span> source <span class="token operator">&lt;</span> comm_sz<span class="token punctuation">;</span> source<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+         <span class="token function">MPI_Recv</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>local_int<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> MPI_DOUBLE<span class="token punctuation">,</span> source<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span>
+            MPI_COMM_WORLD<span class="token punctuation">,</span> MPI_STATUS_IGNORE<span class="token punctuation">)</span><span class="token punctuation">;</span>
+         total_int <span class="token operator">+</span><span class="token operator">=</span> local_int<span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+   <span class="token punctuation">}</span>
+
+   <span class="token comment" spellcheck="true">/* Print the result */</span>
+   <span class="token keyword">if</span> <span class="token punctuation">(</span>my_rank <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"With n = %d trapezoids, our estimate\n"</span><span class="token punctuation">,</span> n<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"of the integral from %f to %f = %.15e\n"</span><span class="token punctuation">,</span>
+          a<span class="token punctuation">,</span> b<span class="token punctuation">,</span> total_int<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token punctuation">}</span>
+
+   <span class="token comment" spellcheck="true">/* Shut down MPI */</span>
+   <span class="token function">MPI_Finalize</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span> <span class="token comment" spellcheck="true">/*  main  */</span>
+
+
+<span class="token comment" spellcheck="true">/*------------------------------------------------------------------
+ * Function:     Trap
+ * Purpose:      Serial function for estimating a definite integral
+ *               using the trapezoidal rule
+ * Input args:   left_endpt
+ *               right_endpt
+ *               trap_count
+ *               base_len
+ * Return val:   Trapezoidal rule estimate of integral from
+ *               left_endpt to right_endpt using trap_count
+ *               trapezoids
+ */</span>
+<span class="token keyword">double</span> <span class="token function">Trap</span><span class="token punctuation">(</span>
+      <span class="token keyword">double</span> left_endpt  <span class="token comment" spellcheck="true">/* in */</span><span class="token punctuation">,</span>
+      <span class="token keyword">double</span> right_endpt <span class="token comment" spellcheck="true">/* in */</span><span class="token punctuation">,</span>
+      <span class="token keyword">int</span>    trap_count  <span class="token comment" spellcheck="true">/* in */</span><span class="token punctuation">,</span>
+      <span class="token keyword">double</span> base_len    <span class="token comment" spellcheck="true">/* in */</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+   <span class="token keyword">double</span> estimate<span class="token punctuation">,</span> x<span class="token punctuation">;</span>
+   <span class="token keyword">int</span> i<span class="token punctuation">;</span>
+
+   estimate <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token function">f</span><span class="token punctuation">(</span>left_endpt<span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token function">f</span><span class="token punctuation">(</span>right_endpt<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token operator">/</span><span class="token number">2.0</span><span class="token punctuation">;</span>
+   <span class="token keyword">for</span> <span class="token punctuation">(</span>i <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span> i <span class="token operator">&lt;=</span> trap_count<span class="token number">-1</span><span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      x <span class="token operator">=</span> left_endpt <span class="token operator">+</span> i<span class="token operator">*</span>base_len<span class="token punctuation">;</span>
+      estimate <span class="token operator">+</span><span class="token operator">=</span> <span class="token function">f</span><span class="token punctuation">(</span>x<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token punctuation">}</span>
+   estimate <span class="token operator">=</span> estimate<span class="token operator">*</span>base_len<span class="token punctuation">;</span>
+
+   <span class="token keyword">return</span> estimate<span class="token punctuation">;</span>
+<span class="token punctuation">}</span> <span class="token comment" spellcheck="true">/*  Trap  */</span>
+
+
+<span class="token comment" spellcheck="true">/*------------------------------------------------------------------
+ * Function:    f
+ * Purpose:     Compute value of function to be integrated
+ * Input args:  x
+ */</span>
+<span class="token keyword">double</span> <span class="token function">f</span><span class="token punctuation">(</span><span class="token keyword">double</span> x<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+   <span class="token keyword">return</span> x<span class="token operator">*</span>x<span class="token punctuation">;</span>
+<span class="token punctuation">}</span> <span class="token comment" spellcheck="true">/* f */</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ mpiexec -n 4 ./trap1
+With n <span class="token operator">=</span> 1024 trapezoids, our estimate
+of the integral from 0.000000 to 3.000000 <span class="token operator">=</span> 9.000004291534424e+00
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>这里的a, b, n都是固定的值，在MPI中，只有0号进程可以使用stdin，下面是从stdin获取到相关参数的代码。</p>
+<p>mpi_trap2.c:</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+
+<span class="token comment" spellcheck="true">/* We'll be using MPI routines, definitions, etc. */</span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;mpi.h></span></span>
+
+<span class="token comment" spellcheck="true">/* Get the input values */</span>
+<span class="token keyword">void</span> <span class="token function">Get_input</span><span class="token punctuation">(</span><span class="token keyword">int</span> my_rank<span class="token punctuation">,</span> <span class="token keyword">int</span> comm_sz<span class="token punctuation">,</span> <span class="token keyword">double</span><span class="token operator">*</span> a_p<span class="token punctuation">,</span> <span class="token keyword">double</span><span class="token operator">*</span> b_p<span class="token punctuation">,</span>
+      <span class="token keyword">int</span><span class="token operator">*</span> n_p<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment" spellcheck="true">/* Calculate local integral  */</span>
+<span class="token keyword">double</span> <span class="token function">Trap</span><span class="token punctuation">(</span><span class="token keyword">double</span> left_endpt<span class="token punctuation">,</span> <span class="token keyword">double</span> right_endpt<span class="token punctuation">,</span> <span class="token keyword">int</span> trap_count<span class="token punctuation">,</span>
+   <span class="token keyword">double</span> base_len<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment" spellcheck="true">/* Function we're integrating */</span>
+<span class="token keyword">double</span> <span class="token function">f</span><span class="token punctuation">(</span><span class="token keyword">double</span> x<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+   <span class="token keyword">int</span> my_rank<span class="token punctuation">,</span> comm_sz<span class="token punctuation">,</span> n<span class="token punctuation">,</span> local_n<span class="token punctuation">;</span>
+   <span class="token keyword">double</span> a<span class="token punctuation">,</span> b<span class="token punctuation">,</span> h<span class="token punctuation">,</span> local_a<span class="token punctuation">,</span> local_b<span class="token punctuation">;</span>
+   <span class="token keyword">double</span> local_int<span class="token punctuation">,</span> total_int<span class="token punctuation">;</span>
+   <span class="token keyword">int</span> source<span class="token punctuation">;</span>
+
+   <span class="token comment" spellcheck="true">/* Let the system do what it needs to start up MPI */</span>
+   <span class="token function">MPI_Init</span><span class="token punctuation">(</span><span class="token constant">NULL</span><span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   <span class="token comment" spellcheck="true">/* Get my process rank */</span>
+   <span class="token function">MPI_Comm_rank</span><span class="token punctuation">(</span>MPI_COMM_WORLD<span class="token punctuation">,</span> <span class="token operator">&amp;</span>my_rank<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   <span class="token comment" spellcheck="true">/* Find out how many processes are being used */</span>
+   <span class="token function">MPI_Comm_size</span><span class="token punctuation">(</span>MPI_COMM_WORLD<span class="token punctuation">,</span> <span class="token operator">&amp;</span>comm_sz<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   <span class="token function">Get_input</span><span class="token punctuation">(</span>my_rank<span class="token punctuation">,</span> comm_sz<span class="token punctuation">,</span> <span class="token operator">&amp;</span>a<span class="token punctuation">,</span> <span class="token operator">&amp;</span>b<span class="token punctuation">,</span> <span class="token operator">&amp;</span>n<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   h <span class="token operator">=</span> <span class="token punctuation">(</span>b<span class="token operator">-</span>a<span class="token punctuation">)</span><span class="token operator">/</span>n<span class="token punctuation">;</span>          <span class="token comment" spellcheck="true">/* h is the same for all processes */</span>
+   local_n <span class="token operator">=</span> n<span class="token operator">/</span>comm_sz<span class="token punctuation">;</span>  <span class="token comment" spellcheck="true">/* So is the number of trapezoids  */</span>
+
+   <span class="token comment" spellcheck="true">/* Length of each process' interval of
+    * integration = local_n*h.  So my interval
+    * starts at: */</span>
+   local_a <span class="token operator">=</span> a <span class="token operator">+</span> my_rank<span class="token operator">*</span>local_n<span class="token operator">*</span>h<span class="token punctuation">;</span>
+   local_b <span class="token operator">=</span> local_a <span class="token operator">+</span> local_n<span class="token operator">*</span>h<span class="token punctuation">;</span>
+   local_int <span class="token operator">=</span> <span class="token function">Trap</span><span class="token punctuation">(</span>local_a<span class="token punctuation">,</span> local_b<span class="token punctuation">,</span> local_n<span class="token punctuation">,</span> h<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   <span class="token comment" spellcheck="true">/* Add up the integrals calculated by each process */</span>
+   <span class="token keyword">if</span> <span class="token punctuation">(</span>my_rank <span class="token operator">!=</span> <span class="token number">0</span><span class="token punctuation">)</span>
+      <span class="token function">MPI_Send</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>local_int<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> MPI_DOUBLE<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span>
+            MPI_COMM_WORLD<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token keyword">else</span> <span class="token punctuation">{</span>
+      total_int <span class="token operator">=</span> local_int<span class="token punctuation">;</span>
+      <span class="token keyword">for</span> <span class="token punctuation">(</span>source <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span> source <span class="token operator">&lt;</span> comm_sz<span class="token punctuation">;</span> source<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+         <span class="token function">MPI_Recv</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>local_int<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> MPI_DOUBLE<span class="token punctuation">,</span> source<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span>
+            MPI_COMM_WORLD<span class="token punctuation">,</span> MPI_STATUS_IGNORE<span class="token punctuation">)</span><span class="token punctuation">;</span>
+         total_int <span class="token operator">+</span><span class="token operator">=</span> local_int<span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+   <span class="token punctuation">}</span>
+
+   <span class="token comment" spellcheck="true">/* Print the result */</span>
+   <span class="token keyword">if</span> <span class="token punctuation">(</span>my_rank <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"With n = %d trapezoids, our estimate\n"</span><span class="token punctuation">,</span> n<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"of the integral from %f to %f = %.15e\n"</span><span class="token punctuation">,</span>
+          a<span class="token punctuation">,</span> b<span class="token punctuation">,</span> total_int<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token punctuation">}</span>
+
+   <span class="token comment" spellcheck="true">/* Shut down MPI */</span>
+   <span class="token function">MPI_Finalize</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span> <span class="token comment" spellcheck="true">/*  main  */</span>
+
+<span class="token comment" spellcheck="true">/*------------------------------------------------------------------
+ * Function:     Get_input
+ * Purpose:      Get the user input:  the left and right endpoints
+ *               and the number of trapezoids
+ * Input args:   my_rank:  process rank in MPI_COMM_WORLD
+ *               comm_sz:  number of processes in MPI_COMM_WORLD
+ * Output args:  a_p:  pointer to left endpoint
+ *               b_p:  pointer to right endpoint
+ *               n_p:  pointer to number of trapezoids
+ */</span>
+<span class="token keyword">void</span> <span class="token function">Get_input</span><span class="token punctuation">(</span><span class="token keyword">int</span> my_rank<span class="token punctuation">,</span> <span class="token keyword">int</span> comm_sz<span class="token punctuation">,</span> <span class="token keyword">double</span><span class="token operator">*</span> a_p<span class="token punctuation">,</span> <span class="token keyword">double</span><span class="token operator">*</span> b_p<span class="token punctuation">,</span>
+      <span class="token keyword">int</span><span class="token operator">*</span> n_p<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+   <span class="token keyword">int</span> dest<span class="token punctuation">;</span>
+
+   <span class="token keyword">if</span> <span class="token punctuation">(</span>my_rank <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Enter a, b, and n\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">scanf</span><span class="token punctuation">(</span><span class="token string">"%lf %lf %d"</span><span class="token punctuation">,</span> a_p<span class="token punctuation">,</span> b_p<span class="token punctuation">,</span> n_p<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token comment" spellcheck="true">// 对每个进程发送 a, b, n的值</span>
+      <span class="token keyword">for</span> <span class="token punctuation">(</span>dest <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span> dest <span class="token operator">&lt;</span> comm_sz<span class="token punctuation">;</span> dest<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+         <span class="token function">MPI_Send</span><span class="token punctuation">(</span>a_p<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> MPI_DOUBLE<span class="token punctuation">,</span> dest<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> MPI_COMM_WORLD<span class="token punctuation">)</span><span class="token punctuation">;</span>
+         <span class="token function">MPI_Send</span><span class="token punctuation">(</span>b_p<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> MPI_DOUBLE<span class="token punctuation">,</span> dest<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> MPI_COMM_WORLD<span class="token punctuation">)</span><span class="token punctuation">;</span>
+         <span class="token function">MPI_Send</span><span class="token punctuation">(</span>n_p<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> MPI_INT<span class="token punctuation">,</span> dest<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> MPI_COMM_WORLD<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+   <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span> <span class="token comment" spellcheck="true">/* my_rank != 0 接收到参数 */</span>
+      <span class="token function">MPI_Recv</span><span class="token punctuation">(</span>a_p<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> MPI_DOUBLE<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> MPI_COMM_WORLD<span class="token punctuation">,</span>
+            MPI_STATUS_IGNORE<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">MPI_Recv</span><span class="token punctuation">(</span>b_p<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> MPI_DOUBLE<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> MPI_COMM_WORLD<span class="token punctuation">,</span>
+            MPI_STATUS_IGNORE<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">MPI_Recv</span><span class="token punctuation">(</span>n_p<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> MPI_INT<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> MPI_COMM_WORLD<span class="token punctuation">,</span>
+            MPI_STATUS_IGNORE<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>  <span class="token comment" spellcheck="true">/* Get_input */</span>
+
+<span class="token comment" spellcheck="true">/*------------------------------------------------------------------
+ * Function:     Trap
+ * Purpose:      Serial function for estimating a definite integral
+ *               using the trapezoidal rule
+ * Input args:   left_endpt
+ *               right_endpt
+ *               trap_count
+ *               base_len
+ * Return val:   Trapezoidal rule estimate of integral from
+ *               left_endpt to right_endpt using trap_count
+ *               trapezoids
+ */</span>
+<span class="token keyword">double</span> <span class="token function">Trap</span><span class="token punctuation">(</span>
+      <span class="token keyword">double</span> left_endpt  <span class="token comment" spellcheck="true">/* in */</span><span class="token punctuation">,</span>
+      <span class="token keyword">double</span> right_endpt <span class="token comment" spellcheck="true">/* in */</span><span class="token punctuation">,</span>
+      <span class="token keyword">int</span>    trap_count  <span class="token comment" spellcheck="true">/* in */</span><span class="token punctuation">,</span>
+      <span class="token keyword">double</span> base_len    <span class="token comment" spellcheck="true">/* in */</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+   <span class="token keyword">double</span> estimate<span class="token punctuation">,</span> x<span class="token punctuation">;</span>
+   <span class="token keyword">int</span> i<span class="token punctuation">;</span>
+
+   estimate <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token function">f</span><span class="token punctuation">(</span>left_endpt<span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token function">f</span><span class="token punctuation">(</span>right_endpt<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token operator">/</span><span class="token number">2.0</span><span class="token punctuation">;</span>
+   <span class="token keyword">for</span> <span class="token punctuation">(</span>i <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span> i <span class="token operator">&lt;=</span> trap_count<span class="token number">-1</span><span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      x <span class="token operator">=</span> left_endpt <span class="token operator">+</span> i<span class="token operator">*</span>base_len<span class="token punctuation">;</span>
+      estimate <span class="token operator">+</span><span class="token operator">=</span> <span class="token function">f</span><span class="token punctuation">(</span>x<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token punctuation">}</span>
+   estimate <span class="token operator">=</span> estimate<span class="token operator">*</span>base_len<span class="token punctuation">;</span>
+
+   <span class="token keyword">return</span> estimate<span class="token punctuation">;</span>
+<span class="token punctuation">}</span> <span class="token comment" spellcheck="true">/*  Trap  */</span>
+
+
+<span class="token comment" spellcheck="true">/*------------------------------------------------------------------
+ * Function:    f
+ * Purpose:     Compute value of function to be integrated
+ * Input args:  x
+ */</span>
+<span class="token keyword">double</span> <span class="token function">f</span><span class="token punctuation">(</span><span class="token keyword">double</span> x<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+   <span class="token keyword">return</span> x<span class="token operator">*</span>x<span class="token punctuation">;</span>
+<span class="token punctuation">}</span> <span class="token comment" spellcheck="true">/* f */</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果:</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ mpiexec -n 4 ./trap2
+Enter a, b, and n
+0.0 3.0 1024
+With n <span class="token operator">=</span> 1024 trapezoids, our estimate
+of the integral from 0.000000 to 3.000000 <span class="token operator">=</span> 9.000004291534424e+00
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="Tree-structured-communication"><a href="#Tree-structured-communication" class="headerlink" title="Tree-structured communication"></a>Tree-structured communication</h3><p>另一经典问题，树状结构求和问题：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">Tree-structured sum（树结构求和）问题是一种常见的并行计算模式，通常用于将一个大型数据集的计算任务分解成多个小任务，并在多个处理单元（如CPU核心或GPU）上并行执行这些小任务，最后将它们的结果合并起来。这种方法通常被用于提高计算效率，尤其是在分布式计算环境下。
+
+具体来说，树结构求和问题的思想是将数据集分割成多个部分，每个部分由一个处理单元负责计算。然后，这些计算结果通过树状结构进行层层合并，直到最终得到整个数据集的总和。
+
+         Total Sum
+           /    \
+      Sum1        Sum2
+      /  \        /   \
+  Part1  Part2  Part3  Part4
+
+在这个示例中，我们有4个处理单元，每个处理单元负责计算一个数据子集的局部总和。Part1、Part2、Part3和Part4是原始数据集划分出来的子集，而Sum1和Sum2是每个处理单元计算出来的局部总和。最终，Sum1和Sum2被合并成Total Sum，得到整个数据集的总和。
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="MPI-Reduce"><a href="#MPI-Reduce" class="headerlink" title="MPI_Reduce"></a>MPI_Reduce</h4><pre class="line-numbers language-bash"><code class="language-bash">MPI_Reduce<span class="token punctuation">(</span>3<span class="token punctuation">)</span>                                     MPI                                    MPI_Reduce<span class="token punctuation">(</span>3<span class="token punctuation">)</span>
+
+NAME
+       MPI_Reduce -  Reduces values on all processes to a single value
+
+SYNOPSIS
+       int MPI_Reduce<span class="token punctuation">(</span>const void *sendbuf, void *recvbuf, int count,
+       MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm<span class="token punctuation">)</span>
+
+       int MPI_Reduce_c<span class="token punctuation">(</span>const void *sendbuf, void *recvbuf, MPI_Count count,
+       MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm<span class="token punctuation">)</span>
+
+INPUT PARAMETERS
+       sendbuf
+              - address of send buffer <span class="token punctuation">(</span>choice<span class="token punctuation">)</span>
+       count  - number of elements <span class="token keyword">in</span> send buffer <span class="token punctuation">(</span>non-negative integer<span class="token punctuation">)</span>
+       datatype
+              - data <span class="token function">type</span> of elements of send buffer <span class="token punctuation">(</span>handle<span class="token punctuation">)</span>
+       <span class="token function">op</span>     - reduce operation <span class="token punctuation">(</span>handle<span class="token punctuation">)</span>
+       root   - rank of root process <span class="token punctuation">(</span>integer<span class="token punctuation">)</span>
+       <span class="token function">comm</span>   - communicator <span class="token punctuation">(</span>handle<span class="token punctuation">)</span>
+       
+MPI_Reduce不是点对点通信，而是一种集合通信操作。它用于将来自各个进程的数据进行聚合操作，并将结果发送给一个特定的进程（通常是根进程），这个进程可以进一步处理这个聚合结果或者输出结果。
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这个库里面也有类似Python reduce的方法，归约计算，和pycuda的ReductionKernel类似。</p>
+<p>实例如下，假设每个进程有有个自己的数字，把他们加起来，或者求最值等：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;mpi.h></span></span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">MPI_Init</span><span class="token punctuation">(</span><span class="token constant">NULL</span><span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">int</span> my_rank<span class="token punctuation">,</span> comm_sz<span class="token punctuation">;</span>
+    <span class="token function">MPI_Comm_rank</span><span class="token punctuation">(</span>MPI_COMM_WORLD<span class="token punctuation">,</span> <span class="token operator">&amp;</span>my_rank<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">MPI_Comm_size</span><span class="token punctuation">(</span>MPI_COMM_WORLD<span class="token punctuation">,</span> <span class="token operator">&amp;</span>comm_sz<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// 每个进程拥有的整数</span>
+    <span class="token keyword">int</span> my_number <span class="token operator">=</span> my_rank <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">int</span> total_sum <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> max_num <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> min_num <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">// 求和</span>
+    <span class="token function">MPI_Reduce</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>my_number<span class="token punctuation">,</span> <span class="token operator">&amp;</span>total_sum<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> MPI_INT<span class="token punctuation">,</span> MPI_SUM<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> MPI_COMM_WORLD<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">// 最大的值</span>
+    <span class="token function">MPI_Reduce</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>my_number<span class="token punctuation">,</span> <span class="token operator">&amp;</span>max_num<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> MPI_INT<span class="token punctuation">,</span> MPI_MAX<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> MPI_COMM_WORLD<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">// 最小的值</span>
+    <span class="token function">MPI_Reduce</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>my_number<span class="token punctuation">,</span> <span class="token operator">&amp;</span>min_num<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> MPI_INT<span class="token punctuation">,</span> MPI_MIN<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> MPI_COMM_WORLD<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>my_rank <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Total sum: %d, max num %d min num %d \n"</span><span class="token punctuation">,</span> total_sum<span class="token punctuation">,</span> max_num<span class="token punctuation">,</span> min_num<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">MPI_Finalize</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>想到类似于Leetcode里面的仅仅出现一次数字，也可以用这个方法并行计算，那个题目是对每个数字做异或运算。</p>
+<h4 id="MPI-Allreduce"><a href="#MPI-Allreduce" class="headerlink" title="MPI_Allreduce"></a>MPI_Allreduce</h4><p>MPI_Allreduce是一种集合通信操作，与MPI_Reduce类似，但MPI_Allreduce将聚合后的结果发送给所有进程，而不仅仅是一个指定的根进程。它可以在所有进程之间共享结果，而不需要显式地进行进程间的通信。</p>
+<p>主要用于将结果做分发，可能所有节点都需要知道最后的和，比如：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;mpi.h></span></span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">MPI_Init</span><span class="token punctuation">(</span><span class="token constant">NULL</span><span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">int</span> my_rank<span class="token punctuation">,</span> comm_sz<span class="token punctuation">;</span>
+    <span class="token function">MPI_Comm_rank</span><span class="token punctuation">(</span>MPI_COMM_WORLD<span class="token punctuation">,</span> <span class="token operator">&amp;</span>my_rank<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">MPI_Comm_size</span><span class="token punctuation">(</span>MPI_COMM_WORLD<span class="token punctuation">,</span> <span class="token operator">&amp;</span>comm_sz<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// 每个进程拥有的整数</span>
+    <span class="token keyword">int</span> my_number <span class="token operator">=</span> my_rank <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> total_sum <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// 求和操作</span>
+    <span class="token function">MPI_Allreduce</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>my_number<span class="token punctuation">,</span> <span class="token operator">&amp;</span>total_sum<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> MPI_INT<span class="token punctuation">,</span> MPI_SUM<span class="token punctuation">,</span> MPI_COMM_WORLD<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Process %d of %d > Total sum: %d\n"</span><span class="token punctuation">,</span> my_rank<span class="token punctuation">,</span> comm_sz<span class="token punctuation">,</span> total_sum<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">MPI_Finalize</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="MPI-Bcast"><a href="#MPI-Bcast" class="headerlink" title="MPI_Bcast"></a>MPI_Bcast</h4><p>MPI_Bcast是MPI中的一种集合通信操作，用于将数据从一个进程（通常是根进程）广播到所有其他进程。这种广播操作对于在并行计算中分发相同的数据以进行协调或同步非常有用。</p>
+<p>实例如下：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;mpi.h></span></span>
+
+<span class="token macro property">#<span class="token directive keyword">define</span> ARRAY_SIZE 5</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">MPI_Init</span><span class="token punctuation">(</span><span class="token constant">NULL</span><span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">int</span> my_rank<span class="token punctuation">,</span> comm_sz<span class="token punctuation">;</span>
+    <span class="token function">MPI_Comm_rank</span><span class="token punctuation">(</span>MPI_COMM_WORLD<span class="token punctuation">,</span> <span class="token operator">&amp;</span>my_rank<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">MPI_Comm_size</span><span class="token punctuation">(</span>MPI_COMM_WORLD<span class="token punctuation">,</span> <span class="token operator">&amp;</span>comm_sz<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">int</span> data<span class="token punctuation">[</span>ARRAY_SIZE<span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>my_rank <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 根进程初始化数组数据</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> ARRAY_SIZE<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            data<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> i <span class="token operator">*</span> <span class="token number">2</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 根进程将数据广播给所有其他进程</span>
+    <span class="token function">MPI_Bcast</span><span class="token punctuation">(</span>data<span class="token punctuation">,</span> ARRAY_SIZE<span class="token punctuation">,</span> MPI_INT<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> MPI_COMM_WORLD<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// 所有进程都可以访问到广播后的数据</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Process %d: Received data: "</span><span class="token punctuation">,</span> my_rank<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> ARRAY_SIZE<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"%d "</span><span class="token punctuation">,</span> data<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">MPI_Finalize</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行如下：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ mpiexec -n 4 ./bcast
+Process 0: Received data: Process 1: Received data: 0 2 4 6 8 
+0 2 4 6 8 
+Process 2: Received data: 0 2 4 6 8 
+Process 3: Received data: 0 2 4 6 8 
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>值得注意的是，MPI_Bcast函数在根进程和其他进程之间是阻塞的，直到广播操作完成。因此，在广播操作完成之前，所有进程都会等待。</p>
+<p>使用MPI_Bcast和MPI_Reduce计算面积：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+
+<span class="token comment" spellcheck="true">/* We'll be using MPI routines, definitions, etc. */</span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;mpi.h></span></span>
+
+<span class="token comment" spellcheck="true">/* Get the input values */</span>
+<span class="token keyword">void</span> <span class="token function">Get_input</span><span class="token punctuation">(</span><span class="token keyword">int</span> my_rank<span class="token punctuation">,</span> <span class="token keyword">int</span> comm_sz<span class="token punctuation">,</span> <span class="token keyword">double</span><span class="token operator">*</span> a_p<span class="token punctuation">,</span> <span class="token keyword">double</span><span class="token operator">*</span> b_p<span class="token punctuation">,</span>
+      <span class="token keyword">int</span><span class="token operator">*</span> n_p<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment" spellcheck="true">/* Calculate local integral  */</span>
+<span class="token keyword">double</span> <span class="token function">Trap</span><span class="token punctuation">(</span><span class="token keyword">double</span> left_endpt<span class="token punctuation">,</span> <span class="token keyword">double</span> right_endpt<span class="token punctuation">,</span> <span class="token keyword">int</span> trap_count<span class="token punctuation">,</span>
+   <span class="token keyword">double</span> base_len<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment" spellcheck="true">/* Function we're integrating */</span>
+<span class="token keyword">double</span> <span class="token function">f</span><span class="token punctuation">(</span><span class="token keyword">double</span> x<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+   <span class="token keyword">int</span> my_rank<span class="token punctuation">,</span> comm_sz<span class="token punctuation">,</span> n<span class="token punctuation">,</span> local_n<span class="token punctuation">;</span>
+   <span class="token keyword">double</span> a<span class="token punctuation">,</span> b<span class="token punctuation">,</span> h<span class="token punctuation">,</span> local_a<span class="token punctuation">,</span> local_b<span class="token punctuation">;</span>
+   <span class="token keyword">double</span> local_int<span class="token punctuation">,</span> total_int<span class="token punctuation">;</span>
+
+   <span class="token comment" spellcheck="true">/* Let the system do what it needs to start up MPI */</span>
+   <span class="token function">MPI_Init</span><span class="token punctuation">(</span><span class="token constant">NULL</span><span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   <span class="token comment" spellcheck="true">/* Get my process rank */</span>
+   <span class="token function">MPI_Comm_rank</span><span class="token punctuation">(</span>MPI_COMM_WORLD<span class="token punctuation">,</span> <span class="token operator">&amp;</span>my_rank<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   <span class="token comment" spellcheck="true">/* Find out how many processes are being used */</span>
+   <span class="token function">MPI_Comm_size</span><span class="token punctuation">(</span>MPI_COMM_WORLD<span class="token punctuation">,</span> <span class="token operator">&amp;</span>comm_sz<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   <span class="token function">Get_input</span><span class="token punctuation">(</span>my_rank<span class="token punctuation">,</span> comm_sz<span class="token punctuation">,</span> <span class="token operator">&amp;</span>a<span class="token punctuation">,</span> <span class="token operator">&amp;</span>b<span class="token punctuation">,</span> <span class="token operator">&amp;</span>n<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   h <span class="token operator">=</span> <span class="token punctuation">(</span>b<span class="token operator">-</span>a<span class="token punctuation">)</span><span class="token operator">/</span>n<span class="token punctuation">;</span>          <span class="token comment" spellcheck="true">/* h is the same for all processes */</span>
+   local_n <span class="token operator">=</span> n<span class="token operator">/</span>comm_sz<span class="token punctuation">;</span>  <span class="token comment" spellcheck="true">/* So is the number of trapezoids  */</span>
+
+   <span class="token comment" spellcheck="true">/* Length of each process' interval of
+    * integration = local_n*h.  So my interval
+    * starts at: */</span>
+   local_a <span class="token operator">=</span> a <span class="token operator">+</span> my_rank<span class="token operator">*</span>local_n<span class="token operator">*</span>h<span class="token punctuation">;</span>
+   local_b <span class="token operator">=</span> local_a <span class="token operator">+</span> local_n<span class="token operator">*</span>h<span class="token punctuation">;</span>
+   local_int <span class="token operator">=</span> <span class="token function">Trap</span><span class="token punctuation">(</span>local_a<span class="token punctuation">,</span> local_b<span class="token punctuation">,</span> local_n<span class="token punctuation">,</span> h<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   <span class="token comment" spellcheck="true">/* Add up the integrals calculated by each process */</span>
+   <span class="token function">MPI_Reduce</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>local_int<span class="token punctuation">,</span> <span class="token operator">&amp;</span>total_int<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> MPI_DOUBLE<span class="token punctuation">,</span> MPI_SUM<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span>
+         MPI_COMM_WORLD<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   <span class="token comment" spellcheck="true">/* Print the result */</span>
+   <span class="token keyword">if</span> <span class="token punctuation">(</span>my_rank <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"With n = %d trapezoids, our estimate\n"</span><span class="token punctuation">,</span> n<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"of the integral from %f to %f = %.15e\n"</span><span class="token punctuation">,</span>
+          a<span class="token punctuation">,</span> b<span class="token punctuation">,</span> total_int<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token punctuation">}</span>
+
+   <span class="token comment" spellcheck="true">/* Shut down MPI */</span>
+   <span class="token function">MPI_Finalize</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span> <span class="token comment" spellcheck="true">/*  main  */</span>
+
+<span class="token comment" spellcheck="true">/*------------------------------------------------------------------
+ * Function:     Get_input
+ * Purpose:      Get the user input:  the left and right endpoints
+ *               and the number of trapezoids
+ * Input args:   my_rank:  process rank in MPI_COMM_WORLD
+ *               comm_sz:  number of processes in MPI_COMM_WORLD
+ * Output args:  a_p:  pointer to left endpoint
+ *               b_p:  pointer to right endpoint
+ *               n_p:  pointer to number of trapezoids
+ */</span>
+<span class="token keyword">void</span> <span class="token function">Get_input</span><span class="token punctuation">(</span><span class="token keyword">int</span> my_rank<span class="token punctuation">,</span> <span class="token keyword">int</span> comm_sz<span class="token punctuation">,</span> <span class="token keyword">double</span><span class="token operator">*</span> a_p<span class="token punctuation">,</span> <span class="token keyword">double</span><span class="token operator">*</span> b_p<span class="token punctuation">,</span>
+      <span class="token keyword">int</span><span class="token operator">*</span> n_p<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+
+   <span class="token keyword">if</span> <span class="token punctuation">(</span>my_rank <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Enter a, b, and n\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">scanf</span><span class="token punctuation">(</span><span class="token string">"%lf %lf %d"</span><span class="token punctuation">,</span> a_p<span class="token punctuation">,</span> b_p<span class="token punctuation">,</span> n_p<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token punctuation">}</span>
+   <span class="token function">MPI_Bcast</span><span class="token punctuation">(</span>a_p<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> MPI_DOUBLE<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> MPI_COMM_WORLD<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token function">MPI_Bcast</span><span class="token punctuation">(</span>b_p<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> MPI_DOUBLE<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> MPI_COMM_WORLD<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token function">MPI_Bcast</span><span class="token punctuation">(</span>n_p<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> MPI_INT<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> MPI_COMM_WORLD<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>  <span class="token comment" spellcheck="true">/* Get_input */</span>
+
+<span class="token comment" spellcheck="true">/*------------------------------------------------------------------
+ * Function:     Trap
+ * Purpose:      Serial function for estimating a definite integral
+ *               using the trapezoidal rule
+ * Input args:   left_endpt
+ *               right_endpt
+ *               trap_count
+ *               base_len
+ * Return val:   Trapezoidal rule estimate of integral from
+ *               left_endpt to right_endpt using trap_count
+ *               trapezoids
+ */</span>
+<span class="token keyword">double</span> <span class="token function">Trap</span><span class="token punctuation">(</span>
+      <span class="token keyword">double</span> left_endpt  <span class="token comment" spellcheck="true">/* in */</span><span class="token punctuation">,</span>
+      <span class="token keyword">double</span> right_endpt <span class="token comment" spellcheck="true">/* in */</span><span class="token punctuation">,</span>
+      <span class="token keyword">int</span>    trap_count  <span class="token comment" spellcheck="true">/* in */</span><span class="token punctuation">,</span>
+      <span class="token keyword">double</span> base_len    <span class="token comment" spellcheck="true">/* in */</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+   <span class="token keyword">double</span> estimate<span class="token punctuation">,</span> x<span class="token punctuation">;</span>
+   <span class="token keyword">int</span> i<span class="token punctuation">;</span>
+
+   estimate <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token function">f</span><span class="token punctuation">(</span>left_endpt<span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token function">f</span><span class="token punctuation">(</span>right_endpt<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token operator">/</span><span class="token number">2.0</span><span class="token punctuation">;</span>
+   <span class="token keyword">for</span> <span class="token punctuation">(</span>i <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span> i <span class="token operator">&lt;=</span> trap_count<span class="token number">-1</span><span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      x <span class="token operator">=</span> left_endpt <span class="token operator">+</span> i<span class="token operator">*</span>base_len<span class="token punctuation">;</span>
+      estimate <span class="token operator">+</span><span class="token operator">=</span> <span class="token function">f</span><span class="token punctuation">(</span>x<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token punctuation">}</span>
+   estimate <span class="token operator">=</span> estimate<span class="token operator">*</span>base_len<span class="token punctuation">;</span>
+
+   <span class="token keyword">return</span> estimate<span class="token punctuation">;</span>
+<span class="token punctuation">}</span> <span class="token comment" spellcheck="true">/*  Trap  */</span>
+
+
+<span class="token comment" spellcheck="true">/*------------------------------------------------------------------
+ * Function:    f
+ * Purpose:     Compute value of function to be integrated
+ * Input args:  x
+ */</span>
+<span class="token keyword">double</span> <span class="token function">f</span><span class="token punctuation">(</span><span class="token keyword">double</span> x<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+   <span class="token keyword">return</span> x<span class="token operator">*</span>x<span class="token punctuation">;</span>
+<span class="token punctuation">}</span> <span class="token comment" spellcheck="true">/* f */</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>本章主要介绍了如何使用MPI库进行简单的并行算法计算，限于篇幅较多，还有很多练习题，所以分开做笔记，下一个笔记还有一些方法没有学到，记录以后，还有练习题需要完成。</p>
+
+</article>
+    
+    
+
+</div>
+<div class="trm-post-next-prev row">
+    <div class="col-lg-12">
+        <!-- title -->
+        <h5 class="trm-title-with-divider">
+            其他文章
+            <span data-number="02"></span>
+        </h5>
+    </div>
+    
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/05/17/PyCuda%E7%AC%94%E8%AE%B0%E4%B8%80/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" #.">
+                    未分类
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/05/17/PyCuda%E7%AC%94%E8%AE%B0%E4%B8%80/" class="trm-anima-link">
+                    PyCuda笔记一
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/05/17</li>
+                <li>12:10</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+</div>
+
+    
+
+
+
+                    <div class="trm-divider footer-divider"></div>
+
+                    <!-- footer -->
+                    <footer class="trm-scroll-animation">
+
+    
+
+    
+
+    
+        <div class="trm-footer-item">
+            <span>
+                由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v7.0.0
+            </span>
+            <span class="footer-separator" data-separator=" | "></span>
+            <span> 
+                主题 - 
+                <a rel="noopener" href='https://github.com/MaLuns/hexo-theme-async' target='_blank'>Async</a>
+                v2.1.8
+            </span>
+        </div>
+      
+
+     
+
+     
+</footer>
+ 
+                    <!-- footer end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- body end -->
+
+            
+
+            
+<div class="trm-fixed-container">
+    
+    
+        <div class="trm-fixed-btn" data-title="阅读模式" onclick="asyncFun.switchReadMode()">
+            <i class="iconfont fas fa-book-reader"></i>
+        </div>
+    
+    
+    <div id="trm-back-top" class="trm-fixed-btn" data-title="回到顶部">
+        <i class="iconfont fas fa-arrow-up"></i>
+    </div>
+</div>
+        </div>
+      </div>
+      <!-- scroll container end -->
+  </div>
+  <!-- app wrapper end -->
+
+  
+  <!-- Plugin -->
+
+
+
+
+    
+    
+<script src="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+
+    
+
+    
+
+    
+
+    <!-- 数学公式 -->
+    
+
+    <!-- 评论插件 -->
+    
+        
+
+        
+    
+
+
+
+<!-- CDN -->
+
+
+    
+
+    
+
+    
+
+
+
+
+    <!-- Service Worker -->
+    
+    <!-- baidu push -->
+    
+
+
+<script id="async-script" src="/js/main.js?v=2.1.8"></script>
+
+</body>
+
+</html>
