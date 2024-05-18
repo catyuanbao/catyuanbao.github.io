@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="x5-fullscreen" content="true">
+<meta name="full-screen" content="yes">
+<meta name="theme-color" content="#317EFB" />
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
+<meta name="description" content="背景本文主要记录《Hands-On GPU Programming with Python and CUDA》一书中，第四章的内容，主要是介绍kernel, thread, block和grid，以及线程同步的相关知识。 SourceModule 函数SourceModule函数通常出现在NVIDIA CUDA编程中，特别是PyCUDA或类似的Python库中，用于处理CUDA内核编译和执行。So">
+<meta property="og:type" content="article">
+<meta property="og:title" content="PyCuda笔记二">
+<meta property="og:url" content="http://example.com/2024/05/19/PyCuda%E7%AC%94%E8%AE%B0%E4%BA%8C/index.html">
+<meta property="og:site_name" content="Cat YuanBao">
+<meta property="og:description" content="背景本文主要记录《Hands-On GPU Programming with Python and CUDA》一书中，第四章的内容，主要是介绍kernel, thread, block和grid，以及线程同步的相关知识。 SourceModule 函数SourceModule函数通常出现在NVIDIA CUDA编程中，特别是PyCUDA或类似的Python库中，用于处理CUDA内核编译和执行。So">
+<meta property="og:locale">
+<meta property="article:published_time" content="2024-05-18T17:34:45.000Z">
+<meta property="article:modified_time" content="2024-05-18T17:35:50.706Z">
+<meta property="article:author" content="橘猫元宝">
+<meta property="article:tag" content="cat">
+<meta name="twitter:card" content="summary">
+
+    <meta name="keywords" content="cat">
+
+
+<title >PyCuda笔记二</title>
+
+<!-- Favicon -->
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='16x16' ></link>
+
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='32x32' ></link>
+
+
+
+
+<!-- Plugin -->
+
+
+
+
+    
+<link rel="stylesheet" href="/css/plugins/bootstrap.row.css">
+
+    
+<link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.css">
+
+    
+    
+
+
+
+
+<!-- Icon -->
+
+    
+<link rel="stylesheet" href="/css/plugins/font-awesome.min.css">
+
+
+
+
+<!-- Variable -->
+<script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-05-19 01:35:50"};</script>
+
+<!-- Theme mode css -->
+<link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
+<script>
+    let defaultMode = ASYNC_CONFIG.theme.default !=='auto' ?  ASYNC_CONFIG.theme.default : (window.matchMedia("(prefers-color-scheme: light)").matches ? 'style-light' : 'style-dark')
+    let catchMode = localStorage.getItem('theme-mode') || defaultMode;
+    let type = catchMode === 'style-dark' ? 'add' : 'remove';
+    document.documentElement.classList[type]('dark')
+</script>
+
+<!-- CDN -->
+
+
+    
+    
+
+
+
+<!-- Site Analytics -->
+ 
+<meta name="generator" content="Hexo 7.0.0"><link rel="stylesheet" href="/css/prism.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+<body>
+
+  <!-- app wrapper -->
+  <div class="trm-app-frame">
+
+    <!-- page preloader -->
+    <div class="trm-preloader">
+    <div class="trm-holder">
+        <div class="preloader">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+    <!-- page preloader end -->
+
+    <!-- change mode preloader -->
+    <div class="trm-mode-swich-animation-frame">
+    <div class="trm-mode-swich-animation">
+        <i class="i-sun"><i class="iconfont far fa-sun"></i></i>
+        <div class="trm-horizon"></div>
+        <i class="i-moon"><i class="iconfont far fa-moon"></i></i>
+    </div>
+</div>
+    <!-- change mode preloader end -->
+
+      <!-- scroll container -->
+      <div id="trm-dynamic-content" class="trm-swup-animation">
+        <div id="trm-scroll-container" class="trm-scroll-container" style="opacity: 0">
+            <!-- top bar -->
+            <header class="trm-top-bar">
+	<div class="container">
+		<div class="trm-left-side">
+			<!-- logo -->
+<a href="/" class="trm-logo-frame trm-anima-link">
+    
+        <img alt="logo" src="/img/favicon.svg">
+    
+    
+        <div class="trm-logo-text">
+            元宝<span>橘猫</span>
+        </div>
+    
+</a>
+<!-- logo end -->
+		</div>
+		<div class="trm-right-side">
+			<!-- menu -->
+<div class="trm-menu">
+    <nav>
+        <ul>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/" target="">
+                    首页
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/archives/" target="">
+                    归档
+                </a>
+                
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+<!-- menu end -->
+			
+    <!-- mode switcher place -->
+    <div class="trm-mode-switcher-place">
+        <div class="trm-mode-switcher">
+            <i class="iconfont far fa-sun"></i>
+            <input class="tgl tgl-light" id="trm-swich" type="checkbox">
+            <label class="trm-swich" for="trm-swich"></label>
+            <i class="iconfont far fa-moon"></i>
+        </div>
+    </div>
+    <!-- mode switcher place end -->
+
+			
+		</div>
+		<div class="trm-menu-btn">
+			<span></span>
+		</div>
+	</div>
+</header>
+            <!-- top bar end -->
+
+            <!-- body -->
+            
+<div class="trm-content-start">
+    <!-- banner -->
+    <div class="trm-banner">
+    
+    <!-- banner cover -->
+    <img style="object-position:top;object-fit:cover;" alt="banner" class="trm-banner-cover" src="/img/banner.png">
+    <!-- banner cover end -->
+    
+
+    <!-- banner content -->
+    <div class="trm-banner-content trm-overlay">
+        <div class="container">
+            <div class="row">
+                
+                <div class="col-lg-4"></div>
+                
+                <div class="col-lg-8">
+
+                    <!-- banner title -->
+                    <div class="trm-banner-text ">
+                        <div class="trm-label trm-mb-20">
+                            NEWS LETTER
+                        </div>
+                        <h1 class="trm-mb-30 trm-hsmb-font">
+                            PyCuda笔记二
+                        </h1>
+
+                        
+                            <ul class="trm-breadcrumbs trm-label">
+                                <li>
+                                    <a href="/" class="trm-anima-link">Home</a>
+                                </li>
+                                <li>
+                                    <span>
+                                        2024
+                                    </span>
+                                </li>
+                            </ul>
+                        
+                    </div>
+                    <!-- banner title end -->
+
+                    <!-- scroll hint -->
+                    <span id="scroll-triger" class="trm-scroll-hint-frame">
+                        <div class="trm-scroll-hint"></div>
+                        <span class="trm-label">Scroll down</span>
+                    </span>
+                    <!-- scroll hint end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- banner content end -->
+</div>
+    <!-- banner end -->
+    <div class="container">
+        <div class="row">
+            
+                <div class="trm-page-sidebar col-lg-4 hidden-sm">
+                    <!-- main card -->
+                    <div class="trm-main-card-frame trm-sidebar">
+    <div class="trm-main-card"> 
+        <!-- card header -->
+<div class="trm-mc-header">
+    <div class="trm-avatar-frame trm-mb-20">
+        <img alt="Avatar" class="trm-avatar" src="/img/cat.jpg">
+    </div>
+    <h5 class="trm-name trm-mb-15">
+        橘猫元宝
+    </h5>
+    
+</div>
+<!-- card header end -->
+        <!-- sidebar social -->
+
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<div class="trm-social">
+    
+        <a href="https://github.com" title="Github" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-github"></i>
+        </a>
+    
+</div>
+
+<!-- sidebar social end -->
+        <!-- info -->
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<ul class="trm-table trm-mb-20">
+    
+        <li>
+            <div class="trm-label">
+                Residence:
+            </div>
+            <div class="trm-label trm-label-light">
+                Mars
+            </div>
+        </li>
+    
+</ul>
+<!-- info end -->
+
+        
+    </div>
+</div>
+                    <!-- main card end -->
+                </div>
+            
+            <div class="trm-page-content col-lg-8">
+                <div id="trm-content" class="trm-content">
+                    <div class="trm-post-info row hidden-sm">
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-calendar-alt trm-icon"></i><br>
+            05/19
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-clock trm-icon"></i><br>
+            01:34
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div id="post-author" class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-user trm-icon"></i><br>
+            橘猫元宝
+        </div>
+    </div>
+</div>
+<div class="trm-card ">
+    <article id="article-container" class="trm-publication">
+    <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>本文主要记录《Hands-On GPU Programming with Python and CUDA》一书中，第四章的内容，主要是介绍kernel, thread, block和grid，以及线程同步的相关知识。</p>
+<h3 id="SourceModule-函数"><a href="#SourceModule-函数" class="headerlink" title="SourceModule 函数"></a>SourceModule 函数</h3><pre class="line-numbers language-bash"><code class="language-bash">SourceModule函数通常出现在NVIDIA CUDA编程中，特别是PyCUDA或类似的Python库中，用于处理CUDA内核编译和执行。SourceModule从CUDA源代码中编译内核并准备其执行。它允许用户在Python中编写CUDA内核代码，并在运行时编译和调用这些内核。
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>简单实例，计算向量相加:</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>autoinit
+<span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>driver <span class="token keyword">as</span> cuda
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">from</span> pycuda<span class="token punctuation">.</span>compiler <span class="token keyword">import</span> SourceModule
+
+<span class="token comment" spellcheck="true"># CUDA内核代码 __global__ 是主机调用设备的方法的修饰词</span>
+mod <span class="token operator">=</span> SourceModule<span class="token punctuation">(</span><span class="token triple-quoted-string string">"""
+__global__ void add_arrays(float *a, float *b, float *c) {
+    int idx = threadIdx.x + blockDim.x * blockIdx.x;
+    c[idx] = a[idx] + b[idx];
+}
+"""</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 获取内核函数</span>
+add_arrays <span class="token operator">=</span> mod<span class="token punctuation">.</span>get_function<span class="token punctuation">(</span><span class="token string">"add_arrays"</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 定义数组大小</span>
+N <span class="token operator">=</span> <span class="token number">10</span>
+a <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span>N<span class="token punctuation">)</span><span class="token punctuation">.</span>astype<span class="token punctuation">(</span>np<span class="token punctuation">.</span>float32<span class="token punctuation">)</span>
+b <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span>N<span class="token punctuation">)</span><span class="token punctuation">.</span>astype<span class="token punctuation">(</span>np<span class="token punctuation">.</span>float32<span class="token punctuation">)</span>
+c <span class="token operator">=</span> np<span class="token punctuation">.</span>empty_like<span class="token punctuation">(</span>a<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 分配设备内存</span>
+a_gpu <span class="token operator">=</span> cuda<span class="token punctuation">.</span>mem_alloc<span class="token punctuation">(</span>a<span class="token punctuation">.</span>nbytes<span class="token punctuation">)</span>
+b_gpu <span class="token operator">=</span> cuda<span class="token punctuation">.</span>mem_alloc<span class="token punctuation">(</span>b<span class="token punctuation">.</span>nbytes<span class="token punctuation">)</span>
+c_gpu <span class="token operator">=</span> cuda<span class="token punctuation">.</span>mem_alloc<span class="token punctuation">(</span>c<span class="token punctuation">.</span>nbytes<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 将数据从主机传输到设备 host to device</span>
+cuda<span class="token punctuation">.</span>memcpy_htod<span class="token punctuation">(</span>a_gpu<span class="token punctuation">,</span> a<span class="token punctuation">)</span>
+cuda<span class="token punctuation">.</span>memcpy_htod<span class="token punctuation">(</span>b_gpu<span class="token punctuation">,</span> b<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 执行内核函数</span>
+block_size <span class="token operator">=</span> <span class="token number">256</span>  <span class="token comment" spellcheck="true"># block的大小</span>
+grid_size <span class="token operator">=</span> <span class="token punctuation">(</span>N <span class="token operator">+</span> block_size <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">//</span> block_size
+add_arrays<span class="token punctuation">(</span>a_gpu<span class="token punctuation">,</span> b_gpu<span class="token punctuation">,</span> c_gpu<span class="token punctuation">,</span> block<span class="token operator">=</span><span class="token punctuation">(</span>block_size<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span> grid<span class="token operator">=</span><span class="token punctuation">(</span>grid_size<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 将结果从设备传输回主机 device to host</span>
+cuda<span class="token punctuation">.</span>memcpy_dtoh<span class="token punctuation">(</span>c<span class="token punctuation">,</span> c_gpu<span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Array a:"</span><span class="token punctuation">,</span> a<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Array b:"</span><span class="token punctuation">,</span> b<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Array c (result):"</span><span class="token punctuation">,</span> c<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>书中实例，计算矩阵乘以一个数字:</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>autoinit
+<span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>driver <span class="token keyword">as</span> drv
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">from</span> pycuda <span class="token keyword">import</span> gpuarray
+<span class="token keyword">from</span> pycuda<span class="token punctuation">.</span>compiler <span class="token keyword">import</span> SourceModule
+
+ker <span class="token operator">=</span> SourceModule<span class="token punctuation">(</span><span class="token triple-quoted-string string">"""
+__global__ void scalar_multiply_kernel(float *outvec, float scalar, float *vec)
+{
+     int i = threadIdx.x;
+     outvec[i] = scalar*vec[i];
+}
+"""</span><span class="token punctuation">)</span>
+
+scalar_multiply_gpu <span class="token operator">=</span> ker<span class="token punctuation">.</span>get_function<span class="token punctuation">(</span><span class="token string">"scalar_multiply_kernel"</span><span class="token punctuation">)</span>
+
+testvec <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span><span class="token number">512</span><span class="token punctuation">)</span><span class="token punctuation">.</span>astype<span class="token punctuation">(</span>np<span class="token punctuation">.</span>float32<span class="token punctuation">)</span>
+testvec_gpu <span class="token operator">=</span> gpuarray<span class="token punctuation">.</span>to_gpu<span class="token punctuation">(</span>testvec<span class="token punctuation">)</span>
+outvec_gpu <span class="token operator">=</span> gpuarray<span class="token punctuation">.</span>empty_like<span class="token punctuation">(</span>testvec_gpu<span class="token punctuation">)</span>
+
+scalar_multiply_gpu<span class="token punctuation">(</span> outvec_gpu<span class="token punctuation">,</span> np<span class="token punctuation">.</span>float32<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">,</span> testvec_gpu<span class="token punctuation">,</span> block<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">512</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span> grid<span class="token operator">=</span>
+<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Does our kernel work correctly? : {}"</span><span class="token punctuation">.</span>format<span class="token punctuation">(</span>np<span class="token punctuation">.</span>allclose<span class="token punctuation">(</span>outvec_gpu<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">,</span> 
+<span class="token number">2</span><span class="token operator">*</span>testvec<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这段代码主要是计算向量乘以一个数字，返回乘以后的结果，使用512个线程，1个block，一个grid。</p>
+<h4 id="说明"><a href="#说明" class="headerlink" title="说明"></a>说明</h4><p>thread是GPU一个执行计算的序列，和CPU的线程类似，不过GPU也执行的线程更多。</p>
+<p>线程基本概念：</p>
+<ol>
+<li>每个线程执行CUDA内核函数中的一段代码。</li>
+<li>线程是CUDA并行计算的基本单位。</li>
+<li>线程在执行期间可以通过其线程索引<code>threadIdx</code>访问其他线程相关信息。</li>
+</ol>
+<p>blocks基本概念：</p>
+<ol>
+<li>线程被组织成块。</li>
+<li>每个块包含若干线程，块内线程可以通过共享内存进行协作。</li>
+<li>块在执行期间可以通过其块索引<code>blockIdx</code>访问其他块相关信息。</li>
+<li>每个块可以在一个SM（Streaming Multiprocessor）上独立执行，块与块之间相互独立。</li>
+</ol>
+<p>grids基本概念：</p>
+<ol>
+<li>块被组织成网格。</li>
+<li>网格定义了一个CUDA内核启动时的总计算范围。</li>
+<li>网格可以是1D、2D或3D的排列。</li>
+</ol>
+<p>线程块和索引的块：</p>
+<p>每个线程和块都有唯一的索引，这些索引用于计算线程在数据处理中的位置。索引可以是1D、2D或3D的。</p>
+<ul>
+<li><strong>线程索引</strong>：<code>threadIdx.x</code>, <code>threadIdx.y</code>, <code>threadIdx.z</code></li>
+<li><strong>块索引</strong>：<code>blockIdx.x</code>, <code>blockIdx.y</code>, <code>blockIdx.z</code></li>
+<li><strong>块的维度</strong>：<code>blockDim.x</code>, <code>blockDim.y</code>, <code>blockDim.z</code></li>
+<li><strong>网格的维度</strong>：<code>gridDim.x</code>, <code>gridDim.y</code>, <code>gridDim.z</code></li>
+</ul>
+<p>索引计算实例：</p>
+<p>假设我们有一个1D网格，每个块包含256个线程，并且网格有1000个块，如何计算线程的索引：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">int</span> idx <span class="token operator">=</span> threadIdx<span class="token punctuation">.</span>x <span class="token operator">+</span> blockIdx<span class="token punctuation">.</span>x <span class="token operator">*</span> blockDim<span class="token punctuation">.</span>x<span class="token punctuation">;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<ul>
+<li><code>threadIdx.x</code>：线程在块内的索引。</li>
+<li><code>blockIdx.x</code>：块在网格中的索引。</li>
+<li><code>blockDim.x</code>：每个块内线程的数量。</li>
+</ul>
+<p>在CPU多线程中，可以使用thread_self获取一个线程ID，GPU中需要计算，算法如下：</p>
+<p>在CUDA编程中，线程的全局ID通常是通过结合线程在块内的局部ID和块在网格内的全局ID来计算的。这使得每个线程能够唯一地标识它自己，并处理相应的数据。</p>
+<p>对于一维情况，全局ID的计算公式为：</p>
+<pre class="line-numbers language-c"><code class="language-c">global_id<span class="token operator">=</span>blockIdx<span class="token punctuation">.</span>x <span class="token operator">*</span> blockDim<span class="token punctuation">.</span>x <span class="token operator">+</span> threadIdx<span class="token punctuation">.</span>x
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>对于二维的情况:</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">int</span> global_id_x <span class="token operator">=</span> blockIdx<span class="token punctuation">.</span>x <span class="token operator">*</span> blockDim<span class="token punctuation">.</span>x <span class="token operator">+</span> threadIdx<span class="token punctuation">.</span>x<span class="token punctuation">;</span>
+<span class="token keyword">int</span> global_id_y <span class="token operator">=</span> blockIdx<span class="token punctuation">.</span>y <span class="token operator">*</span> blockDim<span class="token punctuation">.</span>y <span class="token operator">+</span> threadIdx<span class="token punctuation">.</span>y<span class="token punctuation">;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>对于三维的情况：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">int</span> global_id_x <span class="token operator">=</span> blockIdx<span class="token punctuation">.</span>x <span class="token operator">*</span> blockDim<span class="token punctuation">.</span>x <span class="token operator">+</span> threadIdx<span class="token punctuation">.</span>x<span class="token punctuation">;</span>
+<span class="token keyword">int</span> global_id_y <span class="token operator">=</span> blockIdx<span class="token punctuation">.</span>y <span class="token operator">*</span> blockDim<span class="token punctuation">.</span>y <span class="token operator">+</span> threadIdx<span class="token punctuation">.</span>y<span class="token punctuation">;</span>
+<span class="token keyword">int</span> global_id_z <span class="token operator">=</span> blockIdx<span class="token punctuation">.</span>z <span class="token operator">*</span> blockDim<span class="token punctuation">.</span>z <span class="token operator">+</span> threadIdx<span class="token punctuation">.</span>z<span class="token punctuation">;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<h4 id="线程索引是什么意思，为啥需要3维，而不是更多？"><a href="#线程索引是什么意思，为啥需要3维，而不是更多？" class="headerlink" title="线程索引是什么意思，为啥需要3维，而不是更多？"></a>线程索引是什么意思，为啥需要3维，而不是更多？</h4><p>线程索引是指每个线程在其块内的唯一标识符。CUDA编程模型允许使用三维索引来组织线程和块，以便更直观地处理高维数据，如图像、体数据等。三维索引的使用是出于实际应用的需要和GPU硬件的设计。</p>
+<p>以下是一个处理三维数据的CUDA内核示例，有点类似于把C语言的多维数组给平铺开，找到平铺后的索引。</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>autoinit
+<span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>driver <span class="token keyword">as</span> cuda
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">from</span> pycuda<span class="token punctuation">.</span>compiler <span class="token keyword">import</span> SourceModule
+
+<span class="token comment" spellcheck="true"># CUDA kernel code to process 3D data</span>
+kernel_code <span class="token operator">=</span> <span class="token triple-quoted-string string">"""
+__global__ void process_3d_data(float *data, int width, int height, int depth) {
+    int x = threadIdx.x + blockIdx.x * blockDim.x;
+    int y = threadIdx.y + blockIdx.y * blockDim.y;
+    int z = threadIdx.z + blockIdx.z * blockDim.z;
+    int idx = x + y * width + z * width * height;
+
+    if (x &lt; width &amp;&amp; y &lt; height &amp;&amp; z &lt; depth) {
+        data[idx] *= 2.0;  // Example operation
+    }
+}
+"""</span>
+
+<span class="token comment" spellcheck="true"># Compile the kernel code</span>
+mod <span class="token operator">=</span> SourceModule<span class="token punctuation">(</span>kernel_code<span class="token punctuation">)</span>
+process_3d_data <span class="token operator">=</span> mod<span class="token punctuation">.</span>get_function<span class="token punctuation">(</span><span class="token string">"process_3d_data"</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># Define 3D data dimensions</span>
+width<span class="token punctuation">,</span> height<span class="token punctuation">,</span> depth <span class="token operator">=</span> <span class="token number">32</span><span class="token punctuation">,</span> <span class="token number">32</span><span class="token punctuation">,</span> <span class="token number">32</span>
+N <span class="token operator">=</span> width <span class="token operator">*</span> height <span class="token operator">*</span> depth
+
+<span class="token comment" spellcheck="true"># Create and initialize 3D data</span>
+data <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span>N<span class="token punctuation">)</span><span class="token punctuation">.</span>astype<span class="token punctuation">(</span>np<span class="token punctuation">.</span>float32<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># Allocate device memory and transfer data to the GPU</span>
+data_gpu <span class="token operator">=</span> cuda<span class="token punctuation">.</span>mem_alloc<span class="token punctuation">(</span>data<span class="token punctuation">.</span>nbytes<span class="token punctuation">)</span>
+cuda<span class="token punctuation">.</span>memcpy_htod<span class="token punctuation">(</span>data_gpu<span class="token punctuation">,</span> data<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># Define block size and grid size</span>
+block_size <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token number">8</span><span class="token punctuation">,</span> <span class="token number">8</span><span class="token punctuation">,</span> <span class="token number">8</span><span class="token punctuation">)</span>
+grid_size <span class="token operator">=</span> <span class="token punctuation">(</span>width <span class="token operator">//</span> block_size<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> height <span class="token operator">//</span> block_size<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> depth <span class="token operator">//</span> block_size<span class="token punctuation">[</span><span class="token number">2</span>
+<span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># Launch the kernel</span>
+process_3d_data<span class="token punctuation">(</span>data_gpu<span class="token punctuation">,</span> np<span class="token punctuation">.</span>int32<span class="token punctuation">(</span>width<span class="token punctuation">)</span><span class="token punctuation">,</span> np<span class="token punctuation">.</span>int32<span class="token punctuation">(</span>height<span class="token punctuation">)</span><span class="token punctuation">,</span> np<span class="token punctuation">.</span>int32<span class="token punctuation">(</span>depth<span class="token punctuation">)</span><span class="token punctuation">,</span> block
+<span class="token operator">=</span>block_size<span class="token punctuation">,</span> grid<span class="token operator">=</span>grid_size<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># Copy the result back to the host</span>
+cuda<span class="token punctuation">.</span>memcpy_dtoh<span class="token punctuation">(</span>data<span class="token punctuation">,</span> data_gpu<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># Verify the result (just print the shape here for simplicity)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Processed 3D data shape:"</span><span class="token punctuation">,</span> data<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>突然想到这个问题：原来cuda设计的灵感其实是来源于显卡的实际用途，三维图形图像的构建。</p>
+<h4 id="cuda的分层设计哲学是从显卡实际的用途得到的启发嘛？通过多维的角度对资源进行划分？"><a href="#cuda的分层设计哲学是从显卡实际的用途得到的启发嘛？通过多维的角度对资源进行划分？" class="headerlink" title="cuda的分层设计哲学是从显卡实际的用途得到的启发嘛？通过多维的角度对资源进行划分？"></a>cuda的分层设计哲学是从显卡实际的用途得到的启发嘛？通过多维的角度对资源进行划分？</h4><pre class="line-numbers language-bash"><code class="language-bash">CUDA的分层设计哲学确实受到了显卡实际用途的启发，并且通过多维的角度对资源进行划分。这种设计哲学主要体现在CUDA的硬件架构和编程模型中：
+
+    硬件架构：
+        NVIDIA的GPU设计旨在支持大规模的并行计算，同时满足图形渲染和通用计算的需求。
+        GPU的硬件架构包括多个流多处理器（Streaming Multiprocessor, SM），每个SM包含多个CUDA核心（CUDA Core）。
+        这种分层设计允许GPU同时执行多个线程块，并利用CUDA核心在每个线程块中进行并行计算，从而实现高效的并行计算能力。
+
+    编程模型：
+        CUDA的编程模型也采用了分层设计，包括线程、线程块和网格等概念。
+        每个线程块中的线程可以协同工作，并共享共享内存等资源，而不同线程块之间可以独立执行，并通过全局内存进行通信。
+        通过多维的角度对资源进行划分，例如在二维或三维的网格中组织线程块，可以更好地利用GPU的并行计算能力，提高计算效率。
+
+这种分层设计哲学使得CUDA可以灵活地适应各种计算需求，并充分利用GPU的并行计算能力。通过将硬件架构和编程模型相结合，CUDA能够提供高性能和高效的并行计算解决方案，广泛应用于科学计算、深度学习、图形渲染等领域。
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="这种设计哲学还有什么其他案例？通过对一个物品实际用途得到的启发？"><a href="#这种设计哲学还有什么其他案例？通过对一个物品实际用途得到的启发？" class="headerlink" title="这种设计哲学还有什么其他案例？通过对一个物品实际用途得到的启发？"></a>这种设计哲学还有什么其他案例？通过对一个物品实际用途得到的启发？</h4><pre class="line-numbers language-bash"><code class="language-bash">1. TCP/IP 网络协议栈
+
+    设计启发：通过解决数据通信中的复杂性和层次化管理需求。
+    分层结构：TCP/IP协议栈分为四层：链路层、网络层、传输层和应用层。
+        链路层：负责在物理网络上发送和接收数据帧。
+        网络层：负责路由和逻辑寻址（如IP地址）。
+        传输层：提供端到端通信（如TCP、UDP）。
+        应用层：提供应用程序接口（如HTTP、FTP）。
+    多维划分：每层有特定的职责和功能，可以独立开发和优化，同时确保整体系统的协同工作。
+
+2. 现代操作系统
+
+    设计启发：管理计算资源，确保系统稳定、高效地运行。
+    分层结构：
+        硬件层：物理设备和硬件资源。
+        内核层：资源管理、进程调度、内存管理等。
+        系统调用接口层：用户程序与内核的交互接口。
+        用户层：用户应用程序和系统服务。
+    多维划分：操作系统按功能和责任划分为多个层次，每一层处理不同的任务，提供抽象和保护机制。
+
+3. 数据库管理系统（DBMS）
+
+    设计启发：高效存储、检索和管理大量数据。
+    分层结构：
+        存储管理层：负责数据存储、文件组织和磁盘管理。
+        缓冲管理层：缓存策略和数据读写优化。
+        查询处理和优化层：解析SQL查询，生成执行计划。
+        事务管理层：提供事务的ACID特性（原子性、一致性、隔离性和持久性）。
+    多维划分：不同的层次处理不同的数据管理任务，确保数据的高效访问和一致性维护。
+
+4. 分布式系统
+
+    设计启发：管理分布在不同物理位置的资源，实现高可用性和扩展性。
+    分层结构：
+        应用层：具体的应用程序和服务。
+        中间件层：提供分布式计算的抽象，如消息传递、负载均衡等。
+        节点层：物理或虚拟机节点，负责具体的计算和存储任务。
+    多维划分：不同层次负责不同的任务，通过标准化接口和协议实现系统整体的协同工作。
+
+5. 软件工程中的设计模式
+
+    设计启发：解决特定软件设计问题，提高代码的可维护性和可扩展性。
+    分层结构：设计模式如MVC（Model-View-Controller）：
+        Model：负责数据和业务逻辑。
+        View：负责数据显示和用户交互。
+        Controller：协调Model和View之间的交互。
+    多维划分：每个组件独立处理特定任务，通过清晰的接口和协议协同工作。
+
+6. 计算机图形学
+
+    设计启发：高效地生成和处理图像和动画。
+    分层结构：
+        几何处理层：处理几何形状和模型。
+        光栅化层：将几何形状转换为像素数据。
+        着色层：计算像素颜色，应用光照和纹理。
+    多维划分：每个层次负责不同的图形处理任务，通过流水线方式高效生成图像。
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>大概往后面翻一下这本书，后面基本就是一个线程同步，stream和event了，对于cuda的API讲解，并没有特别多，于是又发出一个提问：</p>
+<h4 id="cuda从API的多样性而言，并没有太多复杂的东西，底层的架构设计和优化比较复杂，你是否认同？"><a href="#cuda从API的多样性而言，并没有太多复杂的东西，底层的架构设计和优化比较复杂，你是否认同？" class="headerlink" title="cuda从API的多样性而言，并没有太多复杂的东西，底层的架构设计和优化比较复杂，你是否认同？"></a>cuda从API的多样性而言，并没有太多复杂的东西，底层的架构设计和优化比较复杂，你是否认同？</h4><pre class="line-numbers language-bash"><code class="language-bash">是的，我认同这一点。CUDA从API的多样性而言，确实相对简洁，不会太复杂。开发者主要使用的API涵盖了基本的内存管理、核函数启动、线程同步等操作。然而，CUDA编程的复杂性更多体现在底层架构设计和性能优化上。这包括理解和利用GPU的硬件特性，以及针对特定应用进行优化。以下是一些具体方面：
+
+1. GPU架构理解
+
+    多线程并行计算：CUDA编程模型基于大量线程的并行计算，理解线程、线程块和网格的关系是基础。
+    SM（Streaming Multiprocessor）：了解流多处理器（SM）的结构，每个SM中的核心、寄存器、共享内存等资源分配情况。
+    内存层次结构：GPU有多种类型的内存，包括全局内存、共享内存、常量内存、纹理内存等，理解这些内存的性能特征和访问模式对性能优化非常关键。
+
+2. 性能优化技术
+
+    内存访问模式：优化内存访问以避免内存带宽瓶颈，包括内存对齐、合并访问（coalesced access）、使用共享内存等。
+    指令级并行：通过避免分支和减少指令依赖来提高指令级并行性。
+    占用率优化：最大化线程块的占用率（occupancy），即确保有足够多的活动线程块以充分利用GPU资源。
+    延迟隐藏：利用线程并行性和指令并行性来隐藏内存访问和其他操作的延迟。
+
+3. 核函数设计
+
+    线程分配：合理设计核函数中的线程分配，以确保每个线程块中的线程工作量均衡。
+    共享内存使用：在核函数中使用共享内存以提高数据访问速度，但需要注意共享内存的大小和访问冲突（bank conflicts）。
+
+4. 并行算法设计
+
+    分块算法：将计算任务分成适合并行处理的块，每个线程块处理一个或多个数据块。
+    递归分割：对于一些递归问题，设计并行算法来分割和处理子问题，例如并行归并排序。
+    数据划分：将大数据集划分为小块并行处理，特别是在多GPU系统中，数据划分和任务分配尤为重要。
+
+5. 调试和性能分析
+
+    调试工具：使用CUDA-GDB进行调试，检测和修复并行程序中的错误。
+    性能分析工具：使用nvprof、Nsight Compute等性能分析工具检测程序中的性能瓶颈，分析内存带宽使用、核函数执行效率等。
+
+6. 混合编程模型
+
+    与MPI结合：在多节点环境中，结合MPI进行分布式并行计算。
+    与OpenMP结合：在CPU和GPU协同计算中，结合OpenMP优化CPU端的并行计算。
+
+总的来说，CUDA的API相对简洁，提供了核心功能和基础操作。但实际应用中，复杂性主要来自于如何高效利用底层硬件资源、设计并行算法以及进行性能优化。这些方面需要深入理解GPU的工作原理和并行计算的基本原理，以及不断进行实验和调试来优化程序性能。
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="康威生命游戏"><a href="#康威生命游戏" class="headerlink" title="康威生命游戏"></a>康威生命游戏</h3><p>在一个二维的矩阵里面的简单算法，规则如下：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">1.每个细胞有两种状态 - 存活或死亡，每个细胞与以自身为中心的周围八格细胞产生互动
+2.当前细胞为存活状态时，当周围的存活细胞低于2个时（不包含2个），该细胞变成死亡状态。（模拟生命数量稀少）
+3.当前细胞为存活状态时，当周围有2个或3个存活细胞时，该细胞保持原样。
+4.当前细胞为存活状态时，当周围有超过3个存活细胞时，该细胞变成死亡状态。（模拟生命数量过多）
+5.当前细胞为死亡状态时，当周围有3个存活细胞时，该细胞变成存活状态。（模拟繁殖）
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>实例代码如下：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>autoinit
+<span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>driver <span class="token keyword">as</span> drv
+<span class="token keyword">from</span> pycuda <span class="token keyword">import</span> gpuarray
+<span class="token keyword">from</span> pycuda<span class="token punctuation">.</span>compiler <span class="token keyword">import</span> SourceModule
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">import</span> matplotlib<span class="token punctuation">.</span>pyplot <span class="token keyword">as</span> plt 
+<span class="token keyword">import</span> matplotlib<span class="token punctuation">.</span>animation <span class="token keyword">as</span> animation
+
+ker <span class="token operator">=</span> SourceModule<span class="token punctuation">(</span><span class="token triple-quoted-string string">"""
+#define _X  ( threadIdx.x + blockIdx.x * blockDim.x )
+#define _Y  ( threadIdx.y + blockIdx.y * blockDim.y )
+
+#define _WIDTH  ( blockDim.x * gridDim.x )
+#define _HEIGHT ( blockDim.y * gridDim.y  )
+
+#define _XM(x)  ( (x + _WIDTH) % _WIDTH )
+#define _YM(y)  ( (y + _HEIGHT) % _HEIGHT )
+
+#define _INDEX(x,y)  ( _XM(x)  + _YM(y) * _WIDTH )
+
+// return the number of living neighbors for a given cell                
+__device__ int nbrs(int x, int y, int * in)
+{
+     return ( in[ _INDEX(x -1, y+1) ] + in[ _INDEX(x-1, y) ] + in[ _INDEX(x-1, y-1)
+ ] \
+                   + in[ _INDEX(x, y+1)] + in[_INDEX(x, y - 1)] \
+                   + in[ _INDEX(x+1, y+1) ] + in[ _INDEX(x+1, y) ] + in[ _INDEX(x+1
+, y-1) ] );
+}
+
+__global__ void conway_ker(int * lattice_out, int * lattice  )
+{
+   // x, y are the appropriate values for the cell covered by this thread
+   int x = _X, y = _Y;
+   
+   // count the number of neighbors around the current cell
+   int n = nbrs(x, y, lattice);
+                   
+    
+    // if the current cell is alive, then determine if it lives or dies for the nex
+t generation.
+    if ( lattice[_INDEX(x,y)] == 1)
+       switch(n)
+       {
+          // if the cell is alive: it remains alive only if it has 2 or 3 neighbors
+.
+          case 2:
+          case 3: lattice_out[_INDEX(x,y)] = 1;
+                  break;
+          default: lattice_out[_INDEX(x,y)] = 0;                   
+       }
+    else if( lattice[_INDEX(x,y)] == 0 )
+         switch(n)
+         {
+            // a dead cell comes to life only if it has 3 neighbors that are alive.
+            case 3: lattice_out[_INDEX(x,y)] = 1;
+                    break;
+            default: lattice_out[_INDEX(x,y)] = 0;         
+         }
+         
+}
+"""</span><span class="token punctuation">)</span>
+
+
+conway_ker <span class="token operator">=</span> ker<span class="token punctuation">.</span>get_function<span class="token punctuation">(</span><span class="token string">"conway_ker"</span><span class="token punctuation">)</span>
+     
+
+<span class="token keyword">def</span> <span class="token function">update_gpu</span><span class="token punctuation">(</span>frameNum<span class="token punctuation">,</span> img<span class="token punctuation">,</span> newLattice_gpu<span class="token punctuation">,</span> lattice_gpu<span class="token punctuation">,</span> N<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true"># Python3要改成// 不然报错类型错误</span>
+    conway_ker<span class="token punctuation">(</span>  newLattice_gpu<span class="token punctuation">,</span> lattice_gpu<span class="token punctuation">,</span> grid<span class="token operator">=</span><span class="token punctuation">(</span>N<span class="token operator">//</span><span class="token number">32</span><span class="token punctuation">,</span>N<span class="token operator">//</span><span class="token number">32</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span> block<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">32</span><span class="token punctuation">,</span><span class="token number">32</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span>
+   <span class="token punctuation">)</span>
+    
+    img<span class="token punctuation">.</span>set_data<span class="token punctuation">(</span>newLattice_gpu<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">)</span>
+    
+    
+    lattice_gpu<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">]</span> <span class="token operator">=</span> newLattice_gpu<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">]</span>
+    
+    <span class="token keyword">return</span> img
+    
+
+<span class="token keyword">if</span> __name__ <span class="token operator">==</span> <span class="token string">'__main__'</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true"># set lattice size</span>
+    N <span class="token operator">=</span> <span class="token number">128</span>
+    
+    lattice <span class="token operator">=</span> np<span class="token punctuation">.</span>int32<span class="token punctuation">(</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>choice<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> N<span class="token operator">*</span>N<span class="token punctuation">,</span> p<span class="token operator">=</span><span class="token punctuation">[</span><span class="token number">0.25</span><span class="token punctuation">,</span> <span class="token number">0.75</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">.</span>reshape<span class="token punctuation">(</span>N<span class="token punctuation">,</span> N<span class="token punctuation">)</span> 
+<span class="token punctuation">)</span>
+    lattice_gpu <span class="token operator">=</span> gpuarray<span class="token punctuation">.</span>to_gpu<span class="token punctuation">(</span>lattice<span class="token punctuation">)</span>
+    
+    newLattice_gpu <span class="token operator">=</span> gpuarray<span class="token punctuation">.</span>empty_like<span class="token punctuation">(</span>lattice_gpu<span class="token punctuation">)</span>        
+
+    fig<span class="token punctuation">,</span> ax <span class="token operator">=</span> plt<span class="token punctuation">.</span>subplots<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    img <span class="token operator">=</span> ax<span class="token punctuation">.</span>imshow<span class="token punctuation">(</span>lattice_gpu<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> interpolation<span class="token operator">=</span><span class="token string">'nearest'</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true"># 原书的参数有误，难以显示图片，这里改成100 100 50 </span>
+    ani <span class="token operator">=</span> animation<span class="token punctuation">.</span>FuncAnimation<span class="token punctuation">(</span>fig<span class="token punctuation">,</span> update_gpu<span class="token punctuation">,</span> fargs<span class="token operator">=</span><span class="token punctuation">(</span>img<span class="token punctuation">,</span> newLattice_gpu<span class="token punctuation">,</span> latt
+ice_gpu<span class="token punctuation">,</span> N<span class="token punctuation">,</span> <span class="token punctuation">)</span> <span class="token punctuation">,</span> interval<span class="token operator">=</span><span class="token number">100</span><span class="token punctuation">,</span> frames<span class="token operator">=</span><span class="token number">100</span><span class="token punctuation">,</span> save_count<span class="token operator">=</span><span class="token number">50</span><span class="token punctuation">)</span>    
+     
+    plt<span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>代码目前看就简单一点了，先定义了几个宏，用来计算点的坐标：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">define</span> _X  ( threadIdx.x + blockIdx.x * blockDim.x )</span>
+<span class="token macro property">#<span class="token directive keyword">define</span> _Y  ( threadIdx.y + blockIdx.y * blockDim.y )</span>
+
+<span class="token macro property">#<span class="token directive keyword">define</span> _WIDTH  ( blockDim.x * gridDim.x )</span>
+<span class="token macro property">#<span class="token directive keyword">define</span> _HEIGHT ( blockDim.y * gridDim.y  )</span>
+
+<span class="token macro property">#<span class="token directive keyword">define</span> _XM(x)  ( (x + _WIDTH) % _WIDTH )</span>
+<span class="token macro property">#<span class="token directive keyword">define</span> _YM(y)  ( (y + _HEIGHT) % _HEIGHT )</span>
+
+<span class="token macro property">#<span class="token directive keyword">define</span> _INDEX(x,y)  ( _XM(x)  + _YM(y) * _WIDTH )</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>二维坐标需要用threadIdx.x + blockIdx.x * blockDim.x 计算</p>
+<pre><code>在 CUDA 中，一个 block 最多可以包含 1024 个线程。这是由 CUDA 的硬件限制决定的，具体限制可能会因不同的 GPU 架构而有所不同，但在大多数现代 GPU 上，这个限制是 1024。
+</code></pre>
+<h4 id="参数计算问题"><a href="#参数计算问题" class="headerlink" title="参数计算问题"></a>参数计算问题</h4><p>conway_ker(  newLattice_gpu, lattice_gpu, grid&#x3D;(N&#x2F;&#x2F;32,N&#x2F;&#x2F;32,1), block&#x3D;(32,32,1))这个 grid和block个数是怎么计算出来的？有没有通用的计算原则？</p>
+<p>一些限制：</p>
+<ol>
+<li><strong>问题的规模</strong>：输入数据的总大小，即需要处理的元素数量。</li>
+<li><strong>线程和 block 的组织方式</strong>：CUDA 中的线程可以组织成一维、二维或三维的结构，block 也是如此。</li>
+<li><strong>硬件限制</strong>：每个 block 的最大线程数（通常是 1024），以及每个维度的最大 block 数（通常是 65535）。</li>
+</ol>
+<p>一些原则：</p>
+<ol>
+<li><strong>单个 block 的线程数尽量大，但不超过硬件限制</strong>：通常每个 block 设置为 1024 个线程是一个合理的选择，但具体取决于问题规模和并行计算需求。</li>
+<li><strong>充分利用 GPU 并行计算能力</strong>：通过合理设置 block 和 grid 的数量，确保每个线程都能有效执行。</li>
+</ol>
+<p>本实例计算方法：</p>
+<ol>
+<li><strong>选择合理的 block 大小</strong></li>
+</ol>
+<p>由于每个 block 最多可以包含 1024 个线程，我们可以选择将 block 大小设置为 <code>32 x 32</code>，这样每个 block 包含 1024 个线程。</p>
+<ol start="2">
+<li>计算grid大小</li>
+</ol>
+<p><code>grid</code> 的大小应该能覆盖整个 <code>N x N</code> 的 lattice。</p>
+<p>如果每个 block 是 <code>32 x 32</code> 的话，那么需要的 block 数量就是 <code>N // 32</code>。</p>
+<p>最后得到的参数：</p>
+<pre class="line-numbers language-python"><code class="language-python">conway_ker<span class="token punctuation">(</span>newLattice_gpu<span class="token punctuation">,</span> lattice_gpu<span class="token punctuation">,</span> grid<span class="token operator">=</span><span class="token punctuation">(</span>N<span class="token operator">//</span><span class="token number">32</span><span class="token punctuation">,</span> N<span class="token operator">//</span><span class="token number">32</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span> block<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">32</span><span class="token punctuation">,</span> <span class="token number">32</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h3 id="线程同步和通信"><a href="#线程同步和通信" class="headerlink" title="线程同步和通信"></a>线程同步和通信</h3><h4 id="使用-syncthreads-进行线程同步"><a href="#使用-syncthreads-进行线程同步" class="headerlink" title="使用__syncthreads 进行线程同步"></a>使用__syncthreads 进行线程同步</h4><p>只有同一个block里面的线程可以同步，不是所有grid里面的线程都可以同步的！</p>
+<p>类似多线程的互斥锁一样，__syncthreads的同步方法是一个锁级别的同步。</p>
+<p>还是以生命游戏为例：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>autoinit
+<span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>driver <span class="token keyword">as</span> drv
+<span class="token keyword">from</span> pycuda <span class="token keyword">import</span> gpuarray
+<span class="token keyword">from</span> pycuda<span class="token punctuation">.</span>compiler <span class="token keyword">import</span> SourceModule
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">import</span> matplotlib<span class="token punctuation">.</span>pyplot <span class="token keyword">as</span> plt 
+
+
+ker <span class="token operator">=</span> SourceModule<span class="token punctuation">(</span><span class="token triple-quoted-string string">"""
+#define _X  ( threadIdx.x + blockIdx.x * blockDim.x )
+#define _Y  ( threadIdx.y + blockIdx.y * blockDim.y )
+
+#define _WIDTH  ( blockDim.x * gridDim.x )
+#define _HEIGHT ( blockDim.y * gridDim.y  )
+
+#define _XM(x)  ( (x + _WIDTH) % _WIDTH )
+#define _YM(y)  ( (y + _HEIGHT) % _HEIGHT )
+
+#define _INDEX(x,y)  ( _XM(x)  + _YM(y) * _WIDTH )
+
+// return the number of living neighbors for a given cell        
+        
+__device__ int nbrs(int x, int y, int * in)
+{
+     return ( in[ _INDEX(x -1, y+1) ] + in[ _INDEX(x-1, y) ] + in
+[ _INDEX(x-1, y-1) ] \
+                   + in[ _INDEX(x, y+1)] + in[_INDEX(x, y - 1)] \
+                   + in[ _INDEX(x+1, y+1) ] + in[ _INDEX(x+1, y) 
+] + in[ _INDEX(x+1, y-1) ] );
+}
+
+__global__ void conway_ker(int * lattice, int iters)
+{
+   // x, y are the appropriate values for the cell covered by thi
+s thread
+   int x = _X, y = _Y;
+   
+   for (int i = 0; i &lt; iters; i++)
+   {
+   
+       // count the number of neighbors around the current cell
+       int n = nbrs(x, y, lattice);
+       
+       int cell_value;
+                       
+        
+        // if the current cell is alive, then determine if it liv
+es or dies for the next generation.
+        if ( lattice[_INDEX(x,y)] == 1)
+           switch(n)
+           {
+              // if the cell is alive: it remains alive only if i
+t has 2 or 3 neighbors.
+              case 2:
+              case 3: cell_value = 1;
+                      break;
+              default: cell_value = 0;                   
+           }
+        else if( lattice[_INDEX(x,y)] == 0 )
+             switch(n)
+             {
+                // a dead cell comes to life only if it has 3 nei
+ghbors that are alive.
+                case 3: cell_value = 1;
+                        break;
+                default: cell_value = 0;         
+             }
+        // 要更新临界区     
+        __syncthreads();
+        lattice[_INDEX(x,y)] = cell_value;
+        __syncthreads(); 
+    }
+         
+}
+"""</span><span class="token punctuation">)</span>
+
+
+conway_ker <span class="token operator">=</span> ker<span class="token punctuation">.</span>get_function<span class="token punctuation">(</span><span class="token string">"conway_ker"</span><span class="token punctuation">)</span>
+     
+
+    
+
+<span class="token keyword">if</span> __name__ <span class="token operator">==</span> <span class="token string">'__main__'</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true"># set lattice size</span>
+    N <span class="token operator">=</span> <span class="token number">32</span>
+    
+    lattice <span class="token operator">=</span> np<span class="token punctuation">.</span>int32<span class="token punctuation">(</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>choice<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> N<span class="token operator">*</span>N<span class="token punctuation">,</span> p<span class="token operator">=</span><span class="token punctuation">[</span><span class="token number">0.25</span><span class="token punctuation">,</span> <span class="token number">0.7</span>
+<span class="token number">5</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">.</span>reshape<span class="token punctuation">(</span>N<span class="token punctuation">,</span> N<span class="token punctuation">)</span> <span class="token punctuation">)</span>
+    lattice_gpu <span class="token operator">=</span> gpuarray<span class="token punctuation">.</span>to_gpu<span class="token punctuation">(</span>lattice<span class="token punctuation">)</span>
+    conway_ker<span class="token punctuation">(</span>lattice_gpu<span class="token punctuation">,</span> np<span class="token punctuation">.</span>int32<span class="token punctuation">(</span><span class="token number">100000</span><span class="token punctuation">)</span><span class="token punctuation">,</span> grid<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span> block
+<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">32</span><span class="token punctuation">,</span><span class="token number">32</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    fig <span class="token operator">=</span> plt<span class="token punctuation">.</span>figure<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>imshow<span class="token punctuation">(</span>lattice_gpu<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里主要关注数据同步的代码行：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">// 要更新临界区     
+        __syncthreads<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        lattice<span class="token punctuation">[</span>_INDEX<span class="token punctuation">(</span>x,y<span class="token punctuation">)</span><span class="token punctuation">]</span> <span class="token operator">=</span> cell_value<span class="token punctuation">;</span>
+        __syncthreads<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> 
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="为什么需要两个-syncthreads-语句？"><a href="#为什么需要两个-syncthreads-语句？" class="headerlink" title="为什么需要两个__syncthreads();语句？"></a>为什么需要两个__syncthreads();语句？</h4><ol>
+<li><p><strong>第一个 <code>__syncthreads()</code>：</strong> 这确保了所有线程在进行共享数据的更新（在这个例子中是 <code>lattice[_INDEX(x,y)] = cell_value;</code>）之前，都已经完成了之前的所有操作。它防止了一些线程还在执行前面的操作，而其他线程已经开始更新共享数据，从而可能导致不一致的数据状态。</p>
+</li>
+<li><p><strong>第二个 <code>__syncthreads()</code>：</strong> 这确保所有线程在更新共享数据之后，再进行任何进一步的操作。这意味着所有线程都完成了对 <code>lattice[_INDEX(x,y)]</code> 的更新，然后再继续执行接下来的代码。这可以防止一些线程在数据更新完成之前就开始使用这些数据，从而导致数据竞争或读取不完整的数据。</p>
+</li>
+<li><p>双重同步（即在更新共享数据前后的 <code>__syncthreads()</code>）对于防止数据竞争、确保数据一致性非常重要，特别是在处理共享内存和全局内存时。在这种情况下，忘记添加任何一个 <code>__syncthreads()</code> 都可能导致难以调试的并发错误和不一致的数据结果。</p>
+</li>
+</ol>
+<h4 id="使用共享内存-shared-memory"><a href="#使用共享内存-shared-memory" class="headerlink" title="使用共享内存 __shared __ memory"></a>使用共享内存 __shared __ memory</h4><p><strong>shared</strong> 变量的作用域是一个block。</p>
+<p>在 CUDA 中，<code>shared</code> 内存的作用域确实是一个线程块（block）。这意味着 <code>shared</code> 内存是为每个线程块单独分配的，并且只能由该线程块内的线程访问和使用。不同的线程块之间不能直接访问彼此的 <code>shared</code> 内存。</p>
+<p>还是以生命游戏举例，使用block内的共享内存：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>autoinit
+<span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>driver <span class="token keyword">as</span> drv
+<span class="token keyword">from</span> pycuda <span class="token keyword">import</span> gpuarray
+<span class="token keyword">from</span> pycuda<span class="token punctuation">.</span>compiler <span class="token keyword">import</span> SourceModule
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">import</span> matplotlib<span class="token punctuation">.</span>pyplot <span class="token keyword">as</span> plt 
+<span class="token keyword">from</span> time <span class="token keyword">import</span> time
+    
+shared_ker <span class="token operator">=</span> SourceModule<span class="token punctuation">(</span><span class="token triple-quoted-string string">"""    
+#define _iters 1000000                       
+
+#define _X  ( threadIdx.x + blockIdx.x * blockDim.x )
+#define _Y  ( threadIdx.y + blockIdx.y * blockDim.y )
+
+#define _WIDTH  ( blockDim.x * gridDim.x )
+#define _HEIGHT ( blockDim.y * gridDim.y  )
+
+#define _XM(x)  ( (x + _WIDTH) % _WIDTH )
+#define _YM(y)  ( (y + _HEIGHT) % _HEIGHT )
+
+#define _INDEX(x,y)  ( _XM(x)  + _YM(y) * _WIDTH )
+
+// return the number of living neighbors for a given cell                
+__device__ int nbrs(int x, int y, int * in)
+{
+     return ( in[ _INDEX(x -1, y+1) ] + in[ _INDEX(x-1, y) ] + in[ _INDEX(x-1, y-1) ] \
+                   + in[ _INDEX(x, y+1)] + in[_INDEX(x, y - 1)] \
+                   + in[ _INDEX(x+1, y+1) ] + in[ _INDEX(x+1, y) ] + in[ _INDEX(x+1, y-1) ] );
+}
+
+__global__ void conway_ker_shared(int * p_lattice, int iters)
+{
+   // x, y are the appropriate values for the cell covered by this thread
+   int x = _X, y = _Y;
+   __shared__ int lattice[32*32];
+   
+   
+   lattice[_INDEX(x,y)] = p_lattice[_INDEX(x,y)];
+   __syncthreads();
+
+   for (int i = 0; i &lt; iters; i++)
+   {
+   
+       // count the number of neighbors around the current cell
+       int n = nbrs(x, y, lattice);
+       
+       int cell_value;
+                       
+        
+        // if the current cell is alive, then determine if it lives or dies for the next generation.
+        if ( lattice[_INDEX(x,y)] == 1)
+           switch(n)
+           {
+              // if the cell is alive: it remains alive only if it has 2 or 3 neighbors.
+              case 2:
+              case 3: cell_value = 1;
+                      break;
+              default: cell_value = 0;                   
+           }
+        else if( lattice[_INDEX(x,y)] == 0 )
+             switch(n)
+             {
+                // a dead cell comes to life only if it has 3 neighbors that are alive.
+                case 3: cell_value = 1;
+                        break;
+                default: cell_value = 0;         
+             }
+             
+        __syncthreads();
+        lattice[_INDEX(x,y)] = cell_value;
+        __syncthreads();
+         
+    }
+             
+    __syncthreads();
+    p_lattice[_INDEX(x,y)] = lattice[_INDEX(x,y)];
+    __syncthreads();
+         
+}
+"""</span><span class="token punctuation">)</span>
+
+
+conway_ker_shared <span class="token operator">=</span> shared_ker<span class="token punctuation">.</span>get_function<span class="token punctuation">(</span><span class="token string">"conway_ker_shared"</span><span class="token punctuation">)</span>
+    
+
+<span class="token keyword">if</span> __name__ <span class="token operator">==</span> <span class="token string">'__main__'</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true"># set lattice size</span>
+    N <span class="token operator">=</span> <span class="token number">32</span>
+    
+    lattice <span class="token operator">=</span> np<span class="token punctuation">.</span>int32<span class="token punctuation">(</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>choice<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> N<span class="token operator">*</span>N<span class="token punctuation">,</span> p<span class="token operator">=</span><span class="token punctuation">[</span><span class="token number">0.25</span><span class="token punctuation">,</span> <span class="token number">0.75</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">.</span>reshape<span class="token punctuation">(</span>N<span class="token punctuation">,</span> N<span class="token punctuation">)</span> <span class="token punctuation">)</span>
+    lattice_gpu <span class="token operator">=</span> gpuarray<span class="token punctuation">.</span>to_gpu<span class="token punctuation">(</span>lattice<span class="token punctuation">)</span>    
+    
+    conway_ker_shared<span class="token punctuation">(</span>lattice_gpu<span class="token punctuation">,</span> np<span class="token punctuation">.</span>int32<span class="token punctuation">(</span><span class="token number">1000000</span><span class="token punctuation">)</span><span class="token punctuation">,</span> grid<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span> block<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">32</span><span class="token punctuation">,</span><span class="token number">32</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>    
+    
+    fig <span class="token operator">=</span> plt<span class="token punctuation">.</span>figure<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>imshow<span class="token punctuation">(</span>lattice_gpu<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">int</span> x <span class="token operator">=</span> _X<span class="token punctuation">,</span> y <span class="token operator">=</span> _Y<span class="token punctuation">;</span>
+__shared__ <span class="token keyword">int</span> lattice<span class="token punctuation">[</span><span class="token number">32</span><span class="token operator">*</span><span class="token number">32</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+
+lattice<span class="token punctuation">[</span><span class="token function">_INDEX</span><span class="token punctuation">(</span>x<span class="token punctuation">,</span>y<span class="token punctuation">)</span><span class="token punctuation">]</span> <span class="token operator">=</span> p_lattice<span class="token punctuation">[</span><span class="token function">_INDEX</span><span class="token punctuation">(</span>x<span class="token punctuation">,</span>y<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token function">__syncthreads</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这几行代码的主要目的是将全局内存中的数据复制到共享内存中，并确保复制操作完成后所有线程才继续执行接下来的操作。这样做的好处是，后续的计算可以利用共享内存中的数据，显著提高内存访问速度，从而提升整体计算性能。</p>
+<h3 id="前缀和算法"><a href="#前缀和算法" class="headerlink" title="前缀和算法"></a>前缀和算法</h3><p>本章最后给出一个问题，计算前缀和算法，前缀和算法的输入和输出是这样的</p>
+<pre class="line-numbers language-bash"><code class="language-bash">arr     <span class="token operator">=</span> <span class="token punctuation">[</span>1, 2, 3, 4, 5<span class="token punctuation">]</span>
+prefix  <span class="token operator">=</span> <span class="token punctuation">[</span>1, 3, 6, 10, 15<span class="token punctuation">]</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>描述如下：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">前缀和数组是一个数组的变换，其中每个元素表示原数组从起始位置到当前索引的累积和。
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>我们先使用简单的Python代码描述一下，递归版本：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">def</span> <span class="token function">prefix_sum_compute</span><span class="token punctuation">(</span>input_list<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">if</span> len<span class="token punctuation">(</span>input_list<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">1</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span> input_list<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+
+    <span class="token keyword">return</span> input_list<span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">+</span> prefix_sum_compute<span class="token punctuation">(</span>input_list<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+<span class="token keyword">def</span> <span class="token function">prefix_sum</span><span class="token punctuation">(</span>input_list<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    ret <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> len<span class="token punctuation">(</span>input_list<span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        ret<span class="token punctuation">.</span>append<span class="token punctuation">(</span>prefix_sum_compute<span class="token punctuation">(</span>input_list<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">:</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> ret
+
+alist <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">4</span><span class="token punctuation">,</span><span class="token number">5</span><span class="token punctuation">]</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>prefix_sum<span class="token punctuation">(</span>alist<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里使用的是两重循环，时间复杂度O(n的平方)，效率不高。</p>
+<p>下面使用迭代算法计算，复杂度为O(n),效率提升一些。</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">def</span> <span class="token function">prefix_sum</span><span class="token punctuation">(</span>input_list<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    ret <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    current_sum <span class="token operator">=</span> <span class="token number">0</span>
+    <span class="token keyword">for</span> num <span class="token keyword">in</span> input_list<span class="token punctuation">:</span>
+        <span class="token comment" spellcheck="true"># 每次在上次累计和的基础上再计算</span>
+        current_sum <span class="token operator">+=</span> num
+        ret<span class="token punctuation">.</span>append<span class="token punctuation">(</span>current_sum<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> ret
+
+alist <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">]</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>prefix_sum<span class="token punctuation">(</span>alist<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="朴素并行前缀和算法"><a href="#朴素并行前缀和算法" class="headerlink" title="朴素并行前缀和算法"></a>朴素并行前缀和算法</h4><p>朴素的并行前缀和算法 (Naive Parallel Prefix Sum) 是一种通过简单的并行化技术实现前缀和计算的方法。</p>
+<p>虽然它的效率可能不如优化后的并行前缀和算法高，但它的实现相对容易理解。下面描述一下这种算法。</p>
+<ol>
+<li>将输入数据 <code>A</code> 平均分配给多个处理单元 (processing units)</li>
+<li>每个处理单元计算其分配到的部分数据的前缀和。</li>
+<li>处理单元间需要同步，以确保在计算前缀和时，前一部分数据的计算结果可以传递到后一部分数据的计算中。</li>
+</ol>
+<p>实例：</p>
+<p>假设输入数组 <code>A = [1, 2, 3, 4, 5]</code>，并使用 <code>num_threads = 2</code> 的设置。</p>
+<ul>
+<li>初始化两个线程，每个线程处理数组的一半：<ul>
+<li>线程 1 处理前两个元素：<code>[1, 2]</code>，计算结果为 <code>[1, 3]</code>。</li>
+<li>线程 2 处理后三个元素：<code>[3, 4, 5]</code>，计算结果为 <code>[3, 7, 12]</code>。</li>
+</ul>
+</li>
+<li>调整结果：<ul>
+<li>线程 2 处理部分结果需要加上线程 1 处理部分的最后一个结果，即 <code>3</code>。</li>
+<li>调整后的结果为 <code>[1, 3, 6, 10, 15]</code>。</li>
+</ul>
+</li>
+</ul>
+<p>最终，输出数组 <code>B</code> 即为输入数组 <code>A</code> 的前缀和结果。</p>
+<p>朴素并行前缀和算法通过简单的并行化技术，将输入数据分配给多个处理单元，并分别计算前缀和。</p>
+<p>虽然它的效率可能不如优化后的并行前缀和算法高，但其实现较为容易理解，适合作为并行计算的入门示例。</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>autoinit
+<span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>driver <span class="token keyword">as</span> drv
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">from</span> pycuda <span class="token keyword">import</span> gpuarray
+<span class="token keyword">from</span> pycuda<span class="token punctuation">.</span>compiler <span class="token keyword">import</span> SourceModule
+<span class="token keyword">from</span> time <span class="token keyword">import</span> time
+<span class="token comment" spellcheck="true"># this is a naive parallel prefix-sum kernel that uses shared memory</span>
+naive_ker <span class="token operator">=</span> SourceModule<span class="token punctuation">(</span><span class="token triple-quoted-string string">"""
+__global__ void naive_prefix(double *vec, double *out)
+{
+     __shared__ double sum_buf[1024];     
+     int tid = threadIdx.x;     
+     sum_buf[tid] = vec[tid];
+     
+     // begin parallel prefix sum algorithm
+     
+     int iter = 1;
+     for (int i=0; i &lt; 10; i++)
+     {
+         __syncthreads();
+         if (tid >= iter )
+         {
+             sum_buf[tid] = sum_buf[tid] + sum_buf[tid - iter];            
+         }
+         
+         iter *= 2;
+     }
+         
+    __syncthreads();
+    out[tid] = sum_buf[tid];
+    __syncthreads();
+        
+}
+"""</span><span class="token punctuation">)</span>
+naive_gpu <span class="token operator">=</span> naive_ker<span class="token punctuation">.</span>get_function<span class="token punctuation">(</span><span class="token string">"naive_prefix"</span><span class="token punctuation">)</span>
+    
+
+
+<span class="token keyword">if</span> __name__ <span class="token operator">==</span> <span class="token string">'__main__'</span><span class="token punctuation">:</span>
+    testvec <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span><span class="token number">1024</span><span class="token punctuation">)</span><span class="token punctuation">.</span>astype<span class="token punctuation">(</span>np<span class="token punctuation">.</span>float64<span class="token punctuation">)</span>
+    testvec_gpu <span class="token operator">=</span> gpuarray<span class="token punctuation">.</span>to_gpu<span class="token punctuation">(</span>testvec<span class="token punctuation">)</span>
+    
+    outvec_gpu <span class="token operator">=</span> gpuarray<span class="token punctuation">.</span>empty_like<span class="token punctuation">(</span>testvec_gpu<span class="token punctuation">)</span>
+
+    naive_gpu<span class="token punctuation">(</span> testvec_gpu <span class="token punctuation">,</span> outvec_gpu<span class="token punctuation">,</span> block<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">1024</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span> grid<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    
+    total_sum <span class="token operator">=</span> sum<span class="token punctuation">(</span> testvec<span class="token punctuation">)</span>
+    total_sum_gpu <span class="token operator">=</span> outvec_gpu<span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Does our kernel work correctly? : {}"</span><span class="token punctuation">.</span>format<span class="token punctuation">(</span>np<span class="token punctuation">.</span>allclose<span class="token punctuation">(</span>total_sum_g
+pu <span class="token punctuation">,</span> total_sum<span class="token punctuation">)</span> <span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>过程详细解释：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">假设 vec 为输入数组 <span class="token punctuation">[</span>1, 2, 3, 4<span class="token punctuation">]</span>，并假设数组长度为4，示例说明每次迭代的过程：
+初始状态
+
+sum_buf <span class="token operator">=</span> <span class="token punctuation">[</span>1, 2, 3, 4<span class="token punctuation">]</span>
+第1次迭代 <span class="token punctuation">(</span>iter <span class="token operator">=</span> 1<span class="token punctuation">)</span>
+
+    线程1：sum_buf<span class="token punctuation">[</span>1<span class="token punctuation">]</span> <span class="token operator">=</span> sum_buf<span class="token punctuation">[</span>1<span class="token punctuation">]</span> + sum_buf<span class="token punctuation">[</span>0<span class="token punctuation">]</span> <span class="token operator">=</span> 2 + 1 <span class="token operator">=</span> 3
+    线程2：sum_buf<span class="token punctuation">[</span>2<span class="token punctuation">]</span> <span class="token operator">=</span> sum_buf<span class="token punctuation">[</span>2<span class="token punctuation">]</span> + sum_buf<span class="token punctuation">[</span>1<span class="token punctuation">]</span> <span class="token operator">=</span> 3 + 2 <span class="token operator">=</span> 5
+    线程3：sum_buf<span class="token punctuation">[</span>3<span class="token punctuation">]</span> <span class="token operator">=</span> sum_buf<span class="token punctuation">[</span>3<span class="token punctuation">]</span> + sum_buf<span class="token punctuation">[</span>2<span class="token punctuation">]</span> <span class="token operator">=</span> 4 + 3 <span class="token operator">=</span> 7
+
+结果：sum_buf <span class="token operator">=</span> <span class="token punctuation">[</span>1, 3, 5, 7<span class="token punctuation">]</span>
+第2次迭代 <span class="token punctuation">(</span>iter <span class="token operator">=</span> 2<span class="token punctuation">)</span>
+
+    线程2：sum_buf<span class="token punctuation">[</span>2<span class="token punctuation">]</span> <span class="token operator">=</span> sum_buf<span class="token punctuation">[</span>2<span class="token punctuation">]</span> + sum_buf<span class="token punctuation">[</span>0<span class="token punctuation">]</span> <span class="token operator">=</span> 5 + 1 <span class="token operator">=</span> 6
+    线程3：sum_buf<span class="token punctuation">[</span>3<span class="token punctuation">]</span> <span class="token operator">=</span> sum_buf<span class="token punctuation">[</span>3<span class="token punctuation">]</span> + sum_buf<span class="token punctuation">[</span>1<span class="token punctuation">]</span> <span class="token operator">=</span> 7 + 3 <span class="token operator">=</span> 10
+
+结果：sum_buf <span class="token operator">=</span> <span class="token punctuation">[</span>1, 3, 6, 10<span class="token punctuation">]</span>
+之后的迭代
+
+由于数组长度较小，迭代到 iter <span class="token operator">=</span> 4 时，所有元素的前缀和已经计算完成。
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>乘以2的解释：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">在每次迭代中，将 iter 翻倍的原因是为了使每个线程在计算时能够跳过前面的 iter 个元素，并与更远的元素相加，从而在 log<span class="token punctuation">(</span>n<span class="token punctuation">)</span> 次迭代内完成前缀和计算。翻倍的目的是快速增加偏移量，使得并行计算能够覆盖整个数组。
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>算法分析:</p>
+<pre class="line-numbers language-bash"><code class="language-bash">朴素并行前缀和算法的每个线程在每次迭代中仅增加一个偏移量。这意味着需要多次迭代才能完成整个前缀和计算。其时间复杂度为O<span class="token punctuation">(</span>n log n<span class="token punctuation">)</span>，因为每次迭代增加的偏移量呈指数增长（1, 2, 4, 8，…），直到覆盖整个数组。
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>后面还介绍了一个更为复杂的并行计算前缀和的算法，算法看起来有点复杂，这部分先跳过阅读了，主要是了解Cuda的线程同步。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>本章主要介绍了kernel函数，thread，block，以及grid。包括了cuda的核心编程概念，我们还通过魔方的实例，类比到cuda的线程概念，最后学习了前缀和的例子，了解了cuda线程同步的基本概念和用法。</p>
+
+</article>
+    
+    
+
+</div>
+<div class="trm-post-next-prev row">
+    <div class="col-lg-12">
+        <!-- title -->
+        <h5 class="trm-title-with-divider">
+            其他文章
+            <span data-number="02"></span>
+        </h5>
+    </div>
+    
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/05/18/Cuda%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E5%8F%ABCube/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/cube.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" /categories/Cuda/">
+                    Cuda
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/05/18/Cuda%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E5%8F%ABCube/" class="trm-anima-link">
+                    Cuda为什么不叫Cube?
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/05/18</li>
+                <li>19:44</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+</div>
+
+    
+
+
+
+                    <div class="trm-divider footer-divider"></div>
+
+                    <!-- footer -->
+                    <footer class="trm-scroll-animation">
+
+    
+
+    
+
+    
+        <div class="trm-footer-item">
+            <span>
+                由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v7.0.0
+            </span>
+            <span class="footer-separator" data-separator=" | "></span>
+            <span> 
+                主题 - 
+                <a rel="noopener" href='https://github.com/MaLuns/hexo-theme-async' target='_blank'>Async</a>
+                v2.1.8
+            </span>
+        </div>
+      
+
+     
+
+     
+</footer>
+ 
+                    <!-- footer end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- body end -->
+
+            
+
+            
+<div class="trm-fixed-container">
+    
+    
+        <div class="trm-fixed-btn" data-title="阅读模式" onclick="asyncFun.switchReadMode()">
+            <i class="iconfont fas fa-book-reader"></i>
+        </div>
+    
+    
+    <div id="trm-back-top" class="trm-fixed-btn" data-title="回到顶部">
+        <i class="iconfont fas fa-arrow-up"></i>
+    </div>
+</div>
+        </div>
+      </div>
+      <!-- scroll container end -->
+  </div>
+  <!-- app wrapper end -->
+
+  
+  <!-- Plugin -->
+
+
+
+
+    
+    
+<script src="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+
+    
+
+    
+
+    
+
+    <!-- 数学公式 -->
+    
+
+    <!-- 评论插件 -->
+    
+        
+
+        
+    
+
+
+
+<!-- CDN -->
+
+
+    
+
+    
+
+    
+
+
+
+
+    <!-- Service Worker -->
+    
+    <!-- baidu push -->
+    
+
+
+<script id="async-script" src="/js/main.js?v=2.1.8"></script>
+
+</body>
+
+</html>
