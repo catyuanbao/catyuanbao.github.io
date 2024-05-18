@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="x5-fullscreen" content="true">
+<meta name="full-screen" content="yes">
+<meta name="theme-color" content="#317EFB" />
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
+<meta name="description" content="背景Ubuntu使用perf报错如下： Error: Access to performance monitoring and observability operations is limited. Consider adjusting &#x2F;proc&#x2F;sys&#x2F;kernel&#x2F;perf_event_paranoid setting to open access to performance monit">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Error- Access to performance monitoring and observability operations is limited解决">
+<meta property="og:url" content="http://example.com/2024/05/18/Error-Access-to-performance-monitoring-and-observability-operations-is-limited%E8%A7%A3%E5%86%B3/index.html">
+<meta property="og:site_name" content="Cat YuanBao">
+<meta property="og:description" content="背景Ubuntu使用perf报错如下： Error: Access to performance monitoring and observability operations is limited. Consider adjusting &#x2F;proc&#x2F;sys&#x2F;kernel&#x2F;perf_event_paranoid setting to open access to performance monit">
+<meta property="og:locale">
+<meta property="article:published_time" content="2024-05-18T07:12:21.000Z">
+<meta property="article:modified_time" content="2024-05-18T07:13:13.258Z">
+<meta property="article:author" content="橘猫元宝">
+<meta property="article:tag" content="cat">
+<meta name="twitter:card" content="summary">
+
+    <meta name="keywords" content="cat">
+
+
+<title >Error- Access to performance monitoring and observability operations is limited解决</title>
+
+<!-- Favicon -->
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='16x16' ></link>
+
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='32x32' ></link>
+
+
+
+
+<!-- Plugin -->
+
+
+
+
+    
+<link rel="stylesheet" href="/css/plugins/bootstrap.row.css">
+
+    
+<link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.css">
+
+    
+    
+
+
+
+
+<!-- Icon -->
+
+    
+<link rel="stylesheet" href="/css/plugins/font-awesome.min.css">
+
+
+
+
+<!-- Variable -->
+<script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-05-18 15:13:13"};</script>
+
+<!-- Theme mode css -->
+<link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
+<script>
+    let defaultMode = ASYNC_CONFIG.theme.default !=='auto' ?  ASYNC_CONFIG.theme.default : (window.matchMedia("(prefers-color-scheme: light)").matches ? 'style-light' : 'style-dark')
+    let catchMode = localStorage.getItem('theme-mode') || defaultMode;
+    let type = catchMode === 'style-dark' ? 'add' : 'remove';
+    document.documentElement.classList[type]('dark')
+</script>
+
+<!-- CDN -->
+
+
+    
+    
+
+
+
+<!-- Site Analytics -->
+ 
+<meta name="generator" content="Hexo 7.0.0"><link rel="stylesheet" href="/css/prism.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+<body>
+
+  <!-- app wrapper -->
+  <div class="trm-app-frame">
+
+    <!-- page preloader -->
+    <div class="trm-preloader">
+    <div class="trm-holder">
+        <div class="preloader">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+    <!-- page preloader end -->
+
+    <!-- change mode preloader -->
+    <div class="trm-mode-swich-animation-frame">
+    <div class="trm-mode-swich-animation">
+        <i class="i-sun"><i class="iconfont far fa-sun"></i></i>
+        <div class="trm-horizon"></div>
+        <i class="i-moon"><i class="iconfont far fa-moon"></i></i>
+    </div>
+</div>
+    <!-- change mode preloader end -->
+
+      <!-- scroll container -->
+      <div id="trm-dynamic-content" class="trm-swup-animation">
+        <div id="trm-scroll-container" class="trm-scroll-container" style="opacity: 0">
+            <!-- top bar -->
+            <header class="trm-top-bar">
+	<div class="container">
+		<div class="trm-left-side">
+			<!-- logo -->
+<a href="/" class="trm-logo-frame trm-anima-link">
+    
+        <img alt="logo" src="/img/favicon.svg">
+    
+    
+        <div class="trm-logo-text">
+            元宝<span>橘猫</span>
+        </div>
+    
+</a>
+<!-- logo end -->
+		</div>
+		<div class="trm-right-side">
+			<!-- menu -->
+<div class="trm-menu">
+    <nav>
+        <ul>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/" target="">
+                    首页
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/archives/" target="">
+                    归档
+                </a>
+                
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+<!-- menu end -->
+			
+    <!-- mode switcher place -->
+    <div class="trm-mode-switcher-place">
+        <div class="trm-mode-switcher">
+            <i class="iconfont far fa-sun"></i>
+            <input class="tgl tgl-light" id="trm-swich" type="checkbox">
+            <label class="trm-swich" for="trm-swich"></label>
+            <i class="iconfont far fa-moon"></i>
+        </div>
+    </div>
+    <!-- mode switcher place end -->
+
+			
+		</div>
+		<div class="trm-menu-btn">
+			<span></span>
+		</div>
+	</div>
+</header>
+            <!-- top bar end -->
+
+            <!-- body -->
+            
+<div class="trm-content-start">
+    <!-- banner -->
+    <div class="trm-banner">
+    
+    <!-- banner cover -->
+    <img style="object-position:top;object-fit:cover;" alt="banner" class="trm-banner-cover" src="/img/banner.png">
+    <!-- banner cover end -->
+    
+
+    <!-- banner content -->
+    <div class="trm-banner-content trm-overlay">
+        <div class="container">
+            <div class="row">
+                
+                <div class="col-lg-4"></div>
+                
+                <div class="col-lg-8">
+
+                    <!-- banner title -->
+                    <div class="trm-banner-text ">
+                        <div class="trm-label trm-mb-20">
+                            NEWS LETTER
+                        </div>
+                        <h1 class="trm-mb-30 trm-hsmb-font">
+                            Error- Access to performance monitoring and observability operations is limited解决
+                        </h1>
+
+                        
+                            <ul class="trm-breadcrumbs trm-label">
+                                <li>
+                                    <a href="/" class="trm-anima-link">Home</a>
+                                </li>
+                                <li>
+                                    <span>
+                                        2024
+                                    </span>
+                                </li>
+                            </ul>
+                        
+                    </div>
+                    <!-- banner title end -->
+
+                    <!-- scroll hint -->
+                    <span id="scroll-triger" class="trm-scroll-hint-frame">
+                        <div class="trm-scroll-hint"></div>
+                        <span class="trm-label">Scroll down</span>
+                    </span>
+                    <!-- scroll hint end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- banner content end -->
+</div>
+    <!-- banner end -->
+    <div class="container">
+        <div class="row">
+            
+                <div class="trm-page-sidebar col-lg-4 hidden-sm">
+                    <!-- main card -->
+                    <div class="trm-main-card-frame trm-sidebar">
+    <div class="trm-main-card"> 
+        <!-- card header -->
+<div class="trm-mc-header">
+    <div class="trm-avatar-frame trm-mb-20">
+        <img alt="Avatar" class="trm-avatar" src="/img/cat.jpg">
+    </div>
+    <h5 class="trm-name trm-mb-15">
+        橘猫元宝
+    </h5>
+    
+</div>
+<!-- card header end -->
+        <!-- sidebar social -->
+
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<div class="trm-social">
+    
+        <a href="https://github.com" title="Github" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-github"></i>
+        </a>
+    
+</div>
+
+<!-- sidebar social end -->
+        <!-- info -->
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<ul class="trm-table trm-mb-20">
+    
+        <li>
+            <div class="trm-label">
+                Residence:
+            </div>
+            <div class="trm-label trm-label-light">
+                Mars
+            </div>
+        </li>
+    
+</ul>
+<!-- info end -->
+
+        
+    </div>
+</div>
+                    <!-- main card end -->
+                </div>
+            
+            <div class="trm-page-content col-lg-8">
+                <div id="trm-content" class="trm-content">
+                    <div class="trm-post-info row hidden-sm">
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-calendar-alt trm-icon"></i><br>
+            05/18
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-clock trm-icon"></i><br>
+            15:12
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div id="post-author" class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-user trm-icon"></i><br>
+            橘猫元宝
+        </div>
+    </div>
+</div>
+<div class="trm-card ">
+    <article id="article-container" class="trm-publication">
+    <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>Ubuntu使用perf报错如下：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">Error:
+Access to performance monitoring and observability operations is limited.
+Consider adjusting /proc/sys/kernel/perf_event_paranoid setting to <span class="token function">open</span>
+access to performance monitoring and observability operations <span class="token keyword">for</span> processes
+without CAP_PERFMON, CAP_SYS_PTRACE or CAP_SYS_ADMIN Linux capability.
+More information can be found at <span class="token string">'Perf events and tool security'</span> document:
+https://www.kernel.org/doc/html/latest/admin-guide/perf-security.html
+perf_event_paranoid setting is 4:
+  -1: Allow use of <span class="token punctuation">(</span>almost<span class="token punctuation">)</span> all events by all <span class="token function">users</span>
+      Ignore mlock limit after perf_event_mlock_kb without CAP_IPC_LOCK
+<span class="token operator">>=</span> 0: Disallow raw and ftrace <span class="token keyword">function</span> tracepoint access
+<span class="token operator">>=</span> 1: Disallow CPU event access
+<span class="token operator">>=</span> 2: Disallow kernel profiling
+To <span class="token function">make</span> the adjusted perf_event_paranoid setting permanent preserve it
+<span class="token keyword">in</span> /etc/sysctl.conf <span class="token punctuation">(</span>e.g. kernel.perf_event_paranoid <span class="token operator">=</span> <span class="token operator">&lt;</span>setting<span class="token operator">></span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>如何解决：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ <span class="token function">sudo</span> sysctl -w kernel.perf_event_paranoid<span class="token operator">=</span>0
+kernel.perf_event_paranoid <span class="token operator">=</span> 0
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>解决后运行perf:</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ perf <span class="token function">stat</span> -d -d ./line                     
+
+ Performance counter stats <span class="token keyword">for</span> <span class="token string">'./line'</span><span class="token keyword">:</span>
+
+            301.30 msec task-clock                <span class="token comment" spellcheck="true">#    0.998 CPUs utilized          </span>
+                29      context-switches          <span class="token comment" spellcheck="true">#   96.248 /sec                   </span>
+                 0      cpu-migrations            <span class="token comment" spellcheck="true">#    0.000 /sec                   </span>
+            97,703      page-faults               <span class="token comment" spellcheck="true">#  324.267 K/sec                  </span>
+     1,215,776,574      cycles                    <span class="token comment" spellcheck="true">#    4.035 GHz                      (34.27%)</span>
+        82,734,865      stalled-cycles-frontend   <span class="token comment" spellcheck="true">#    6.81% frontend cycles idle     (35.60%)</span>
+       802,571,926      stalled-cycles-backend    <span class="token comment" spellcheck="true">#   66.01% backend cycles idle      (36.94%)</span>
+     1,592,945,867      instructions              <span class="token comment" spellcheck="true">#    1.31  insn per cycle         </span>
+                                                  <span class="token comment" spellcheck="true">#    0.50  stalled cycles per insn  (38.26%)</span>
+       196,928,249      branches                  <span class="token comment" spellcheck="true">#  653.586 M/sec                    (39.58%)</span>
+           479,165      branch-misses             <span class="token comment" spellcheck="true">#    0.24% of all branches          (39.19%)</span>
+       742,943,024      L1-dcache-loads           <span class="token comment" spellcheck="true">#    2.466 G/sec                    (37.86%)</span>
+        15,438,365      L1-dcache-load-misses     <span class="token comment" spellcheck="true">#    2.08% of all L1-dcache accesses  (36.53%)</span>
+   <span class="token operator">&lt;</span>not supported<span class="token operator">></span>      LLC-loads                                                   
+   <span class="token operator">&lt;</span>not supported<span class="token operator">></span>      LLC-load-misses                                             
+       134,638,617      L1-icache-loads           <span class="token comment" spellcheck="true">#  446.853 M/sec                    (35.21%)</span>
+         1,393,992      L1-icache-load-misses     <span class="token comment" spellcheck="true">#    1.04% of all L1-icache accesses  (33.88%)</span>
+           468,337      dTLB-loads                <span class="token comment" spellcheck="true">#    1.554 M/sec                    (33.17%)</span>
+           427,687      dTLB-load-misses          <span class="token comment" spellcheck="true">#   91.32% of all dTLB cache accesses  (33.17%)</span>
+                36      iTLB-loads                <span class="token comment" spellcheck="true">#  119.481 /sec                     (33.16%)</span>
+                30      iTLB-load-misses          <span class="token comment" spellcheck="true">#   83.33% of all iTLB cache accesses  (33.17%)</span>
+
+       0.301758063 seconds <span class="token function">time</span> elapsed
+
+       0.212669000 seconds user
+       0.088277000 seconds sys
+
+
+$ perf <span class="token function">stat</span> -d -d ./co  
+
+ Performance counter stats <span class="token keyword">for</span> <span class="token string">'./co'</span><span class="token keyword">:</span>
+
+            566.68 msec task-clock                <span class="token comment" spellcheck="true">#    0.999 CPUs utilized          </span>
+                55      context-switches          <span class="token comment" spellcheck="true">#   97.056 /sec                   </span>
+                 0      cpu-migrations            <span class="token comment" spellcheck="true">#    0.000 /sec                   </span>
+            97,702      page-faults               <span class="token comment" spellcheck="true">#  172.410 K/sec                  </span>
+     2,299,068,395      cycles                    <span class="token comment" spellcheck="true">#    4.057 GHz                      (35.87%)</span>
+        98,374,607      stalled-cycles-frontend   <span class="token comment" spellcheck="true">#    4.28% frontend cycles idle     (36.52%)</span>
+     1,684,833,683      stalled-cycles-backend    <span class="token comment" spellcheck="true">#   73.28% backend cycles idle      (36.51%)</span>
+     1,756,823,310      instructions              <span class="token comment" spellcheck="true">#    0.76  insn per cycle         </span>
+                                                  <span class="token comment" spellcheck="true">#    0.96  stalled cycles per insn  (36.50%)</span>
+       201,816,862      branches                  <span class="token comment" spellcheck="true">#  356.137 M/sec                    (36.51%)</span>
+           617,575      branch-misses             <span class="token comment" spellcheck="true">#    0.31% of all branches          (35.91%)</span>
+       867,898,397      L1-dcache-loads           <span class="token comment" spellcheck="true">#    1.532 G/sec                    (35.27%)</span>
+       112,344,152      L1-dcache-load-misses     <span class="token comment" spellcheck="true">#   12.94% of all L1-dcache accesses  (35.27%)</span>
+   <span class="token operator">&lt;</span>not supported<span class="token operator">></span>      LLC-loads                                                   
+   <span class="token operator">&lt;</span>not supported<span class="token operator">></span>      LLC-load-misses                                             
+        94,234,550      L1-icache-loads           <span class="token comment" spellcheck="true">#  166.291 M/sec                    (35.27%)</span>
+         1,241,142      L1-icache-load-misses     <span class="token comment" spellcheck="true">#    1.32% of all L1-icache accesses  (35.28%)</span>
+       108,519,209      dTLB-loads                <span class="token comment" spellcheck="true">#  191.499 M/sec                    (35.27%)</span>
+       104,612,126      dTLB-load-misses          <span class="token comment" spellcheck="true">#   96.40% of all dTLB cache accesses  (35.27%)</span>
+               399      iTLB-loads                <span class="token comment" spellcheck="true">#  704.097 /sec                     (35.28%)</span>
+                62      iTLB-load-misses          <span class="token comment" spellcheck="true">#   15.54% of all iTLB cache accesses  (35.27%)</span>
+
+       0.567427312 seconds <span class="token function">time</span> elapsed
+
+       0.466474000 seconds user
+       0.100533000 seconds sys
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里line.c如下：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">define</span> max 10000</span>
+<span class="token keyword">int</span> array<span class="token punctuation">[</span>max<span class="token punctuation">]</span><span class="token punctuation">[</span>max<span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> i<span class="token punctuation">,</span> j<span class="token punctuation">;</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span>i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> max<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span>j <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> j <span class="token operator">&lt;</span> max<span class="token punctuation">;</span> j<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            array<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">[</span>j<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">1234</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>co.c如下：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">define</span> max 10000</span>
+<span class="token keyword">int</span> array<span class="token punctuation">[</span>max<span class="token punctuation">]</span><span class="token punctuation">[</span>max<span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> i<span class="token punctuation">,</span> j<span class="token punctuation">;</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span>i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> max<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span>j <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> j <span class="token operator">&lt;</span> max<span class="token punctuation">;</span> j<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            array<span class="token punctuation">[</span>j<span class="token punctuation">]</span><span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">1234</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>可以看出缓存是否命中对性能的影响：</p>
+<pre class="line-numbers language-bash"><code class="language-bash"> 15,438,365      L1-dcache-load-misses     <span class="token comment" spellcheck="true">#    2.08% of all L1-dcache accesses  (36.53%)</span>
+112,344,152      L1-dcache-load-misses     <span class="token comment" spellcheck="true">#   12.94% of all L1-dcache accesses  (35.27%)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+</article>
+    
+    
+
+</div>
+<div class="trm-post-next-prev row">
+    <div class="col-lg-12">
+        <!-- title -->
+        <h5 class="trm-title-with-divider">
+            其他文章
+            <span data-number="02"></span>
+        </h5>
+    </div>
+    
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/05/17/Cuda-C%E8%AF%AD%E8%A8%80%E7%AC%94%E8%AE%B0%E4%B8%80/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" #.">
+                    未分类
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/05/17/Cuda-C%E8%AF%AD%E8%A8%80%E7%AC%94%E8%AE%B0%E4%B8%80/" class="trm-anima-link">
+                    Cuda-C语言笔记一
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/05/17</li>
+                <li>22:18</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+</div>
+
+    
+
+
+
+                    <div class="trm-divider footer-divider"></div>
+
+                    <!-- footer -->
+                    <footer class="trm-scroll-animation">
+
+    
+
+    
+
+    
+        <div class="trm-footer-item">
+            <span>
+                由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v7.0.0
+            </span>
+            <span class="footer-separator" data-separator=" | "></span>
+            <span> 
+                主题 - 
+                <a rel="noopener" href='https://github.com/MaLuns/hexo-theme-async' target='_blank'>Async</a>
+                v2.1.8
+            </span>
+        </div>
+      
+
+     
+
+     
+</footer>
+ 
+                    <!-- footer end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- body end -->
+
+            
+
+            
+<div class="trm-fixed-container">
+    
+    
+        <div class="trm-fixed-btn" data-title="阅读模式" onclick="asyncFun.switchReadMode()">
+            <i class="iconfont fas fa-book-reader"></i>
+        </div>
+    
+    
+    <div id="trm-back-top" class="trm-fixed-btn" data-title="回到顶部">
+        <i class="iconfont fas fa-arrow-up"></i>
+    </div>
+</div>
+        </div>
+      </div>
+      <!-- scroll container end -->
+  </div>
+  <!-- app wrapper end -->
+
+  
+  <!-- Plugin -->
+
+
+
+
+    
+    
+<script src="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+
+    
+
+    
+
+    
+
+    <!-- 数学公式 -->
+    
+
+    <!-- 评论插件 -->
+    
+        
+
+        
+    
+
+
+
+<!-- CDN -->
+
+
+    
+
+    
+
+    
+
+
+
+
+    <!-- Service Worker -->
+    
+    <!-- baidu push -->
+    
+
+
+<script id="async-script" src="/js/main.js?v=2.1.8"></script>
+
+</body>
+
+</html>
