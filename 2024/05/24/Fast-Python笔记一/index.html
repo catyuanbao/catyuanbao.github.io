@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="x5-fullscreen" content="true">
+<meta name="full-screen" content="yes">
+<meta name="theme-color" content="#317EFB" />
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
+<meta name="description" content="本文主要记录Fast Python一书的第一部分，记录基本的Python性能优化方法与实践。 Optimizing pure Python code is the low-hanging fruit这句话是指优化纯Python代码是一个容易入手且能立即见效的工作。这通常指的是使用Python内置的性能分析工具找出代码中的瓶颈，然后通过重构、优化数据结构、使用生成器表达式代替列表推导式、避免不必要的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Fast Python笔记一">
+<meta property="og:url" content="http://example.com/2024/05/24/Fast-Python%E7%AC%94%E8%AE%B0%E4%B8%80/index.html">
+<meta property="og:site_name" content="Cat YuanBao">
+<meta property="og:description" content="本文主要记录Fast Python一书的第一部分，记录基本的Python性能优化方法与实践。 Optimizing pure Python code is the low-hanging fruit这句话是指优化纯Python代码是一个容易入手且能立即见效的工作。这通常指的是使用Python内置的性能分析工具找出代码中的瓶颈，然后通过重构、优化数据结构、使用生成器表达式代替列表推导式、避免不必要的">
+<meta property="og:locale">
+<meta property="article:published_time" content="2024-05-24T11:50:01.000Z">
+<meta property="article:modified_time" content="2024-05-24T11:50:25.643Z">
+<meta property="article:author" content="橘猫元宝">
+<meta property="article:tag" content="cat">
+<meta name="twitter:card" content="summary">
+
+    <meta name="keywords" content="cat">
+
+
+<title >Fast Python笔记一</title>
+
+<!-- Favicon -->
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='16x16' ></link>
+
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='32x32' ></link>
+
+
+
+
+<!-- Plugin -->
+
+
+
+
+    
+<link rel="stylesheet" href="/css/plugins/bootstrap.row.css">
+
+    
+<link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.css">
+
+    
+    
+
+
+
+
+<!-- Icon -->
+
+    
+<link rel="stylesheet" href="/css/plugins/font-awesome.min.css">
+
+
+
+
+<!-- Variable -->
+<script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-05-24 19:50:25"};</script>
+
+<!-- Theme mode css -->
+<link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
+<script>
+    let defaultMode = ASYNC_CONFIG.theme.default !=='auto' ?  ASYNC_CONFIG.theme.default : (window.matchMedia("(prefers-color-scheme: light)").matches ? 'style-light' : 'style-dark')
+    let catchMode = localStorage.getItem('theme-mode') || defaultMode;
+    let type = catchMode === 'style-dark' ? 'add' : 'remove';
+    document.documentElement.classList[type]('dark')
+</script>
+
+<!-- CDN -->
+
+
+    
+    
+
+
+
+<!-- Site Analytics -->
+ 
+<meta name="generator" content="Hexo 7.0.0"><link rel="stylesheet" href="/css/prism.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+<body>
+
+  <!-- app wrapper -->
+  <div class="trm-app-frame">
+
+    <!-- page preloader -->
+    <div class="trm-preloader">
+    <div class="trm-holder">
+        <div class="preloader">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+    <!-- page preloader end -->
+
+    <!-- change mode preloader -->
+    <div class="trm-mode-swich-animation-frame">
+    <div class="trm-mode-swich-animation">
+        <i class="i-sun"><i class="iconfont far fa-sun"></i></i>
+        <div class="trm-horizon"></div>
+        <i class="i-moon"><i class="iconfont far fa-moon"></i></i>
+    </div>
+</div>
+    <!-- change mode preloader end -->
+
+      <!-- scroll container -->
+      <div id="trm-dynamic-content" class="trm-swup-animation">
+        <div id="trm-scroll-container" class="trm-scroll-container" style="opacity: 0">
+            <!-- top bar -->
+            <header class="trm-top-bar">
+	<div class="container">
+		<div class="trm-left-side">
+			<!-- logo -->
+<a href="/" class="trm-logo-frame trm-anima-link">
+    
+        <img alt="logo" src="/img/favicon.svg">
+    
+    
+        <div class="trm-logo-text">
+            元宝<span>橘猫</span>
+        </div>
+    
+</a>
+<!-- logo end -->
+		</div>
+		<div class="trm-right-side">
+			<!-- menu -->
+<div class="trm-menu">
+    <nav>
+        <ul>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/" target="">
+                    首页
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/archives/" target="">
+                    归档
+                </a>
+                
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+<!-- menu end -->
+			
+    <!-- mode switcher place -->
+    <div class="trm-mode-switcher-place">
+        <div class="trm-mode-switcher">
+            <i class="iconfont far fa-sun"></i>
+            <input class="tgl tgl-light" id="trm-swich" type="checkbox">
+            <label class="trm-swich" for="trm-swich"></label>
+            <i class="iconfont far fa-moon"></i>
+        </div>
+    </div>
+    <!-- mode switcher place end -->
+
+			
+		</div>
+		<div class="trm-menu-btn">
+			<span></span>
+		</div>
+	</div>
+</header>
+            <!-- top bar end -->
+
+            <!-- body -->
+            
+<div class="trm-content-start">
+    <!-- banner -->
+    <div class="trm-banner">
+    
+    <!-- banner cover -->
+    <img style="object-position:top;object-fit:cover;" alt="banner" class="trm-banner-cover" src="/img/banner.png">
+    <!-- banner cover end -->
+    
+
+    <!-- banner content -->
+    <div class="trm-banner-content trm-overlay">
+        <div class="container">
+            <div class="row">
+                
+                <div class="col-lg-4"></div>
+                
+                <div class="col-lg-8">
+
+                    <!-- banner title -->
+                    <div class="trm-banner-text ">
+                        <div class="trm-label trm-mb-20">
+                            NEWS LETTER
+                        </div>
+                        <h1 class="trm-mb-30 trm-hsmb-font">
+                            Fast Python笔记一
+                        </h1>
+
+                        
+                            <ul class="trm-breadcrumbs trm-label">
+                                <li>
+                                    <a href="/" class="trm-anima-link">Home</a>
+                                </li>
+                                <li>
+                                    <span>
+                                        2024
+                                    </span>
+                                </li>
+                            </ul>
+                        
+                    </div>
+                    <!-- banner title end -->
+
+                    <!-- scroll hint -->
+                    <span id="scroll-triger" class="trm-scroll-hint-frame">
+                        <div class="trm-scroll-hint"></div>
+                        <span class="trm-label">Scroll down</span>
+                    </span>
+                    <!-- scroll hint end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- banner content end -->
+</div>
+    <!-- banner end -->
+    <div class="container">
+        <div class="row">
+            
+                <div class="trm-page-sidebar col-lg-4 hidden-sm">
+                    <!-- main card -->
+                    <div class="trm-main-card-frame trm-sidebar">
+    <div class="trm-main-card"> 
+        <!-- card header -->
+<div class="trm-mc-header">
+    <div class="trm-avatar-frame trm-mb-20">
+        <img alt="Avatar" class="trm-avatar" src="/img/cat.jpg">
+    </div>
+    <h5 class="trm-name trm-mb-15">
+        橘猫元宝
+    </h5>
+    
+</div>
+<!-- card header end -->
+        <!-- sidebar social -->
+
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<div class="trm-social">
+    
+        <a href="https://github.com" title="Github" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-github"></i>
+        </a>
+    
+</div>
+
+<!-- sidebar social end -->
+        <!-- info -->
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<ul class="trm-table trm-mb-20">
+    
+        <li>
+            <div class="trm-label">
+                Residence:
+            </div>
+            <div class="trm-label trm-label-light">
+                Mars
+            </div>
+        </li>
+    
+</ul>
+<!-- info end -->
+
+        
+    </div>
+</div>
+                    <!-- main card end -->
+                </div>
+            
+            <div class="trm-page-content col-lg-8">
+                <div id="trm-content" class="trm-content">
+                    <div class="trm-post-info row hidden-sm">
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-calendar-alt trm-icon"></i><br>
+            05/24
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-clock trm-icon"></i><br>
+            19:50
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div id="post-author" class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-user trm-icon"></i><br>
+            橘猫元宝
+        </div>
+    </div>
+</div>
+<div class="trm-card ">
+    <article id="article-container" class="trm-publication">
+    <p>本文主要记录Fast Python一书的第一部分，记录基本的Python性能优化方法与实践。</p>
+<h3 id="Optimizing-pure-Python-code-is-the-low-hanging-fruit"><a href="#Optimizing-pure-Python-code-is-the-low-hanging-fruit" class="headerlink" title="Optimizing pure Python code is the low-hanging fruit"></a>Optimizing pure Python code is the low-hanging fruit</h3><p>这句话是指优化纯Python代码是一个容易入手且能立即见效的工作。这通常指的是使用Python内置的性能分析工具找出代码中的瓶颈，然后通过重构、优化数据结构、使用生成器表达式代替列表推导式、避免不必要的函数调用等方法来改善代码性能。</p>
+<p>解决方案通常包括以下步骤：</p>
+<ol>
+<li>使用cProfile或line_profiler等工具分析代码的性能瓶颈。</li>
+<li>重构复杂的函数，简化逻辑，确保代码易于阅读和维护。</li>
+<li>优化循环，比如使用<code>numba.jit</code>或<code>cython</code>来加速计算密集型循环。</li>
+<li>优化数据结构，选择适合场景的数据结构，如使用字典代替列表。</li>
+<li>使用生成器表达式替代列表推导式以减少内存使用。</li>
+</ol>
+<p>简单实例:</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> timeit
+
+<span class="token comment" spellcheck="true"># 原始代码</span>
+<span class="token keyword">def</span> <span class="token function">original_function</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    result <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">1000</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        result<span class="token punctuation">.</span>append<span class="token punctuation">(</span>i <span class="token operator">*</span> <span class="token number">2</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> result
+
+<span class="token comment" spellcheck="true"># 优化后的代码</span>
+<span class="token keyword">def</span> <span class="token function">optimized_function</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> <span class="token punctuation">[</span>i <span class="token operator">*</span> <span class="token number">2</span> <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">1000</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+
+<span class="token comment" spellcheck="true"># 性能比较</span>
+original_time <span class="token operator">=</span> timeit<span class="token punctuation">.</span>timeit<span class="token punctuation">(</span>original_function<span class="token punctuation">,</span> number<span class="token operator">=</span><span class="token number">1000</span><span class="token punctuation">)</span>
+optimized_time <span class="token operator">=</span> timeit<span class="token punctuation">.</span>timeit<span class="token punctuation">(</span>optimized_function<span class="token punctuation">,</span> number<span class="token operator">=</span><span class="token number">1000</span><span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">"Original function time: {original_time}"</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">"Optimized function time: {optimized_time}"</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里优化是使用列表解析代替append方法，append是一个方法，调用时必然会产生函数的开销，而列表解析是Python语言的特性，对于简单的计算而言，这种优化是合适的，但是对于复杂的逻辑，比如循环中可能会产生异常的情况，列表解析就不太合适了，各有利弊。</p>
+<p>运行结果：</p>
+<pre class="line-numbers language-python"><code class="language-python">Original function time<span class="token punctuation">:</span> <span class="token number">0.07216073399831657</span>
+Optimized function time<span class="token punctuation">:</span> <span class="token number">0.06214098700002069</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<h3 id="cProfile-分析性能"><a href="#cProfile-分析性能" class="headerlink" title="cProfile 分析性能"></a>cProfile 分析性能</h3><p>cProfile 是python内置的一个标准库，可以用来分析Python代码的性能。</p>
+<p>下面是一个下载并解析csv的代码片段，使用cProfile分析</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> collections
+<span class="token keyword">import</span> csv
+<span class="token keyword">import</span> datetime
+<span class="token keyword">import</span> sys
+
+<span class="token keyword">import</span> requests
+
+stations <span class="token operator">=</span> sys<span class="token punctuation">.</span>argv<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">","</span><span class="token punctuation">)</span>
+years <span class="token operator">=</span> <span class="token punctuation">[</span>int<span class="token punctuation">(</span>year<span class="token punctuation">)</span> <span class="token keyword">for</span> year <span class="token keyword">in</span> sys<span class="token punctuation">.</span>argv<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">'-'</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+start_year <span class="token operator">=</span> years<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+end_year <span class="token operator">=</span> years<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span>
+
+TEMP_URL <span class="token operator">=</span> <span class="token string">"https://www.ncei.noaa.gov/data/global-hourly/access/{year}/{station}.csv"</span>
+
+TEMP_FILE <span class="token operator">=</span> <span class="token string">"station_{station}_{year}.csv"</span>
+
+
+<span class="token keyword">def</span> <span class="token function">download_data</span><span class="token punctuation">(</span>station<span class="token punctuation">,</span> year<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    url <span class="token operator">=</span> TEMP_URL<span class="token punctuation">.</span>format<span class="token punctuation">(</span>station<span class="token operator">=</span>station<span class="token punctuation">,</span> year<span class="token operator">=</span>year<span class="token punctuation">)</span>
+    resp <span class="token operator">=</span> requests<span class="token punctuation">.</span>get<span class="token punctuation">(</span>url<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> resp<span class="token punctuation">.</span>status_code <span class="token operator">!=</span> <span class="token number">200</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span>
+
+    file_name <span class="token operator">=</span> TEMP_FILE<span class="token punctuation">.</span>format<span class="token punctuation">(</span>station<span class="token operator">=</span>station<span class="token punctuation">,</span> year<span class="token operator">=</span>year<span class="token punctuation">)</span>
+    <span class="token keyword">with</span> open<span class="token punctuation">(</span>file_name<span class="token punctuation">,</span> <span class="token string">'wt'</span><span class="token punctuation">)</span> <span class="token keyword">as</span> w<span class="token punctuation">:</span>
+        w<span class="token punctuation">.</span>write<span class="token punctuation">(</span>resp<span class="token punctuation">.</span>text<span class="token punctuation">)</span>
+
+
+<span class="token keyword">def</span> <span class="token function">download_all_data</span><span class="token punctuation">(</span>stations<span class="token punctuation">,</span> start_year<span class="token punctuation">,</span> end_year<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">for</span> station <span class="token keyword">in</span> stations<span class="token punctuation">:</span>
+        <span class="token keyword">for</span> year <span class="token keyword">in</span> range<span class="token punctuation">(</span>start_year<span class="token punctuation">,</span> end_year <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            download_data<span class="token punctuation">(</span>station<span class="token punctuation">,</span> year<span class="token punctuation">)</span>
+
+
+<span class="token keyword">def</span> <span class="token function">get_file_temperatures</span><span class="token punctuation">(</span>file_name<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">with</span> open<span class="token punctuation">(</span>file_name<span class="token punctuation">,</span> <span class="token string">'rt'</span><span class="token punctuation">)</span> <span class="token keyword">as</span> fd<span class="token punctuation">:</span>
+        reader <span class="token operator">=</span> csv<span class="token punctuation">.</span>reader<span class="token punctuation">(</span>fd<span class="token punctuation">)</span>
+        header <span class="token operator">=</span> next<span class="token punctuation">(</span>reader<span class="token punctuation">)</span>
+        <span class="token keyword">for</span> row <span class="token keyword">in</span> reader<span class="token punctuation">:</span>
+            station <span class="token operator">=</span> row<span class="token punctuation">[</span>header<span class="token punctuation">.</span>index<span class="token punctuation">(</span><span class="token string">"STATION"</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+            tmp <span class="token operator">=</span> row<span class="token punctuation">[</span>header<span class="token punctuation">.</span>index<span class="token punctuation">(</span><span class="token string">"TMP"</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+            temperature<span class="token punctuation">,</span> status <span class="token operator">=</span> tmp<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">','</span><span class="token punctuation">)</span>
+            <span class="token keyword">if</span> status <span class="token operator">!=</span> <span class="token string">'1'</span><span class="token punctuation">:</span>
+                <span class="token keyword">continue</span>
+            temperature <span class="token operator">=</span> int<span class="token punctuation">(</span>float<span class="token punctuation">(</span>temperature<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token number">10</span><span class="token punctuation">)</span>
+            <span class="token keyword">yield</span> temperature
+
+
+<span class="token keyword">def</span> <span class="token function">get_all_temperatures</span><span class="token punctuation">(</span>stations<span class="token punctuation">,</span> start_year<span class="token punctuation">,</span> end_year<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    temperatures <span class="token operator">=</span> collections<span class="token punctuation">.</span>defaultdict<span class="token punctuation">(</span>list<span class="token punctuation">)</span>
+    <span class="token keyword">for</span> station <span class="token keyword">in</span> stations<span class="token punctuation">:</span>
+        <span class="token keyword">for</span> year <span class="token keyword">in</span> range<span class="token punctuation">(</span>start_year<span class="token punctuation">,</span> end_year <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            file_name <span class="token operator">=</span> TEMP_FILE<span class="token punctuation">.</span>format<span class="token punctuation">(</span>station<span class="token operator">=</span>station<span class="token punctuation">,</span> year<span class="token operator">=</span>year<span class="token punctuation">)</span>
+            <span class="token keyword">for</span> temperature <span class="token keyword">in</span> get_file_temperatures<span class="token punctuation">(</span>file_name<span class="token punctuation">)</span><span class="token punctuation">:</span>
+                temperatures<span class="token punctuation">[</span>station<span class="token punctuation">]</span><span class="token punctuation">.</span>append<span class="token punctuation">(</span>temperature<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> temperatures
+
+
+<span class="token keyword">def</span> <span class="token function">get_min_temperature</span><span class="token punctuation">(</span>all_temperatures<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> <span class="token punctuation">{</span>station<span class="token punctuation">:</span> min<span class="token punctuation">(</span>temperatures<span class="token punctuation">)</span> <span class="token keyword">for</span> station<span class="token punctuation">,</span> temperatures <span class="token keyword">in</span> all_temperatures<span class="token punctuation">.</span>items<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+
+
+
+<span class="token keyword">if</span> __name__ <span class="token operator">==</span> <span class="token string">'__main__'</span><span class="token punctuation">:</span>
+    download_all_data<span class="token punctuation">(</span>stations<span class="token punctuation">,</span> start_year<span class="token punctuation">,</span> end_year<span class="token punctuation">)</span>
+    all_temperatures<span class="token operator">=</span> get_all_temperatures<span class="token punctuation">(</span>stations<span class="token punctuation">,</span> start_year<span class="token punctuation">,</span> end_year<span class="token punctuation">)</span>
+    min_temperature <span class="token operator">=</span> get_min_temperature<span class="token punctuation">(</span>all_temperatures<span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'min'</span><span class="token punctuation">,</span> min_temperature<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>使用 cProfile 查看运行性能：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ <span class="token function">time</span> python3 -m cProfile -s cumulative download.py 01044099999,02293099999 2021-2021 <span class="token operator">></span> profile.txt
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>profile文件内容如下，可以看到大部分时间花在了网络请求上面，主要是socket的read方法：</p>
+<pre class="line-numbers language-python"><code class="language-python">min <span class="token punctuation">{</span><span class="token string">'01044099999'</span><span class="token punctuation">:</span> <span class="token operator">-</span><span class="token number">10</span><span class="token punctuation">,</span> <span class="token string">'02293099999'</span><span class="token punctuation">:</span> <span class="token operator">-</span><span class="token number">27</span><span class="token punctuation">}</span>
+         <span class="token number">397260</span> function calls <span class="token punctuation">(</span><span class="token number">392597</span> primitive calls<span class="token punctuation">)</span> <span class="token keyword">in</span> <span class="token number">119.336</span> seconds
+
+   Ordered by<span class="token punctuation">:</span> cumulative time
+
+   ncalls  tottime  percall  cumtime  percall filename<span class="token punctuation">:</span>lineno<span class="token punctuation">(</span>function<span class="token punctuation">)</span>
+    <span class="token number">133</span><span class="token operator">/</span><span class="token number">1</span>    <span class="token number">0.001</span>    <span class="token number">0.000</span>  <span class="token number">119.336</span>  <span class="token number">119.336</span> <span class="token punctuation">{</span>built<span class="token operator">-</span><span class="token keyword">in</span> method builtins<span class="token punctuation">.</span><span class="token keyword">exec</span><span class="token punctuation">}</span>
+        <span class="token number">1</span>    <span class="token number">0.000</span>    <span class="token number">0.000</span>  <span class="token number">119.336</span>  <span class="token number">119.336</span> download<span class="token punctuation">.</span>py<span class="token punctuation">:</span><span class="token number">1</span><span class="token punctuation">(</span><span class="token operator">&lt;</span>module<span class="token operator">></span><span class="token punctuation">)</span>
+        <span class="token number">1</span>    <span class="token number">0.001</span>    <span class="token number">0.001</span>  <span class="token number">118.812</span>  <span class="token number">118.812</span> download<span class="token punctuation">.</span>py<span class="token punctuation">:</span><span class="token number">29</span><span class="token punctuation">(</span>download_all_data<span class="token punctuation">)</span>
+        <span class="token number">2</span>    <span class="token number">0.001</span>    <span class="token number">0.000</span>  <span class="token number">118.810</span>   <span class="token number">59.405</span> download<span class="token punctuation">.</span>py<span class="token punctuation">:</span><span class="token number">18</span><span class="token punctuation">(</span>download_data<span class="token punctuation">)</span>
+        <span class="token number">2</span>    <span class="token number">0.000</span>    <span class="token number">0.000</span>  <span class="token number">118.783</span>   <span class="token number">59.391</span> api<span class="token punctuation">.</span>py<span class="token punctuation">:</span><span class="token number">62</span><span class="token punctuation">(</span>get<span class="token punctuation">)</span>
+        <span class="token number">2</span>    <span class="token number">0.000</span>    <span class="token number">0.000</span>  <span class="token number">118.783</span>   <span class="token number">59.391</span> api<span class="token punctuation">.</span>py<span class="token punctuation">:</span><span class="token number">14</span><span class="token punctuation">(</span>request<span class="token punctuation">)</span>
+        <span class="token number">2</span>    <span class="token number">0.000</span>    <span class="token number">0.000</span>  <span class="token number">118.782</span>   <span class="token number">59.391</span> sessions<span class="token punctuation">.</span>py<span class="token punctuation">:</span><span class="token number">502</span><span class="token punctuation">(</span>request<span class="token punctuation">)</span>
+        <span class="token number">2</span>    <span class="token number">0.000</span>    <span class="token number">0.000</span>  <span class="token number">118.771</span>   <span class="token number">59.385</span> sessions<span class="token punctuation">.</span>py<span class="token punctuation">:</span><span class="token number">673</span><span class="token punctuation">(</span>send<span class="token punctuation">)</span>
+     <span class="token number">2956</span>    <span class="token number">0.014</span>    <span class="token number">0.000</span>  <span class="token number">116.718</span>    <span class="token number">0.039</span> socket<span class="token punctuation">.</span>py<span class="token punctuation">:</span><span class="token number">693</span><span class="token punctuation">(</span>readinto<span class="token punctuation">)</span>
+     <span class="token number">2956</span>    <span class="token number">0.012</span>    <span class="token number">0.000</span>  <span class="token number">116.693</span>    <span class="token number">0.039</span> ssl<span class="token punctuation">.</span>py<span class="token punctuation">:</span><span class="token number">1238</span><span class="token punctuation">(</span>recv_into<span class="token punctuation">)</span>
+     <span class="token number">2956</span>    <span class="token number">0.008</span>    <span class="token number">0.000</span>  <span class="token number">116.679</span>    <span class="token number">0.039</span> ssl<span class="token punctuation">.</span>py<span class="token punctuation">:</span><span class="token number">1096</span><span class="token punctuation">(</span>read<span class="token punctuation">)</span>
+     <span class="token number">2956</span>  <span class="token number">116.671</span>    <span class="token number">0.039</span>  <span class="token number">116.671</span>    <span class="token number">0.039</span> <span class="token punctuation">{</span>method <span class="token string">'read'</span> of <span class="token string">'_ssl._SSLSocket'</span> objects<span class="token punctuation">}</span>
+        <span class="token number">6</span>    <span class="token number">0.000</span>    <span class="token number">0.000</span>  <span class="token number">116.305</span>   <span class="token number">19.384</span> models<span class="token punctuation">.</span>py<span class="token punctuation">:</span><span class="token number">887</span><span class="token punctuation">(</span>content<span class="token punctuation">)</span>
+       <span class="token number">24</span>    <span class="token number">0.009</span>    <span class="token number">0.000</span>  <span class="token number">116.305</span>    <span class="token number">4.846</span> <span class="token punctuation">{</span>method <span class="token string">'join'</span> of <span class="token string">'bytes'</span> objects<span class="token punctuation">}</span>
+     <span class="token number">1171</span>    <span class="token number">0.001</span>    <span class="token number">0.000</span>  <span class="token number">116.297</span>    <span class="token number">0.099</span> models<span class="token punctuation">.</span>py<span class="token punctuation">:</span><span class="token number">812</span><span class="token punctuation">(</span>generate<span class="token punctuation">)</span>
+     <span class="token number">1171</span>    <span class="token number">0.006</span>    <span class="token number">0.000</span>  <span class="token number">116.295</span>    <span class="token number">0.099</span> response<span class="token punctuation">.</span>py<span class="token punctuation">:</span><span class="token number">1021</span><span class="token punctuation">(</span>stream<span class="token punctuation">)</span>
+     <span class="token number">1169</span>    <span class="token number">0.012</span>    <span class="token number">0.000</span>  <span class="token number">116.287</span>    <span class="token number">0.099</span> response<span class="token punctuation">.</span>py<span class="token punctuation">:</span><span class="token number">899</span><span class="token punctuation">(</span>read<span class="token punctuation">)</span>
+     <span class="token number">1171</span>    <span class="token number">0.018</span>    <span class="token number">0.000</span>  <span class="token number">116.223</span>    <span class="token number">0.099</span> response<span class="token punctuation">.</span>py<span class="token punctuation">:</span><span class="token number">847</span><span class="token punctuation">(</span>_raw_read<span class="token punctuation">)</span>
+     <span class="token number">1300</span>    <span class="token number">0.056</span>    <span class="token number">0.000</span>  <span class="token number">116.190</span>    <span class="token number">0.089</span> <span class="token punctuation">{</span>method <span class="token string">'read'</span> of <span class="token string">'_io.BufferedReader'</span> objects<span class="token punctuation">}</span>
+     <span class="token number">1171</span>    <span class="token number">0.004</span>    <span class="token number">0.000</span>  <span class="token number">116.175</span>    <span class="token number">0.099</span> response<span class="token punctuation">.</span>py<span class="token punctuation">:</span><span class="token number">790</span><span class="token punctuation">(</span>_fp_read<span class="token punctuation">)</span>
+     <span class="token number">1171</span>    <span class="token number">0.011</span>    <span class="token number">0.000</span>  <span class="token number">116.171</span>    <span class="token number">0.099</span> client<span class="token punctuation">.</span>py<span class="token punctuation">:</span><span class="token number">456</span><span class="token punctuation">(</span>read<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>使用本地缓存减少网络请求后的代码：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> collections
+<span class="token keyword">import</span> csv
+<span class="token keyword">import</span> datetime
+<span class="token keyword">import</span> sys
+<span class="token keyword">import</span> os
+
+<span class="token keyword">import</span> requests
+
+stations <span class="token operator">=</span> sys<span class="token punctuation">.</span>argv<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">","</span><span class="token punctuation">)</span>
+years <span class="token operator">=</span> <span class="token punctuation">[</span>int<span class="token punctuation">(</span>year<span class="token punctuation">)</span> <span class="token keyword">for</span> year <span class="token keyword">in</span> sys<span class="token punctuation">.</span>argv<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">'-'</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+start_year <span class="token operator">=</span> years<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+end_year <span class="token operator">=</span> years<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span>
+
+TEMP_URL <span class="token operator">=</span> <span class="token string">"https://www.ncei.noaa.gov/data/global-hourly/access/{year}/{station}.csv"</span>
+
+TEMP_FILE <span class="token operator">=</span> <span class="token string">"station_{station}_{year}.csv"</span>
+
+
+<span class="token keyword">def</span> <span class="token function">download_data</span><span class="token punctuation">(</span>station<span class="token punctuation">,</span> year<span class="token punctuation">)</span><span class="token punctuation">:</span>
+
+    file_name <span class="token operator">=</span> TEMP_FILE<span class="token punctuation">.</span>format<span class="token punctuation">(</span>station<span class="token operator">=</span>station<span class="token punctuation">,</span> year<span class="token operator">=</span>year<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true"># 注意这种优化要保证，文件不变化，否则会导致数据错误</span>
+    <span class="token keyword">if</span> os<span class="token punctuation">.</span>path<span class="token punctuation">.</span>exists<span class="token punctuation">(</span>file_name<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span>
+    url <span class="token operator">=</span> TEMP_URL<span class="token punctuation">.</span>format<span class="token punctuation">(</span>station<span class="token operator">=</span>station<span class="token punctuation">,</span> year<span class="token operator">=</span>year<span class="token punctuation">)</span>
+    resp <span class="token operator">=</span> requests<span class="token punctuation">.</span>get<span class="token punctuation">(</span>url<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> resp<span class="token punctuation">.</span>status_code <span class="token operator">!=</span> <span class="token number">200</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span>
+
+    <span class="token keyword">with</span> open<span class="token punctuation">(</span>file_name<span class="token punctuation">,</span> <span class="token string">'wt'</span><span class="token punctuation">)</span> <span class="token keyword">as</span> w<span class="token punctuation">:</span>
+        w<span class="token punctuation">.</span>write<span class="token punctuation">(</span>resp<span class="token punctuation">.</span>text<span class="token punctuation">)</span>
+
+
+<span class="token keyword">def</span> <span class="token function">download_all_data</span><span class="token punctuation">(</span>stations<span class="token punctuation">,</span> start_year<span class="token punctuation">,</span> end_year<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">for</span> station <span class="token keyword">in</span> stations<span class="token punctuation">:</span>
+        <span class="token keyword">for</span> year <span class="token keyword">in</span> range<span class="token punctuation">(</span>start_year<span class="token punctuation">,</span> end_year <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            download_data<span class="token punctuation">(</span>station<span class="token punctuation">,</span> year<span class="token punctuation">)</span>
+
+
+<span class="token keyword">def</span> <span class="token function">get_file_temperatures</span><span class="token punctuation">(</span>file_name<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">with</span> open<span class="token punctuation">(</span>file_name<span class="token punctuation">,</span> <span class="token string">'rt'</span><span class="token punctuation">)</span> <span class="token keyword">as</span> fd<span class="token punctuation">:</span>
+        reader <span class="token operator">=</span> csv<span class="token punctuation">.</span>reader<span class="token punctuation">(</span>fd<span class="token punctuation">)</span>
+        header <span class="token operator">=</span> next<span class="token punctuation">(</span>reader<span class="token punctuation">)</span>
+        <span class="token keyword">for</span> row <span class="token keyword">in</span> reader<span class="token punctuation">:</span>
+            station <span class="token operator">=</span> row<span class="token punctuation">[</span>header<span class="token punctuation">.</span>index<span class="token punctuation">(</span><span class="token string">"STATION"</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+            tmp <span class="token operator">=</span> row<span class="token punctuation">[</span>header<span class="token punctuation">.</span>index<span class="token punctuation">(</span><span class="token string">"TMP"</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+            temperature<span class="token punctuation">,</span> status <span class="token operator">=</span> tmp<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">','</span><span class="token punctuation">)</span>
+            <span class="token keyword">if</span> status <span class="token operator">!=</span> <span class="token string">'1'</span><span class="token punctuation">:</span>
+                <span class="token keyword">continue</span>
+            temperature <span class="token operator">=</span> int<span class="token punctuation">(</span>float<span class="token punctuation">(</span>temperature<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token number">10</span><span class="token punctuation">)</span>
+            <span class="token keyword">yield</span> temperature
+
+
+<span class="token keyword">def</span> <span class="token function">get_all_temperatures</span><span class="token punctuation">(</span>stations<span class="token punctuation">,</span> start_year<span class="token punctuation">,</span> end_year<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    temperatures <span class="token operator">=</span> collections<span class="token punctuation">.</span>defaultdict<span class="token punctuation">(</span>list<span class="token punctuation">)</span>
+    <span class="token keyword">for</span> station <span class="token keyword">in</span> stations<span class="token punctuation">:</span>
+        <span class="token keyword">for</span> year <span class="token keyword">in</span> range<span class="token punctuation">(</span>start_year<span class="token punctuation">,</span> end_year <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            file_name <span class="token operator">=</span> TEMP_FILE<span class="token punctuation">.</span>format<span class="token punctuation">(</span>station<span class="token operator">=</span>station<span class="token punctuation">,</span> year<span class="token operator">=</span>year<span class="token punctuation">)</span>
+            <span class="token keyword">for</span> temperature <span class="token keyword">in</span> get_file_temperatures<span class="token punctuation">(</span>file_name<span class="token punctuation">)</span><span class="token punctuation">:</span>
+                temperatures<span class="token punctuation">[</span>station<span class="token punctuation">]</span><span class="token punctuation">.</span>append<span class="token punctuation">(</span>temperature<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> temperatures
+
+
+<span class="token keyword">def</span> <span class="token function">get_min_temperature</span><span class="token punctuation">(</span>all_temperatures<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> <span class="token punctuation">{</span>station<span class="token punctuation">:</span> min<span class="token punctuation">(</span>temperatures<span class="token punctuation">)</span> <span class="token keyword">for</span> station<span class="token punctuation">,</span> temperatures <span class="token keyword">in</span> all_temperatures<span class="token punctuation">.</span>items<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+
+
+
+<span class="token keyword">if</span> __name__ <span class="token operator">==</span> <span class="token string">'__main__'</span><span class="token punctuation">:</span>
+    download_all_data<span class="token punctuation">(</span>stations<span class="token punctuation">,</span> start_year<span class="token punctuation">,</span> end_year<span class="token punctuation">)</span>
+    all_temperatures<span class="token operator">=</span> get_all_temperatures<span class="token punctuation">(</span>stations<span class="token punctuation">,</span> start_year<span class="token punctuation">,</span> end_year<span class="token punctuation">)</span>
+    min_temperature <span class="token operator">=</span> get_min_temperature<span class="token punctuation">(</span>all_temperatures<span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'min'</span><span class="token punctuation">,</span> min_temperature<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>优化后的profile文件内容：</p>
+<pre class="line-numbers language-python"><code class="language-python">$ more profile<span class="token punctuation">.</span>txt
+min <span class="token punctuation">{</span><span class="token string">'01044099999'</span><span class="token punctuation">:</span> <span class="token operator">-</span><span class="token number">10</span><span class="token punctuation">,</span> <span class="token string">'02293099999'</span><span class="token punctuation">:</span> <span class="token operator">-</span><span class="token number">27</span><span class="token punctuation">}</span>
+         <span class="token number">310870</span> function calls <span class="token punctuation">(</span><span class="token number">306328</span> primitive calls<span class="token punctuation">)</span> <span class="token keyword">in</span> <span class="token number">0.521</span> seconds
+
+   Ordered by<span class="token punctuation">:</span> cumulative time
+
+   ncalls  tottime  percall  cumtime  percall filename<span class="token punctuation">:</span>lineno<span class="token punctuation">(</span>function<span class="token punctuation">)</span>
+       <span class="token number">15</span>    <span class="token number">0.001</span>    <span class="token number">0.000</span>    <span class="token number">0.536</span>    <span class="token number">0.036</span> __init__<span class="token punctuation">.</span>py<span class="token punctuation">:</span><span class="token number">1</span><span class="token punctuation">(</span><span class="token operator">&lt;</span>module<span class="token operator">></span><span class="token punctuation">)</span>
+    <span class="token number">132</span><span class="token operator">/</span><span class="token number">1</span>    <span class="token number">0.001</span>    <span class="token number">0.000</span>    <span class="token number">0.521</span>    <span class="token number">0.521</span> <span class="token punctuation">{</span>built<span class="token operator">-</span><span class="token keyword">in</span> method builtins<span class="token punctuation">.</span><span class="token keyword">exec</span><span class="token punctuation">}</span>
+        <span class="token number">1</span>    <span class="token number">0.000</span>    <span class="token number">0.000</span>    <span class="token number">0.521</span>    <span class="token number">0.521</span> use_cache<span class="token punctuation">.</span>py<span class="token punctuation">:</span><span class="token number">1</span><span class="token punctuation">(</span><span class="token operator">&lt;</span>module<span class="token operator">></span><span class="token punctuation">)</span>
+    <span class="token number">180</span><span class="token operator">/</span><span class="token number">3</span>    <span class="token number">0.002</span>    <span class="token number">0.000</span>    <span class="token number">0.280</span>    <span class="token number">0.093</span> <span class="token operator">&lt;</span>frozen importlib<span class="token punctuation">.</span>_bootstrap<span class="token operator">></span><span class="token punctuation">:</span><span class="token number">1343</span><span class="token punctuation">(</span>_find_and_load<span class="token punctuation">)</span>
+    <span class="token number">179</span><span class="token operator">/</span><span class="token number">3</span>    <span class="token number">0.001</span>    <span class="token number">0.000</span>    <span class="token number">0.280</span>    <span class="token number">0.093</span> <span class="token operator">&lt;</span>frozen importlib<span class="token punctuation">.</span>_bootstrap<span class="token operator">></span><span class="token punctuation">:</span><span class="token number">1298</span><span class="token punctuation">(</span>_find_and_load_unlocked<span class="token punctuation">)</span>
+    <span class="token number">157</span><span class="token operator">/</span><span class="token number">3</span>    <span class="token number">0.001</span>    <span class="token number">0.000</span>    <span class="token number">0.280</span>    <span class="token number">0.093</span> <span class="token operator">&lt;</span>frozen importlib<span class="token punctuation">.</span>_bootstrap<span class="token operator">></span><span class="token punctuation">:</span><span class="token number">905</span><span class="token punctuation">(</span>_load_unlocked<span class="token punctuation">)</span>
+    <span class="token number">130</span><span class="token operator">/</span><span class="token number">3</span>    <span class="token number">0.001</span>    <span class="token number">0.000</span>    <span class="token number">0.279</span>    <span class="token number">0.093</span> <span class="token operator">&lt;</span>frozen importlib<span class="token punctuation">.</span>_bootstrap_external<span class="token operator">></span><span class="token punctuation">:</span><span class="token number">988</span><span class="token punctuation">(</span>exec_module<span class="token punctuation">)</span>
+    <span class="token number">374</span><span class="token operator">/</span><span class="token number">6</span>    <span class="token number">0.001</span>    <span class="token number">0.000</span>    <span class="token number">0.277</span>    <span class="token number">0.046</span> <span class="token operator">&lt;</span>frozen importlib<span class="token punctuation">.</span>_bootstrap<span class="token operator">></span><span class="token punctuation">:</span><span class="token number">480</span><span class="token punctuation">(</span>_call_with_frames_removed<span class="token punctuation">)</span>
+        <span class="token number">1</span>    <span class="token number">0.015</span>    <span class="token number">0.015</span>    <span class="token number">0.240</span>    <span class="token number">0.240</span> use_cache<span class="token punctuation">.</span>py<span class="token punctuation">:</span><span class="token number">53</span><span class="token punctuation">(</span>get_all_temperatures<span class="token punctuation">)</span>
+    <span class="token number">33650</span>    <span class="token number">0.184</span>    <span class="token number">0.000</span>    <span class="token number">0.218</span>    <span class="token number">0.000</span> use_cache<span class="token punctuation">.</span>py<span class="token punctuation">:</span><span class="token number">39</span><span class="token punctuation">(</span>get_file_temperatures<span class="token punctuation">)</span>
+     <span class="token number">17</span><span class="token operator">/</span><span class="token number">7</span>    <span class="token number">0.000</span>    <span class="token number">0.000</span>    <span class="token number">0.202</span>    <span class="token number">0.029</span> <span class="token punctuation">{</span>built<span class="token operator">-</span><span class="token keyword">in</span> method builtins<span class="token punctuation">.</span>__import__<span class="token punctuation">}</span>
+    <span class="token number">49</span><span class="token operator">/</span><span class="token number">20</span>    <span class="token number">0.000</span>    <span class="token number">0.000</span>    <span class="token number">0.165</span>    <span class="token number">0.008</span> <span class="token operator">&lt;</span>frozen importlib<span class="token punctuation">.</span>_bootstrap<span class="token operator">></span><span class="token punctuation">:</span><span class="token number">1384</span><span class="token punctuation">(</span>_handle_fromlist<span class="token punctuation">)</span>
+        <span class="token number">2</span>    <span class="token number">0.000</span>    <span class="token number">0.000</span>    <span class="token number">0.141</span>    <span class="token number">0.070</span> exceptions<span class="token punctuation">.</span>py<span class="token punctuation">:</span><span class="token number">1</span><span class="token punctuation">(</span><span class="token operator">&lt;</span>module<span class="token operator">></span><span class="token punctuation">)</span>
+      <span class="token number">130</span>    <span class="token number">0.002</span>    <span class="token number">0.000</span>    <span class="token number">0.085</span>    <span class="token number">0.001</span> <span class="token operator">&lt;</span>frozen importlib<span class="token punctuation">.</span>_bootstrap_external<span class="token operator">></span><span class="token punctuation">:</span><span class="token number">1061</span><span class="token punctuation">(</span>get_code<span class="token punctuation">)</span>
+        <span class="token number">1</span>    <span class="token number">0.000</span>    <span class="token number">0.000</span>    <span class="token number">0.061</span>    <span class="token number">0.061</span> client<span class="token punctuation">.</span>py<span class="token punctuation">:</span><span class="token number">1</span><span class="token punctuation">(</span><span class="token operator">&lt;</span>module<span class="token operator">></span><span class="token punctuation">)</span>
+        <span class="token number">1</span>    <span class="token number">0.000</span>    <span class="token number">0.000</span>    <span class="token number">0.058</span>    <span class="token number">0.058</span> compat<span class="token punctuation">.</span>py<span class="token punctuation">:</span><span class="token number">1</span><span class="token punctuation">(</span><span class="token operator">&lt;</span>module<span class="token operator">></span><span class="token punctuation">)</span>
+        <span class="token number">3</span>    <span class="token number">0.000</span>    <span class="token number">0.000</span>    <span class="token number">0.058</span>    <span class="token number">0.019</span> utils<span class="token punctuation">.</span>py<span class="token punctuation">:</span><span class="token number">1</span><span class="token punctuation">(</span><span class="token operator">&lt;</span>module<span class="token operator">></span><span class="token punctuation">)</span>
+      <span class="token number">130</span>    <span class="token number">0.001</span>    <span class="token number">0.000</span>    <span class="token number">0.054</span>    <span class="token number">0.000</span> <span class="token operator">&lt;</span>frozen importlib<span class="token punctuation">.</span>_bootstrap_external<span class="token operator">></span><span class="token punctuation">:</span><span class="token number">1182</span><span class="token punctuation">(</span>get_data<span class="token punctuation">)</span>
+       <span class="token number">75</span>    <span class="token number">0.001</span>    <span class="token number">0.000</span>    <span class="token number">0.049</span>    <span class="token number">0.001</span> __init__<span class="token punctuation">.</span>py<span class="token punctuation">:</span><span class="token number">280</span><span class="token punctuation">(</span>_compile<span class="token punctuation">)</span>
+       <span class="token number">74</span>    <span class="token number">0.000</span>    <span class="token number">0.000</span>    <span class="token number">0.049</span>    <span class="token number">0.001</span> __init__<span class="token punctuation">.</span>py<span class="token punctuation">:</span><span class="token number">226</span><span class="token punctuation">(</span>compile<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这个实例主要介绍了如何通过cProfile模块来分析代码的性能瓶颈，并找出可以优化的点。</p>
+<p>cProfile还可以结合snakeviz对代码做可视化的解析：</p>
+<p>以fib函数为例：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">def</span> <span class="token function">compute_fib</span><span class="token punctuation">(</span>limit<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    a<span class="token punctuation">,</span> b <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">1</span>
+    RES <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">]</span>
+    count <span class="token operator">=</span> <span class="token number">1</span>
+    <span class="token keyword">while</span> count <span class="token operator">&lt;=</span> limit<span class="token punctuation">:</span>
+        a<span class="token punctuation">,</span> b <span class="token operator">=</span> b<span class="token punctuation">,</span> a <span class="token operator">+</span> b
+        count <span class="token operator">+=</span> <span class="token number">1</span>
+        RES<span class="token punctuation">.</span>append<span class="token punctuation">(</span>b<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> RES
+
+
+<span class="token keyword">def</span> <span class="token function">double_fib</span><span class="token punctuation">(</span>fib_nums<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> <span class="token punctuation">[</span>i <span class="token operator">*</span> <span class="token number">2</span> <span class="token keyword">for</span> i <span class="token keyword">in</span> fib_nums<span class="token punctuation">]</span>
+
+
+<span class="token keyword">def</span> <span class="token function">square_fib_double</span><span class="token punctuation">(</span>double_nums<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> <span class="token punctuation">[</span>i <span class="token operator">**</span> <span class="token number">2</span> <span class="token keyword">for</span> i <span class="token keyword">in</span> double_nums<span class="token punctuation">]</span>
+
+
+res <span class="token operator">=</span> compute_fib<span class="token punctuation">(</span><span class="token number">200</span><span class="token punctuation">)</span>
+res <span class="token operator">=</span> double_fib<span class="token punctuation">(</span>res<span class="token punctuation">)</span>
+res <span class="token operator">=</span> square_fib_double<span class="token punctuation">(</span>res<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>res<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-python"><code class="language-python">$ time python3 <span class="token operator">-</span>m cProfile <span class="token operator">-</span>o fib<span class="token punctuation">.</span>prof fib<span class="token punctuation">.</span>py
+$ snakeviz fib<span class="token punctuation">.</span>prof
+snakeviz web server started on <span class="token number">127.0</span><span class="token punctuation">.</span><span class="token number">0.1</span><span class="token punctuation">:</span><span class="token number">8080</span><span class="token punctuation">;</span> enter Ctrl<span class="token operator">-</span>C to exit
+http<span class="token punctuation">:</span><span class="token operator">//</span><span class="token number">127.0</span><span class="token punctuation">.</span><span class="token number">0.1</span><span class="token punctuation">:</span><span class="token number">8080</span><span class="token operator">/</span>snakeviz<span class="token operator">/</span><span class="token operator">%</span>2FUsers<span class="token operator">%</span><span class="token number">2Fa110</span><span class="token operator">%</span>2Fhigh_per_py<span class="token operator">%</span><span class="token number">2FC2</span><span class="token operator">%</span>2Ffib<span class="token punctuation">.</span>prof
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>可以得到一个可视化的效果图</p>
+<p>并能够直观的分析出来耗时的部分。</p>
+<p>除了cProfile以外，常用的还有line_profile，这是一个第三方库，使用实例如下，以一道算法题为例：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> re
+
+<span class="token keyword">def</span> <span class="token function">split_multiple</span><span class="token punctuation">(</span>input_str<span class="token punctuation">,</span> separators<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true"># 将所有分隔符连接起来，并构造正则表达式</span>
+    separators_regex <span class="token operator">=</span> <span class="token string">'|'</span><span class="token punctuation">.</span>join<span class="token punctuation">(</span>map<span class="token punctuation">(</span>re<span class="token punctuation">.</span>escape<span class="token punctuation">,</span> separators<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> <span class="token punctuation">[</span>i<span class="token punctuation">.</span>lower<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">for</span> i <span class="token keyword">in</span> re<span class="token punctuation">.</span>split<span class="token punctuation">(</span>separators_regex<span class="token punctuation">,</span> input_str<span class="token punctuation">)</span> <span class="token keyword">if</span> i<span class="token punctuation">]</span>
+
+<span class="token keyword">class</span> <span class="token class-name">Solution</span><span class="token punctuation">:</span>
+    @profile
+    <span class="token keyword">def</span> <span class="token function">mostCommonWord</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> paragraph<span class="token punctuation">,</span> banned<span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">></span> str<span class="token punctuation">:</span>
+        words <span class="token operator">=</span> split_multiple<span class="token punctuation">(</span>paragraph<span class="token punctuation">,</span> <span class="token string">" !?',;."</span><span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true"># 计算每个出现单词的次数</span>
+        res <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+        <span class="token keyword">for</span> word <span class="token keyword">in</span> words<span class="token punctuation">:</span>
+            <span class="token keyword">if</span> word <span class="token keyword">in</span> res<span class="token punctuation">:</span>
+                res<span class="token punctuation">[</span>word<span class="token punctuation">]</span> <span class="token operator">+=</span> <span class="token number">1</span>
+            <span class="token keyword">else</span><span class="token punctuation">:</span>
+                res<span class="token punctuation">[</span>word<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">1</span>
+        most_common_word <span class="token operator">=</span> <span class="token string">''</span>
+        most_common_word_count <span class="token operator">=</span> <span class="token number">1</span>
+        <span class="token keyword">for</span> key <span class="token keyword">in</span> res<span class="token punctuation">:</span>
+            <span class="token keyword">if</span> res<span class="token punctuation">[</span>key<span class="token punctuation">]</span> <span class="token operator">>=</span> most_common_word_count <span class="token operator">and</span> key <span class="token operator">not</span> <span class="token keyword">in</span> banned<span class="token punctuation">:</span>
+                most_common_word <span class="token operator">=</span> key
+                most_common_word_count <span class="token operator">=</span> res<span class="token punctuation">[</span>key<span class="token punctuation">]</span>
+        <span class="token keyword">return</span> most_common_word
+
+
+a <span class="token operator">=</span> Solution<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>mostCommonWord<span class="token punctuation">(</span><span class="token string">"Bob hit a ball, the hit BALL flew far after it was hit."</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'hit'</span><span class="token punctuation">,</span> <span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>a<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre><code>$ kernprof -l sp.py
+ball
+Wrote profile results to sp.py.lprof
+Inspect results with:
+/Library/Frameworks/Python.framework/Versions/3.12/bin/python3.12 -m line_profiler -rmt &quot;sp.py.lprof&quot;
+</code></pre>
+<p>查看prof文件，按行解析：</p>
+<pre class="line-numbers language-python"><code class="language-python">Timer unit<span class="token punctuation">:</span> <span class="token number">1e</span><span class="token operator">-</span><span class="token number">06</span> s
+
+Total time<span class="token punctuation">:</span> <span class="token number">0.001671</span> s
+File<span class="token punctuation">:</span> sp<span class="token punctuation">.</span>py
+Function<span class="token punctuation">:</span> mostCommonWord at line <span class="token number">9</span>
+
+Line <span class="token comment" spellcheck="true">#      Hits         Time  Per Hit   % Time  Line Contents</span>
+<span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span>
+     <span class="token number">9</span>                                               @profile
+    <span class="token number">10</span>                                               <span class="token keyword">def</span> <span class="token function">mostCommonWord</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> paragraph<span class="token punctuation">,</span> banned<span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">></span> str<span class="token punctuation">:</span>
+    <span class="token number">11</span>         <span class="token number">1</span>       <span class="token number">1636.0</span>   <span class="token number">1636.0</span>     <span class="token number">97.9</span>          words <span class="token operator">=</span> split_multiple<span class="token punctuation">(</span>paragraph<span class="token punctuation">,</span> <span class="token string">" !?',;."</span><span class="token punctuation">)</span>
+    <span class="token number">12</span>                                                   <span class="token comment" spellcheck="true"># 计算每个出现单词的次数</span>
+    <span class="token number">13</span>         <span class="token number">1</span>          <span class="token number">1.0</span>      <span class="token number">1.0</span>      <span class="token number">0.1</span>          res <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+    <span class="token number">14</span>        <span class="token number">14</span>          <span class="token number">6.0</span>      <span class="token number">0.4</span>      <span class="token number">0.4</span>          <span class="token keyword">for</span> word <span class="token keyword">in</span> words<span class="token punctuation">:</span>
+    <span class="token number">15</span>        <span class="token number">13</span>          <span class="token number">5.0</span>      <span class="token number">0.4</span>      <span class="token number">0.3</span>              <span class="token keyword">if</span> word <span class="token keyword">in</span> res<span class="token punctuation">:</span>
+    <span class="token number">16</span>         <span class="token number">3</span>          <span class="token number">3.0</span>      <span class="token number">1.0</span>      <span class="token number">0.2</span>                  res<span class="token punctuation">[</span>word<span class="token punctuation">]</span> <span class="token operator">+=</span> <span class="token number">1</span>
+    <span class="token number">17</span>                                                       <span class="token keyword">else</span><span class="token punctuation">:</span>
+    <span class="token number">18</span>        <span class="token number">10</span>          <span class="token number">3.0</span>      <span class="token number">0.3</span>      <span class="token number">0.2</span>                  res<span class="token punctuation">[</span>word<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">1</span>
+    <span class="token number">19</span>         <span class="token number">1</span>          <span class="token number">0.0</span>      <span class="token number">0.0</span>      <span class="token number">0.0</span>          most_common_word <span class="token operator">=</span> <span class="token string">''</span>
+    <span class="token number">20</span>         <span class="token number">1</span>          <span class="token number">1.0</span>      <span class="token number">1.0</span>      <span class="token number">0.1</span>          most_common_word_count <span class="token operator">=</span> <span class="token number">1</span>
+    <span class="token number">21</span>        <span class="token number">11</span>          <span class="token number">8.0</span>      <span class="token number">0.7</span>      <span class="token number">0.5</span>          <span class="token keyword">for</span> key <span class="token keyword">in</span> res<span class="token punctuation">:</span>
+    <span class="token number">22</span>        <span class="token number">10</span>          <span class="token number">6.0</span>      <span class="token number">0.6</span>      <span class="token number">0.4</span>              <span class="token keyword">if</span> res<span class="token punctuation">[</span>key<span class="token punctuation">]</span> <span class="token operator">>=</span> most_common_word_count <span class="token operator">and</span> key <span class="token operator">not</span> <span class="token keyword">in</span> banned<span class="token punctuation">:</span>
+    <span class="token number">23</span>         <span class="token number">3</span>          <span class="token number">1.0</span>      <span class="token number">0.3</span>      <span class="token number">0.1</span>                  most_common_word <span class="token operator">=</span> key
+    <span class="token number">24</span>         <span class="token number">3</span>          <span class="token number">0.0</span>      <span class="token number">0.0</span>      <span class="token number">0.0</span>                  most_common_word_count <span class="token operator">=</span> res<span class="token punctuation">[</span>key<span class="token punctuation">]</span>
+    <span class="token number">25</span>         <span class="token number">1</span>          <span class="token number">1.0</span>      <span class="token number">1.0</span>      <span class="token number">0.1</span>          <span class="token keyword">return</span> most_common_word
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里可以看出，大部分时间都花在了split_multiple方法上面。</p>
+<h3 id="Python基本数据结构的性能分析"><a href="#Python基本数据结构的性能分析" class="headerlink" title="Python基本数据结构的性能分析"></a>Python基本数据结构的性能分析</h3><p>这部分主要介绍Python的基本数据类型，比如list，set，dict，tuple的性能分析与测试。</p>
+<p>以下是一个基于基本的数据类型的性能测试：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> random
+<span class="token keyword">from</span> timeit <span class="token keyword">import</span> timeit
+
+MAX_SIZE <span class="token operator">=</span> <span class="token number">1000000</span>
+
+big_list <span class="token operator">=</span> list<span class="token punctuation">(</span>range<span class="token punctuation">(</span>MAX_SIZE<span class="token punctuation">)</span><span class="token punctuation">)</span>
+big_range <span class="token operator">=</span> range<span class="token punctuation">(</span>MAX_SIZE<span class="token punctuation">)</span>
+big_set <span class="token operator">=</span> set<span class="token punctuation">(</span>range<span class="token punctuation">(</span>MAX_SIZE<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token keyword">def</span> <span class="token function">search_cases</span><span class="token punctuation">(</span>n<span class="token punctuation">,</span> where<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">for</span> _ <span class="token keyword">in</span> range<span class="token punctuation">(</span>n<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        random<span class="token punctuation">.</span>randint<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token operator">*</span>MAX_SIZE<span class="token punctuation">)</span> <span class="token keyword">in</span> where
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>timeit<span class="token punctuation">(</span><span class="token string">'search_cases(1000,big_set)'</span><span class="token punctuation">,</span> number<span class="token operator">=</span><span class="token number">5</span><span class="token punctuation">,</span> globals<span class="token operator">=</span>globals<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>timeit<span class="token punctuation">(</span><span class="token string">'search_cases(1000,big_range)'</span><span class="token punctuation">,</span> number<span class="token operator">=</span><span class="token number">5</span><span class="token punctuation">,</span> globals<span class="token operator">=</span>globals<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>timeit<span class="token punctuation">(</span><span class="token string">'search_cases(1000,big_list)'</span><span class="token punctuation">,</span> number<span class="token operator">=</span><span class="token number">5</span><span class="token punctuation">,</span> globals<span class="token operator">=</span>globals<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果如下：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ python3 time_time.py
+0.004048648988828063
+0.003750314994249493
+56.678636483004084
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里可以看出，in 操作符在对查找set和range时候，性能很快，但是list性能很差。</p>
+<pre><code>Why such low performance in the second search? Because to complete this search,
+the in operator does a sequential scan starting from the beginning of the list. 
+</code></pre>
+<p>Python的in操作符，在查找list时候的算法复杂度是O(n) 的，所以会很慢，而set和dictionary 的平均复杂度是O(1)。</p>
+<p><a target="_blank" rel="noopener" href="https://wiki.python.org/moin/TimeComplexity">https://wiki.python.org/moin/TimeComplexity</a> 记录了常用容器的时间复杂度。</p>
+<pre><code>The set implementation still has much better performance. That is because in Python
+(to be more precise, CPython) a set is implemented with a hash. Finding an element
+thus has the cost of searching a hash. Hash functions come in many flavors and have
+to deal with many design problems. But when comparing lists and sets, we can gener-
+ally assume that set lookup is mostly constant and will perform as well with a collection
+of size 10 or 10 million. This is not actually correct, but it is reasonable for under-
+standing, in an intuitive way, why set lookups compare favorably against list lookups.
+</code></pre>
+<p>CPython的set实现使用的是一个hash table所以，它的查找性能比较高。</p>
+<h3 id="对内存使用的优化与查找对象内存大小"><a href="#对内存使用的优化与查找对象内存大小" class="headerlink" title="对内存使用的优化与查找对象内存大小"></a>对内存使用的优化与查找对象内存大小</h3><p>Python中，可以使用sys.getsizeof查看变量的大小：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> random
+<span class="token keyword">from</span> timeit <span class="token keyword">import</span> timeit
+<span class="token keyword">import</span> sys
+
+MAX_SIZE <span class="token operator">=</span> <span class="token number">1000000</span>
+
+big_list <span class="token operator">=</span> list<span class="token punctuation">(</span>range<span class="token punctuation">(</span>MAX_SIZE<span class="token punctuation">)</span><span class="token punctuation">)</span>
+big_range <span class="token operator">=</span> range<span class="token punctuation">(</span>MAX_SIZE<span class="token punctuation">)</span>
+big_set <span class="token operator">=</span> set<span class="token punctuation">(</span>range<span class="token punctuation">(</span>MAX_SIZE<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token keyword">def</span> <span class="token function">search_cases</span><span class="token punctuation">(</span>n<span class="token punctuation">,</span> where<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">for</span> _ <span class="token keyword">in</span> range<span class="token punctuation">(</span>n<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        random<span class="token punctuation">.</span>randint<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token operator">*</span>MAX_SIZE<span class="token punctuation">)</span> <span class="token keyword">in</span> where
+
+<span class="token comment" spellcheck="true">#print(timeit('search_cases(1000,big_set)', number=5, globals=globals()))</span>
+<span class="token comment" spellcheck="true">#print(timeit('search_cases(1000,big_range)', number=5, globals=globals()))</span>
+<span class="token comment" spellcheck="true">#print(timeit('search_cases(1000,big_list)', number=5, globals=globals()))</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>sys<span class="token punctuation">.</span>getsizeof<span class="token punctuation">(</span>big_list<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>sys<span class="token punctuation">.</span>getsizeof<span class="token punctuation">(</span>big_range<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>sys<span class="token punctuation">.</span>getsizeof<span class="token punctuation">(</span>big_set<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-python"><code class="language-python">$ python3 time_time<span class="token punctuation">.</span>py
+<span class="token number">8000056</span>
+<span class="token number">48</span>
+<span class="token number">33554648</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里可以查看出，range是惰性求值的，内存使用最少，list比较set更少。</p>
+<p>这里介绍一下Cpython对于小整数和字符串的缓存机制：</p>
+<pre><code>In CPython, that
+happens to be memory location. CPython is smart enough to see that the same string
+content is being used over and over again—remember that each ASCII character is
+represented by an integer between 0 and 127—and, as such, the output of the previ-
+ous code is 46
+</code></pre>
+<pre><code>s1 = &#39;a&#39; * 2
+s2 = &#39;a&#39; * 2
+s = 2
+s3 = &#39;a&#39; * s
+s4 = &#39;a&#39; * s
+print(id(s1))
+print(id(s2))
+print(id(s3))
+print(id(s4))
+print(s1 == s4)
+
+4468947008
+4468947008
+4468947104
+4468947152
+True
+</code></pre>
+<p>使用array代替list: Using arrays as a compact representation alternative to lists</p>
+<pre><code>Arrays are of fixed size and can only contain objects of the same type. Hence, their
+representation can be made much more compact: it can be stored with the object
+overhead. Recall that for our integers, there was a 28-byte size for a storage of, really, a
+single byte of data.
+
+</code></pre>
+<p>List的内存使用：</p>
+<pre><code>When you allocate a list, Python creates an extra space for potential future additions,
+so the list will normally have more space than you expect. This makes insertions sub-
+stantially cheaper because there is no need to allocate memory every time a new ele-
+ment is added—just when the extra space allocated is exhausted. The cost, of course,
+is the memory overhead. As a rule, such overhead is not serious unless you have lots
+of tiny lists; that is, the “lots of tiny objects” argument is especially true for lists. While
+knowing this is interesting, the overhead is normally OK with all other cases.
+</code></pre>
+<p>由于list的长度和内容不固定，所以它实际使用的内存可能远超出你的想象。</p>
+<p>这里介绍一个获取对象分配内存的方法：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">from</span> array <span class="token keyword">import</span> array
+<span class="token keyword">from</span> collections<span class="token punctuation">.</span>abc <span class="token keyword">import</span> Iterable<span class="token punctuation">,</span> Mapping
+<span class="token keyword">from</span> sys <span class="token keyword">import</span> getsizeof
+<span class="token keyword">from</span> types <span class="token keyword">import</span> GeneratorType
+
+
+<span class="token keyword">def</span> <span class="token function">compute_allocation</span><span class="token punctuation">(</span>obj<span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">></span> int<span class="token punctuation">:</span>
+    my_ids <span class="token operator">=</span> set<span class="token punctuation">(</span><span class="token punctuation">[</span>id<span class="token punctuation">(</span>obj<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    to_compute <span class="token operator">=</span> <span class="token punctuation">[</span>obj<span class="token punctuation">]</span>
+    allocation_size <span class="token operator">=</span> <span class="token number">0</span>
+    container_allocation <span class="token operator">=</span> <span class="token number">0</span>
+    <span class="token keyword">while</span> len<span class="token punctuation">(</span>to_compute<span class="token punctuation">)</span> <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">:</span>
+        obj_to_check <span class="token operator">=</span> to_compute<span class="token punctuation">.</span>pop<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        allocation_size <span class="token operator">+=</span> getsizeof<span class="token punctuation">(</span>obj_to_check<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> type<span class="token punctuation">(</span>obj_to_check<span class="token punctuation">)</span> <span class="token operator">==</span> str<span class="token punctuation">:</span>
+            <span class="token keyword">continue</span>
+        <span class="token keyword">if</span> type<span class="token punctuation">(</span>obj_to_check<span class="token punctuation">)</span> <span class="token operator">==</span> array<span class="token punctuation">:</span>
+            <span class="token keyword">continue</span>
+        <span class="token keyword">elif</span> isinstance<span class="token punctuation">(</span>obj_to_check<span class="token punctuation">,</span> GeneratorType<span class="token punctuation">)</span><span class="token punctuation">:</span>
+            <span class="token keyword">continue</span>
+        <span class="token keyword">elif</span> isinstance<span class="token punctuation">(</span>obj_to_check<span class="token punctuation">,</span> Mapping<span class="token punctuation">)</span><span class="token punctuation">:</span>
+            container_allocation <span class="token operator">+=</span> getsizeof<span class="token punctuation">(</span>obj_to_check<span class="token punctuation">)</span>
+            <span class="token keyword">for</span> ikey<span class="token punctuation">,</span> ivalue <span class="token keyword">in</span> obj_to_check<span class="token punctuation">.</span>items<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+                <span class="token keyword">if</span> id<span class="token punctuation">(</span>ikey<span class="token punctuation">)</span> <span class="token operator">not</span> <span class="token keyword">in</span> my_ids<span class="token punctuation">:</span>
+                    my_ids<span class="token punctuation">.</span>add<span class="token punctuation">(</span>id<span class="token punctuation">(</span>ikey<span class="token punctuation">)</span><span class="token punctuation">)</span>
+                    to_compute<span class="token punctuation">.</span>append<span class="token punctuation">(</span>id<span class="token punctuation">(</span>ikey<span class="token punctuation">)</span><span class="token punctuation">)</span>
+                <span class="token keyword">if</span> id<span class="token punctuation">(</span>ivalue<span class="token punctuation">)</span> <span class="token operator">not</span> <span class="token keyword">in</span> my_ids<span class="token punctuation">:</span>
+                    my_ids<span class="token punctuation">.</span>add<span class="token punctuation">(</span>ivalue<span class="token punctuation">)</span>
+                    to_compute<span class="token punctuation">.</span>append<span class="token punctuation">(</span>id<span class="token punctuation">(</span>ivalue<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token keyword">elif</span> isinstance<span class="token punctuation">(</span>obj_to_check<span class="token punctuation">,</span> Iterable<span class="token punctuation">)</span><span class="token punctuation">:</span>
+            container_allocation <span class="token operator">+=</span> getsizeof<span class="token punctuation">(</span>obj_to_check<span class="token punctuation">)</span>
+            <span class="token keyword">for</span> inner <span class="token keyword">in</span> obj_to_check<span class="token punctuation">:</span>
+                <span class="token keyword">if</span> id<span class="token punctuation">(</span>inner<span class="token punctuation">)</span> <span class="token operator">not</span> <span class="token keyword">in</span> my_ids<span class="token punctuation">:</span>
+                    my_ids<span class="token punctuation">.</span>add<span class="token punctuation">(</span>id<span class="token punctuation">(</span>inner<span class="token punctuation">)</span><span class="token punctuation">)</span>
+                    to_compute<span class="token punctuation">.</span>append<span class="token punctuation">(</span>inner<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> allocation_size<span class="token punctuation">,</span> allocation_size <span class="token operator">-</span> container_allocation
+
+
+MAX <span class="token operator">=</span> <span class="token number">1000000</span>
+big_list <span class="token operator">=</span> list<span class="token punctuation">(</span>range<span class="token punctuation">(</span>MAX<span class="token punctuation">)</span><span class="token punctuation">)</span>
+big_set <span class="token operator">=</span> set<span class="token punctuation">(</span>list<span class="token punctuation">(</span>range<span class="token punctuation">(</span>MAX<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+big_dict <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span>MAX<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    big_dict<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> i
+<span class="token keyword">print</span><span class="token punctuation">(</span>compute_allocation<span class="token punctuation">(</span>big_list<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>compute_allocation<span class="token punctuation">(</span>big_set<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>compute_allocation<span class="token punctuation">(</span>big_dict<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行如下：</p>
+<pre><code>(36000056, 28000000)
+(61554648, 28000000)
+(73943128, 32000000)
+</code></pre>
+<p>可以看出list set dict 使用内存 由少到多。</p>
+<p>最后，本章给出的优化方法是，大数据量时候，使用惰性求值，比如生成器方法来代替list等全部计算好的值，这也是优化中的常用方法。</p>
+<p>下一章主要介绍使用异步编程优化性能。</p>
+
+</article>
+    
+    
+
+</div>
+<div class="trm-post-next-prev row">
+    <div class="col-lg-12">
+        <!-- title -->
+        <h5 class="trm-title-with-divider">
+            其他文章
+            <span data-number="02"></span>
+        </h5>
+    </div>
+    
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/05/19/PyCuda%E7%AC%94%E8%AE%B0%E4%BA%8C/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/pycuda.png">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" /categories/Cuda/">
+                    Cuda
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/05/19/PyCuda%E7%AC%94%E8%AE%B0%E4%BA%8C/" class="trm-anima-link">
+                    PyCuda笔记二
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/05/19</li>
+                <li>01:34</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+</div>
+
+    
+
+
+
+                    <div class="trm-divider footer-divider"></div>
+
+                    <!-- footer -->
+                    <footer class="trm-scroll-animation">
+
+    
+
+    
+
+    
+        <div class="trm-footer-item">
+            <span>
+                由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v7.0.0
+            </span>
+            <span class="footer-separator" data-separator=" | "></span>
+            <span> 
+                主题 - 
+                <a rel="noopener" href='https://github.com/MaLuns/hexo-theme-async' target='_blank'>Async</a>
+                v2.1.8
+            </span>
+        </div>
+      
+
+     
+
+     
+</footer>
+ 
+                    <!-- footer end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- body end -->
+
+            
+
+            
+<div class="trm-fixed-container">
+    
+    
+        <div class="trm-fixed-btn" data-title="阅读模式" onclick="asyncFun.switchReadMode()">
+            <i class="iconfont fas fa-book-reader"></i>
+        </div>
+    
+    
+    <div id="trm-back-top" class="trm-fixed-btn" data-title="回到顶部">
+        <i class="iconfont fas fa-arrow-up"></i>
+    </div>
+</div>
+        </div>
+      </div>
+      <!-- scroll container end -->
+  </div>
+  <!-- app wrapper end -->
+
+  
+  <!-- Plugin -->
+
+
+
+
+    
+    
+<script src="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+
+    
+
+    
+
+    
+
+    <!-- 数学公式 -->
+    
+
+    <!-- 评论插件 -->
+    
+        
+
+        
+    
+
+
+
+<!-- CDN -->
+
+
+    
+
+    
+
+    
+
+
+
+
+    <!-- Service Worker -->
+    
+    <!-- baidu push -->
+    
+
+
+<script id="async-script" src="/js/main.js?v=2.1.8"></script>
+
+</body>
+
+</html>
