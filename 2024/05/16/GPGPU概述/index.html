@@ -16,7 +16,7 @@
 <meta property="og:locale">
 <meta property="og:image" content="http://example.com/img/404.jpg">
 <meta property="article:published_time" content="2024-05-15T17:34:42.000Z">
-<meta property="article:modified_time" content="2024-05-18T07:59:16.620Z">
+<meta property="article:modified_time" content="2024-05-25T01:10:22.704Z">
 <meta property="article:author" content="橘猫元宝">
 <meta property="article:tag" content="cat">
 <meta name="twitter:card" content="summary">
@@ -64,7 +64,7 @@
 
 <!-- Variable -->
 <script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
-<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-05-18 15:59:16"};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-05-25 09:10:22"};</script>
 
 <!-- Theme mode css -->
 <link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
@@ -427,6 +427,8 @@ total_cores <span class="token operator">=</span> cores_per_sm<span class="token
 <p>运行结果是1408，和网络搜索查询到的1660显卡核心数一致。</p>
 <p>可以看出CPU的设计引入的多级缓存机制，同时核心数比较少，而GPU的核心数比较多，缓存也比较少。</p>
 <p>在擅长领域上，CPU作为通用计算单位，对各种类型的数据都游刃有余，但是GPU擅长的就是一个浮点数。（后面学习Cuda时候可以测试一下是否是这样的）。</p>
+<p>Cache,Local Memory: CPU 大于 GPU，大的缓存可以降低时延。<br>线程数(threads)： GPU大于CPU，线程数量越多，算力越强。<br>寄存器数量：GPU 大于CPU，threads需要用到更多寄存器，threads多，寄存器就多。</p>
+<p>CPU计算能力会越来越强，但是随之的问题也会出现，比如散热等问题。</p>
 <h3 id="GPU的计算原理和GPU到GPGPU的演化"><a href="#GPU的计算原理和GPU到GPGPU的演化" class="headerlink" title="GPU的计算原理和GPU到GPGPU的演化"></a>GPU的计算原理和GPU到GPGPU的演化</h3><h4 id="GPU的工作原理"><a href="#GPU的工作原理" class="headerlink" title="GPU的工作原理"></a>GPU的工作原理</h4><p>图形图像相关的任务，在处理时，会将三维的立体模型专为二维图像，这个过程需要流水线计算，主要有两种标准OpenGL和Direct3D。</p>
 <p>处理步骤如下：</p>
 <ol>
