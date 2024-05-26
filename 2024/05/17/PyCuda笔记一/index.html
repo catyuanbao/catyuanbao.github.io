@@ -15,7 +15,7 @@
 <meta property="og:description" content="背景本文主要记录《Hands-On GPU Programming with Python and CUDA 》1-3章的内容，快速体验一下Cuda，作为了解Python Cuda的第一课的笔记。 第一章本章主要介绍了为什么使用GPU，以及Amdahl’s law，还有就是cProfile的性能分析模块。 这里我已经了解了GPGPU概述的基本知识，并发编程导论中了解过了Amdahl’s law，在">
 <meta property="og:locale">
 <meta property="article:published_time" content="2024-05-17T04:10:42.000Z">
-<meta property="article:modified_time" content="2024-05-25T01:19:15.539Z">
+<meta property="article:modified_time" content="2024-05-25T01:24:09.278Z">
 <meta property="article:author" content="橘猫元宝">
 <meta property="article:tag" content="cat">
 <meta name="twitter:card" content="summary">
@@ -62,7 +62,7 @@
 
 <!-- Variable -->
 <script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
-<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-05-25 09:19:15"};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-05-25 09:24:09"};</script>
 
 <!-- Theme mode css -->
 <link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
@@ -465,6 +465,7 @@ It took 0.12327837944030762 seconds to dump the image.
 <li>CUDA运行时API（Runtime API）；</li>
 <li>CUDA驱动API；</li>
 </ol>
+<p>驱动API以cu开头，运行时API以cuda开头。</p>
 <p>需要从驱动-&gt;运行时-&gt;函数库这个方式去安装。</p>
 <p>这里最后还提了一个问题，能不能在Intel的核显或者AMD的显卡上运行Cuda，答案是否定的，只能在英伟达的显卡玩。</p>
 <h3 id="第三章"><a href="#第三章" class="headerlink" title="第三章"></a>第三章</h3><p>第三章主要是PyCuda的起步，通过gpuarray体验一下Cuda以及Python函数式编程的简单介绍。</p>

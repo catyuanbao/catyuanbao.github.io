@@ -15,7 +15,7 @@
 <meta property="og:description" content="本文主要记录Fast Python一书的第一部分，记录基本的Python性能优化方法与实践。 Optimizing pure Python code is the low-hanging fruit这句话是指优化纯Python代码是一个容易入手且能立即见效的工作。这通常指的是使用Python内置的性能分析工具找出代码中的瓶颈，然后通过重构、优化数据结构、使用生成器表达式代替列表推导式、避免不必要的">
 <meta property="og:locale">
 <meta property="article:published_time" content="2024-05-24T11:50:01.000Z">
-<meta property="article:modified_time" content="2024-05-24T12:01:08.427Z">
+<meta property="article:modified_time" content="2024-05-26T04:06:02.767Z">
 <meta property="article:author" content="橘猫元宝">
 <meta property="article:tag" content="cat">
 <meta name="twitter:card" content="summary">
@@ -62,7 +62,7 @@
 
 <!-- Variable -->
 <script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
-<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-05-24 20:01:08"};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-05-26 12:06:02"};</script>
 
 <!-- Theme mode css -->
 <link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
@@ -661,6 +661,65 @@ Line <span class="token comment" spellcheck="true">#      Hits         Time  Per
     <span class="token number">25</span>         <span class="token number">1</span>          <span class="token number">1.0</span>      <span class="token number">1.0</span>      <span class="token number">0.1</span>          <span class="token keyword">return</span> most_common_word
 <span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 <p>这里可以看出，大部分时间都花在了split_multiple方法上面。</p>
+<p>可以简单优化一下算法，减少使用太多的正则:</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">def</span> <span class="token function">split_multiple</span><span class="token punctuation">(</span>input_str<span class="token punctuation">,</span> separators<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    strip_separators <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token keyword">for</span> c <span class="token keyword">in</span> input_str<span class="token punctuation">:</span>
+        <span class="token keyword">if</span> c <span class="token keyword">in</span> separators<span class="token punctuation">:</span>
+            strip_separators<span class="token punctuation">.</span>append<span class="token punctuation">(</span><span class="token string">' '</span><span class="token punctuation">)</span>
+        <span class="token keyword">else</span><span class="token punctuation">:</span>
+            strip_separators<span class="token punctuation">.</span>append<span class="token punctuation">(</span>c<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> <span class="token punctuation">[</span>word<span class="token punctuation">.</span>lower<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">for</span> word <span class="token keyword">in</span> <span class="token string">''</span><span class="token punctuation">.</span>join<span class="token punctuation">(</span>strip_separators<span class="token punctuation">)</span><span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">if</span> word<span class="token punctuation">]</span>
+
+<span class="token keyword">class</span> <span class="token class-name">Solution</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">mostCommonWord</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> paragraph<span class="token punctuation">,</span> banned<span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">></span> str<span class="token punctuation">:</span>
+        words <span class="token operator">=</span> split_multiple<span class="token punctuation">(</span>paragraph<span class="token punctuation">,</span> <span class="token string">"!?',;."</span><span class="token punctuation">)</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span>words<span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true"># 计算每个出现单词的次数</span>
+        res <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+        <span class="token keyword">for</span> word <span class="token keyword">in</span> words<span class="token punctuation">:</span>
+            <span class="token keyword">if</span> word <span class="token keyword">in</span> res<span class="token punctuation">:</span>
+                res<span class="token punctuation">[</span>word<span class="token punctuation">]</span> <span class="token operator">+=</span> <span class="token number">1</span>
+            <span class="token keyword">else</span><span class="token punctuation">:</span>
+                res<span class="token punctuation">[</span>word<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">1</span>
+        most_common_word <span class="token operator">=</span> <span class="token string">''</span>
+        most_common_word_count <span class="token operator">=</span> <span class="token number">1</span>
+        <span class="token keyword">for</span> key <span class="token keyword">in</span> res<span class="token punctuation">:</span>
+            <span class="token keyword">if</span> res<span class="token punctuation">[</span>key<span class="token punctuation">]</span> <span class="token operator">>=</span> most_common_word_count <span class="token operator">and</span> key <span class="token operator">not</span> <span class="token keyword">in</span> banned<span class="token punctuation">:</span>
+                most_common_word <span class="token operator">=</span> key
+                most_common_word_count <span class="token operator">=</span> res<span class="token punctuation">[</span>key<span class="token punctuation">]</span>
+        <span class="token keyword">return</span> most_common_word
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行时间：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">Timer unit: 1e-06 s
+
+Total time: 0.000121 s
+File: so.py
+Function: mostCommonWord at line 11
+
+Line <span class="token comment" spellcheck="true">#      Hits         Time  Per Hit   % Time  Line Contents</span>
+<span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span>
+    11                                               @profile
+    12                                               def mostCommonWord<span class="token punctuation">(</span>self, paragraph, banned<span class="token punctuation">)</span> -<span class="token operator">></span> str:
+    13         1         37.0     37.0     30.6          words <span class="token operator">=</span> split_multiple<span class="token punctuation">(</span>paragraph, <span class="token string">"!?',;."</span><span class="token punctuation">)</span>
+    14         1         44.0     44.0     36.4          print<span class="token punctuation">(</span>words<span class="token punctuation">)</span>
+    15                                                   <span class="token comment" spellcheck="true"># 计算每个出现单词的次数</span>
+    16         1          1.0      1.0      0.8          res <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+    17        14          8.0      0.6      6.6          <span class="token keyword">for</span> word <span class="token keyword">in</span> words:
+    18        13          7.0      0.5      5.8              <span class="token keyword">if</span> word <span class="token keyword">in</span> res:
+    19         3          2.0      0.7      1.7                  res<span class="token punctuation">[</span>word<span class="token punctuation">]</span> +<span class="token operator">=</span> 1
+    20                                                       else:
+    21        10          6.0      0.6      5.0                  res<span class="token punctuation">[</span>word<span class="token punctuation">]</span> <span class="token operator">=</span> 1
+    22         1          1.0      1.0      0.8          most_common_word <span class="token operator">=</span> <span class="token string">''</span>
+    23         1          0.0      0.0      0.0          most_common_word_count <span class="token operator">=</span> 1
+    24        11          5.0      0.5      4.1          <span class="token keyword">for</span> key <span class="token keyword">in</span> res:
+    25        10          6.0      0.6      5.0              <span class="token keyword">if</span> res<span class="token punctuation">[</span>key<span class="token punctuation">]</span> <span class="token operator">>=</span> most_common_word_count and key not <span class="token keyword">in</span> banned:
+    26         3          2.0      0.7      1.7                  most_common_word <span class="token operator">=</span> key
+    27         3          1.0      0.3      0.8                  most_common_word_count <span class="token operator">=</span> res<span class="token punctuation">[</span>key<span class="token punctuation">]</span>
+    28         1          1.0      1.0      0.8          <span class="token keyword">return</span> most_common_word
+
+  0.00 seconds - so.py:11 - mostCommonWord
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 <h3 id="Python基本数据结构的性能分析"><a href="#Python基本数据结构的性能分析" class="headerlink" title="Python基本数据结构的性能分析"></a>Python基本数据结构的性能分析</h3><p>这部分主要介绍Python的基本数据类型，比如list，set，dict，tuple的性能分析与测试。</p>
 <p>以下是一个基于基本的数据类型的性能测试：</p>
 <pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> random
@@ -848,6 +907,37 @@ big_dict <span class="token operator">=</span> <span class="token punctuation">{
             <span data-number="02"></span>
         </h5>
     </div>
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/05/26/Fast-Python%E7%AC%94%E8%AE%B0%E4%BA%8C/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" #.">
+                    未分类
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/05/26/Fast-Python%E7%AC%94%E8%AE%B0%E4%BA%8C/" class="trm-anima-link">
+                    Fast Python笔记二
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/05/26</li>
+                <li>12:06</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
     
     
         <div class="col-lg-6">

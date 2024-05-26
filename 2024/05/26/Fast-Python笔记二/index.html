@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="x5-fullscreen" content="true">
+<meta name="full-screen" content="yes">
+<meta name="theme-color" content="#317EFB" />
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
+<meta name="description" content="本文主要记录Fast Python第三章，主要是介绍Python异步编程，实现一个简单的MapReduce服务端。 并发并行和顺序执行 Parallelism is the easiest concept to explain: tasks run in parallel when they are run-ning at the same time. Concurrent tasks may r">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Fast Python笔记二">
+<meta property="og:url" content="http://example.com/2024/05/26/Fast-Python%E7%AC%94%E8%AE%B0%E4%BA%8C/index.html">
+<meta property="og:site_name" content="Cat YuanBao">
+<meta property="og:description" content="本文主要记录Fast Python第三章，主要是介绍Python异步编程，实现一个简单的MapReduce服务端。 并发并行和顺序执行 Parallelism is the easiest concept to explain: tasks run in parallel when they are run-ning at the same time. Concurrent tasks may r">
+<meta property="og:locale">
+<meta property="article:published_time" content="2024-05-26T04:06:42.000Z">
+<meta property="article:modified_time" content="2024-05-26T04:07:22.757Z">
+<meta property="article:author" content="橘猫元宝">
+<meta property="article:tag" content="cat">
+<meta name="twitter:card" content="summary">
+
+    <meta name="keywords" content="cat">
+
+
+<title >Fast Python笔记二</title>
+
+<!-- Favicon -->
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='16x16' ></link>
+
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='32x32' ></link>
+
+
+
+
+<!-- Plugin -->
+
+
+
+
+    
+<link rel="stylesheet" href="/css/plugins/bootstrap.row.css">
+
+    
+<link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.css">
+
+    
+    
+
+
+
+
+<!-- Icon -->
+
+    
+<link rel="stylesheet" href="/css/plugins/font-awesome.min.css">
+
+
+
+
+<!-- Variable -->
+<script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-05-26 12:07:22"};</script>
+
+<!-- Theme mode css -->
+<link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
+<script>
+    let defaultMode = ASYNC_CONFIG.theme.default !=='auto' ?  ASYNC_CONFIG.theme.default : (window.matchMedia("(prefers-color-scheme: light)").matches ? 'style-light' : 'style-dark')
+    let catchMode = localStorage.getItem('theme-mode') || defaultMode;
+    let type = catchMode === 'style-dark' ? 'add' : 'remove';
+    document.documentElement.classList[type]('dark')
+</script>
+
+<!-- CDN -->
+
+
+    
+    
+
+
+
+<!-- Site Analytics -->
+ 
+<meta name="generator" content="Hexo 7.0.0"><link rel="stylesheet" href="/css/prism.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+<body>
+
+  <!-- app wrapper -->
+  <div class="trm-app-frame">
+
+    <!-- page preloader -->
+    <div class="trm-preloader">
+    <div class="trm-holder">
+        <div class="preloader">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+    <!-- page preloader end -->
+
+    <!-- change mode preloader -->
+    <div class="trm-mode-swich-animation-frame">
+    <div class="trm-mode-swich-animation">
+        <i class="i-sun"><i class="iconfont far fa-sun"></i></i>
+        <div class="trm-horizon"></div>
+        <i class="i-moon"><i class="iconfont far fa-moon"></i></i>
+    </div>
+</div>
+    <!-- change mode preloader end -->
+
+      <!-- scroll container -->
+      <div id="trm-dynamic-content" class="trm-swup-animation">
+        <div id="trm-scroll-container" class="trm-scroll-container" style="opacity: 0">
+            <!-- top bar -->
+            <header class="trm-top-bar">
+	<div class="container">
+		<div class="trm-left-side">
+			<!-- logo -->
+<a href="/" class="trm-logo-frame trm-anima-link">
+    
+        <img alt="logo" src="/img/favicon.svg">
+    
+    
+        <div class="trm-logo-text">
+            元宝<span>橘猫</span>
+        </div>
+    
+</a>
+<!-- logo end -->
+		</div>
+		<div class="trm-right-side">
+			<!-- menu -->
+<div class="trm-menu">
+    <nav>
+        <ul>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/" target="">
+                    首页
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/archives/" target="">
+                    归档
+                </a>
+                
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+<!-- menu end -->
+			
+    <!-- mode switcher place -->
+    <div class="trm-mode-switcher-place">
+        <div class="trm-mode-switcher">
+            <i class="iconfont far fa-sun"></i>
+            <input class="tgl tgl-light" id="trm-swich" type="checkbox">
+            <label class="trm-swich" for="trm-swich"></label>
+            <i class="iconfont far fa-moon"></i>
+        </div>
+    </div>
+    <!-- mode switcher place end -->
+
+			
+		</div>
+		<div class="trm-menu-btn">
+			<span></span>
+		</div>
+	</div>
+</header>
+            <!-- top bar end -->
+
+            <!-- body -->
+            
+<div class="trm-content-start">
+    <!-- banner -->
+    <div class="trm-banner">
+    
+    <!-- banner cover -->
+    <img style="object-position:top;object-fit:cover;" alt="banner" class="trm-banner-cover" src="/img/banner.png">
+    <!-- banner cover end -->
+    
+
+    <!-- banner content -->
+    <div class="trm-banner-content trm-overlay">
+        <div class="container">
+            <div class="row">
+                
+                <div class="col-lg-4"></div>
+                
+                <div class="col-lg-8">
+
+                    <!-- banner title -->
+                    <div class="trm-banner-text ">
+                        <div class="trm-label trm-mb-20">
+                            NEWS LETTER
+                        </div>
+                        <h1 class="trm-mb-30 trm-hsmb-font">
+                            Fast Python笔记二
+                        </h1>
+
+                        
+                            <ul class="trm-breadcrumbs trm-label">
+                                <li>
+                                    <a href="/" class="trm-anima-link">Home</a>
+                                </li>
+                                <li>
+                                    <span>
+                                        2024
+                                    </span>
+                                </li>
+                            </ul>
+                        
+                    </div>
+                    <!-- banner title end -->
+
+                    <!-- scroll hint -->
+                    <span id="scroll-triger" class="trm-scroll-hint-frame">
+                        <div class="trm-scroll-hint"></div>
+                        <span class="trm-label">Scroll down</span>
+                    </span>
+                    <!-- scroll hint end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- banner content end -->
+</div>
+    <!-- banner end -->
+    <div class="container">
+        <div class="row">
+            
+                <div class="trm-page-sidebar col-lg-4 hidden-sm">
+                    <!-- main card -->
+                    <div class="trm-main-card-frame trm-sidebar">
+    <div class="trm-main-card"> 
+        <!-- card header -->
+<div class="trm-mc-header">
+    <div class="trm-avatar-frame trm-mb-20">
+        <img alt="Avatar" class="trm-avatar" src="/img/cat.jpg">
+    </div>
+    <h5 class="trm-name trm-mb-15">
+        橘猫元宝
+    </h5>
+    
+</div>
+<!-- card header end -->
+        <!-- sidebar social -->
+
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<div class="trm-social">
+    
+        <a href="https://github.com" title="Github" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-github"></i>
+        </a>
+    
+</div>
+
+<!-- sidebar social end -->
+        <!-- info -->
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<ul class="trm-table trm-mb-20">
+    
+        <li>
+            <div class="trm-label">
+                Residence:
+            </div>
+            <div class="trm-label trm-label-light">
+                Mars
+            </div>
+        </li>
+    
+</ul>
+<!-- info end -->
+
+        
+    </div>
+</div>
+                    <!-- main card end -->
+                </div>
+            
+            <div class="trm-page-content col-lg-8">
+                <div id="trm-content" class="trm-content">
+                    <div class="trm-post-info row hidden-sm">
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-calendar-alt trm-icon"></i><br>
+            05/26
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-clock trm-icon"></i><br>
+            12:06
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div id="post-author" class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-user trm-icon"></i><br>
+            橘猫元宝
+        </div>
+    </div>
+</div>
+<div class="trm-card ">
+    <article id="article-container" class="trm-publication">
+    <p>本文主要记录Fast Python第三章，主要是介绍Python异步编程，实现一个简单的MapReduce服务端。</p>
+<p>并发并行和顺序执行</p>
+<p>Parallelism is the easiest concept to explain: tasks run in parallel when they are run-<br>ning at the same time. Concurrent tasks may run in any order: they may be run in<br>parallel or in sequence, depending on the language and OS. So all parallel tasks are<br>concurrent but not the other way around.<br>​<br>Understanding sequential, concurrent, and parallel models. Sequential execution occurs<br>when all tasks are executed in sequence and never interrupted. Concurrent execution with<br>no parallelism adds the possibility of a task being interrupted by another and later resumed.<br>Parallelism occurs when several tasks are run at the same time.<br>Parallelism是多个任务同时执行（强调同时），Concurrent是多个任务以任意顺序执行（强调多个任务执行）。</p>
+<p>单进程协程服务器实例</p>
+<p>这里给出一个MapReduce的单进程+协程的服务器实例。</p>
+<p>客户端可以提交任务，并获取执行结果，这里第一个版本只有简单的返回一个随机数，并没有计算word的次数 基于Python asyncio模块实现：</p>
+<p>import asyncio<br>import pickle<br>from random import randint<br>​<br>results &#x3D; {}<br>​<br>​<br>async def submit_job(reader, writer):<br>    job_id &#x3D; max(list(results.keys()) + [0]) + 1<br>    writer.write(job_id.to_bytes(4, ‘little’))<br>    writer.close()<br>    sleep_time &#x3D; randint(1, 4)<br>    await asyncio.sleep(sleep_time)<br>    results[job_id] &#x3D; sleep_time<br>​<br>​<br>async def get_results(reader, writer):<br>    job_id &#x3D; int.from_bytes(await reader.read(4), ‘little’)<br>    data &#x3D; pickle.dumps(results.get(job_id, None))<br>    writer.write(len(data).to_bytes(4, ‘little’))<br>    writer.write(data)<br>​<br>​<br>async def accept_requests(reader, writer):<br>    op &#x3D; await reader.read(1)<br>    if op[0] &#x3D;&#x3D; 0:<br>        await submit_job(reader, writer)<br>    elif op[0] &#x3D;&#x3D; 1:<br>        await get_results(reader, writer)<br>​<br>​<br>async def main():<br>    server &#x3D; await asyncio.start_server(accept_requests, ‘127.0.0.1’, 1936)<br>    async with server:<br>        await server.serve_forever()<br>​<br>​<br>print(‘listen at 172.0.0.1 1936 port’)<br>asyncio.run(main())<br>客户端实现：</p>
+<p>import marshal<br>import pickle<br>import socket<br>from time import sleep<br>​<br>​<br>def my_funs():<br>    def mapper(v):<br>        return v, 1  # XXX<br>​<br>    def reducer(my_args):<br>        v, obs &#x3D; my_args<br>        return v, sum(obs)<br>    return mapper, reducer<br>​<br>​<br>def do_request(my_funs, data):<br>    conn &#x3D; socket.create_connection((‘127.0.0.1’, 1936))<br>    conn.send(b’\x00’)<br>    my_code &#x3D; marshal.dumps(my_funs.<strong>code</strong>)<br>    conn.send(len(my_code).to_bytes(4, ‘little’, signed&#x3D;False))<br>    conn.send(my_code)<br>    my_data &#x3D; pickle.dumps(data)<br>    conn.send(len(my_data).to_bytes(4, ‘little’))<br>    conn.send(my_data)<br>    job_id &#x3D; int.from_bytes(conn.recv(4), ‘little’)<br>    conn.close()<br>​<br>    print(f’Getting data from job_id {job_id}’)<br>    result &#x3D; None<br>    while result is None:<br>        conn &#x3D; socket.create_connection((‘127.0.0.1’, 1936))<br>        conn.send(b’\x01’)<br>        conn.send(job_id.to_bytes(4, ‘little’))<br>        result_size &#x3D; int.from_bytes(conn.recv(4), ‘little’)<br>        result &#x3D; pickle.loads(conn.recv(result_size))<br>        conn.close()<br>        sleep(1)<br>    print(f’Result is {result} Number 1-4’)<br>​<br>​<br>if <strong>name</strong> &#x3D;&#x3D; ‘<strong>main</strong>‘:<br>    do_request(my_funs, ‘Python rocks. Python is great’.split(‘ ‘))<br>多运行几次的运行结果：</p>
+<p>$ python3 map_c.py<br>Getting data from job_id 8<br>Result is 1 Number 1-4<br>仅仅返回一个随机数。</p>
+<p>实现MapReduce的基本算法：</p>
+<p>from collections import defaultdict<br>​<br>​<br>def map_reduce_ultra_naive(my_input, mapper, reducer):<br>    map_results &#x3D; map(mapper, my_input)<br>​<br>    distributor &#x3D; defaultdict(list)<br>    for key, value in map_results:<br>        distributor[key].append(value)<br>​<br>    print(distributor)<br>    return map(reducer, distributor.items())<br>​<br>​<br>words &#x3D; ‘Python is great Python rocks’.split(‘ ‘)<br>​<br>emiter &#x3D; lambda word: (word, 1)<br>counter &#x3D; lambda emitted: (emitted[0], sum(emitted[1]))<br>​<br>a &#x3D; list(map_reduce_ultra_naive(words, emiter, counter))<br>print(a)<br>使用 concurrent.futures 实现一个线程版本的mapreduse:</p>
+<p>from collections import defaultdict<br>from concurrent.futures import ThreadPoolExecutor as Executor<br>​<br>​<br>def map_reduce_still_naive(my_input, mapper, reducer):<br>    with Executor() as executor:<br>        map_results &#x3D; executor.map(mapper, my_input)<br>        distributor &#x3D; defaultdict(list)<br>        for key, value in map_results:<br>            distributor[key].append(value)<br>        results &#x3D; executor.map(reducer, distributor.items())<br>    return results<br>​<br>​<br>words &#x3D; filter(lambda x: x!&#x3D; ‘’, map(lambda x: x.strip().rstrip(), ‘ ‘.join(open(‘text.txt’, ‘rt’, encoding&#x3D;’utf-8’).readlines()).split(‘ ‘)))<br>​<br>emiter &#x3D; lambda word: (word, 1)<br>counter &#x3D; lambda emitted: (emitted[0], sum(emitted[1]))<br>​<br>a &#x3D; list(map_reduce_still_naive(words, emiter, counter))<br>​<br>for i in sorted(a, key&#x3D;lambda x: x[1]):<br>    print(i)<br>这段代码使用了 ThreadPoolExecutor 类来实现并发的 MapReduce 框架。ThreadPoolExecutor 可以创建一个线程池，可以让你并发地执行多个任务。</p>
+<p>线程池中的线程个数取自 os.cpu_count() 一般为系统的逻辑核心数。</p>
+<p>实现一个带有任务进度显示的mapreduce版本：</p>
+<p>from collections import defaultdict<br>from concurrent.futures import ThreadPoolExecutor as Executor<br>from time import sleep<br>​<br>​<br>def report_progress(futures, tag, callback):<br>    not_done &#x3D; 1<br>    done &#x3D; 0<br>    while not_done &gt; 0:<br>        not_done &#x3D; 0<br>        done &#x3D; 0<br>        for fut in futures:<br>            if fut.done():<br>                done +&#x3D;1<br>            else:<br>                not_done +&#x3D; 1<br>        sleep(0.5)<br>        if not_done &gt; 0 and callback:<br>            callback(tag, done, not_done)<br>​<br>​<br>def async_map(executor, mapper, data):<br>    futures &#x3D; []<br>    for datum in data:<br>        futures.append(executor.submit(mapper, datum))<br>    return futures<br>​<br>​<br>def map_less_naive(executor, my_input, mapper):<br>    map_results &#x3D; async_map(executor, mapper, my_input)<br>    return map_results<br>​<br>​<br>def map_reduce_less_naive(my_input, mapper, reducer, callback&#x3D;None):<br>    with Executor(max_workers&#x3D;2) as executor:<br>        futures &#x3D; async_map(executor, mapper, my_input)<br>        report_progress(futures, ‘map’, callback)<br>        #wait(futures).done<br>        map_results &#x3D; map(lambda f: f.result(), futures)<br>        distributor &#x3D; defaultdict(list)<br>        for key, value in map_results:<br>            distributor[key].append(value)<br>​<br>        futures &#x3D; async_map(executor, reducer, distributor.items())<br>        report_progress(futures, ‘reduce’, callback)<br>        #wait(futures).done<br>        results &#x3D; map(lambda f: f.result(), futures)<br>    return results<br>​<br>​<br>def emitter(word):<br>    #sleep(10)<br>    return word, 1<br>​<br>​<br>counter &#x3D; lambda emitted: (emitted[0], sum(emitted[1]))<br>​<br>def reporter(tag, done, not_done):<br>    print(f’Operation {tag}: {done}&#x2F;{done+not_done}’)<br>​<br>words &#x3D; ‘Python is great Python rocks’.split(‘ ‘)<br>a &#x3D; map_reduce_less_naive(words, emitter, counter, reporter)<br>​<br>for i in sorted(a, key&#x3D;lambda x: x[1]):<br>    print(i)<br>​<br>#words &#x3D; ‘Python is great Python rocks’.split(‘ ‘)<br>​<br>#with Executor(max_workers&#x3D;4) as executor:</p>
+<h1 id="maps-map-less-naive-executor-words-emitter"><a href="#maps-map-less-naive-executor-words-emitter" class="headerlink" title="maps &#x3D; map_less_naive(executor, words, emitter)"></a>maps &#x3D; map_less_naive(executor, words, emitter)</h1><h1 id="print-maps-1"><a href="#print-maps-1" class="headerlink" title="print(maps[-1])"></a>print(maps[-1])</h1><h1 id="not-done-1"><a href="#not-done-1" class="headerlink" title="not_done &#x3D; 1"></a>not_done &#x3D; 1</h1><h1 id="while-not-done-0"><a href="#while-not-done-0" class="headerlink" title="while not_done &gt; 0:"></a>while not_done &gt; 0:</h1><h1 id="not-done-0"><a href="#not-done-0" class="headerlink" title="not_done &#x3D; 0"></a>not_done &#x3D; 0</h1><h1 id="for-fut-in-maps"><a href="#for-fut-in-maps" class="headerlink" title="for fut in maps:"></a>for fut in maps:</h1><h1 id="not-done-1-if-not-fut-done-else-0"><a href="#not-done-1-if-not-fut-done-else-0" class="headerlink" title="not_done +&#x3D; 1 if not fut.done() else 0"></a>not_done +&#x3D; 1 if not fut.done() else 0</h1><h1 id="sleep-1"><a href="#sleep-1" class="headerlink" title="sleep(1)"></a>sleep(1)</h1><h1 id="print-f’Still-not-finalized-not-done-’"><a href="#print-f’Still-not-finalized-not-done-’" class="headerlink" title="print(f’Still not finalized: {not_done}’)"></a>print(f’Still not finalized: {not_done}’)</h1><p>运行结果：</p>
+<p>Operation map: 3&#x2F;5<br>Operation reduce: 0&#x2F;4<br>(‘is’, 1)<br>(‘great’, 1)<br>(‘rocks’, 1)<br>(‘Python’, 2)<br>CPython 中的全局解释器锁（GIL）阻止了多个本地线程同时执行 Python 字节码，这确实限制了 CPU 密集型任务的真正并行性。因此，尽管提供的解决方案利用了线程的并发性，但由于 GIL 的限制，它并不能实现真正的并行性。</p>
+<p>要在 Python 中实现并行计算，特别是对于像这个 MapReduce 实现这样的 CPU 密集型任务，你通常会考虑使用多进程而不是多线程。多进程允许 Python 通过创建单独的进程来绕过 GIL，每个进程都有自己的 Python 解释器和内存空间。</p>
+<p>在 MapReduce 的背景下，你可以用 concurrent.futures 模块中的 ProcessPoolExecutor 替换 ThreadPoolExecutor 来实现真正的并行性。这将涉及启动多个 Python 进程，以便在 CPU 核心之间并行地执行映射和归约任务，从而更好地利用可用的硬件资源。</p>
+<p>虽然 CPython 中的全局解释器锁（GIL）会限制 Python  字节码级别的并行执行，但是低级别的代码可以通过一些方式绕过这一限制。在进入低级别的解决方案时，你可以释放  GIL，并使用并行性来充分利用系统资源。这就是诸如 NumPy、SciPy 和 scikit-learn 这样的库所做的。它们在 C 或  Fortran 中编写了多线程代码，释放了 GIL，并且实际上是并行的。因此，在 Python  的线程环境中，你的代码仍然可以实现并行性。只是并行的部分不会用 Python 编写。</p>
+<p>关于PyPy和Jython</p>
+<p>PyPy 是另一个流行的 Python 解释器，与 CPython 不同，PyPy 有一个可选的 GIL。在默认情况下，PyPy 也会使用 GIL 来确保线程安全。但是，PyPy 具有一些可配置选项，允许在特定情况下禁用 GIL，以便在某些多线程场景中获得更好的性能。</p>
+<p>要注意的是，尽管 PyPy 允许禁用 GIL，但并不意味着它完全消除了多线程中的竞争条件或死锁等问题。因此，在使用 PyPy 进行多线程编程时，仍然需要谨慎处理共享资源并避免潜在的并发问题。</p>
+<p>Jython 是另一种 Python 解释器，它将 Python 代码转换为 Java 字节码，以在 Java 虚拟机 (JVM) 上运行。尽管 Jython 提供了与 Java 互操作性的优势，但是自2017年以来，Jython 的更新速度相对缓慢，并且目前处于较低的活跃状态。</p>
+<p>多进程版本实现并行</p>
+<p>由于GIL的存在，目前的版本并没有实现并行，无非利用多核心的优势，所以，需要使用多进程的方式，充分利用多核计算能力。</p>
+<p>pickle 多进程的问题</p>
+<p>在 Python 中，pickle 是一种用于序列化和反序列化 Python 对象的标准模块。然而，pickle 在多进程环境下存在一些限制，特别是在使用 multiprocessing 模块创建子进程时。</p>
+<p>具体来说，当使用 multiprocessing 模块创建的子进程尝试序列化或反序列化对象时，由于子进程无法直接访问父进程的内存空间，因此 pickle 会遇到一些问题，导致无法正常工作。</p>
+<p>为了解决这个问题，Python 提供了 multiprocessing 模块中的 multiprocessing.Manager 类，它允许在多进程环境中共享 Python 对象。这个类使用了一种特殊的代理对象来实现对象的共享和传递，从而规避了 pickle 在多进程中的限制。</p>
+<p>因此，虽然在多进程环境中使用 pickle 可能会遇到一些问题，但通过使用 multiprocessing 模块中的管理器类，你仍然可以在多进程中有效地共享和传递 Python 对象。</p>
+<p>比如如下代码：</p>
+<p>from collections import defaultdict<br>from concurrent.futures import ProcessPoolExecutor as Executor<br>from time import sleep<br>​<br>from time import sleep<br>​<br>​<br>def report_progress(futures, tag, callback):<br>    not_done &#x3D; 1<br>    done &#x3D; 0<br>    while not_done &gt; 0:<br>        not_done &#x3D; 0<br>        done &#x3D; 0<br>        for fut in futures:<br>            if fut.done():<br>                done +&#x3D;1<br>            else:<br>                not_done +&#x3D; 1<br>        sleep(0.5)<br>        if not_done &gt; 0 and callback:<br>            callback(tag, done, not_done)<br>​<br>​<br>def async_map(executor, mapper, data):<br>    futures &#x3D; []<br>    for datum in data:<br>        futures.append(executor.submit(mapper, datum))<br>    return futures<br>​<br>​<br>​<br>​<br>def map_reduce_less_naive(my_input, mapper, reducer, callback&#x3D;None):<br>    with Executor(max_workers&#x3D;2) as executor:<br>        futures &#x3D; async_map(executor, mapper, my_input)<br>        report_progress(futures, ‘map’, callback)<br>        #wait(futures).done<br>        map_results &#x3D; map(lambda f: f.result(), futures)<br>        distributor &#x3D; defaultdict(list)<br>        for key, value in map_results:<br>            distributor[key].append(value)<br>​<br>        futures &#x3D; async_map(executor, reducer, distributor.items())<br>        report_progress(futures, ‘reduce’, callback)<br>        #wait(futures).done<br>        results &#x3D; map(lambda f: f.result(), futures)<br>    return results<br>​<br>​<br>def emitter(word):<br>    #sleep(10)<br>    return word, 1<br>​<br>​<br>counter &#x3D; lambda emitted: (emitted[0], sum(emitted[1]))<br>​<br>def reporter(tag, done, not_done):<br>    print(f’Operation {tag}: {done}&#x2F;{done+not_done}’)<br>​<br>words &#x3D; ‘Python is great Python rocks’.split(‘ ‘)<br>a &#x3D; map_reduce_less_naive(words, emitter, counter, reporter)<br>​<br>for i in sorted(a, key&#x3D;lambda x: x[1]):<br>    print(i)<br>报错如下：</p>
+<p>“””<br>Traceback (most recent call last):<br>  File “&#x2F;usr&#x2F;lib64&#x2F;python3.9&#x2F;multiprocessing&#x2F;queues.py”, line 244, in _feed<br>    obj &#x3D; _ForkingPickler.dumps(obj)<br>  File “&#x2F;usr&#x2F;lib64&#x2F;python3.9&#x2F;multiprocessing&#x2F;reduction.py”, line 51, in dumps<br>    cls(buf, protocol).dump(obj)<br>_pickle.PicklingError: Can’t pickle &lt;function <lambda> at 0x7efcde37d8b0&gt;: attribute lookup <lambda> on <strong>main</strong> failed<br>“””<br>​<br>The above exception was the direct cause of the following exception:<br>​<br>Traceback (most recent call last):<br>  File “&#x2F;root&#x2F;m_m.py”, line 63, in <module><br>    for i in sorted(a, key&#x3D;lambda x: x[1]):<br>  File “&#x2F;root&#x2F;m_m.py”, line 46, in <lambda><br>    results &#x3D; map(lambda f: f.result(), futures)<br>  File “&#x2F;usr&#x2F;lib64&#x2F;python3.9&#x2F;concurrent&#x2F;futures&#x2F;_base.py”, line 439, in result<br>    return self.__get_result()<br>  File “&#x2F;usr&#x2F;lib64&#x2F;python3.9&#x2F;concurrent&#x2F;futures&#x2F;_base.py”, line 391, in __get_result<br>    raise self._exception<br>  File “&#x2F;usr&#x2F;lib64&#x2F;python3.9&#x2F;multiprocessing&#x2F;queues.py”, line 244, in _feed<br>    obj &#x3D; _ForkingPickler.dumps(obj)<br>  File “&#x2F;usr&#x2F;lib64&#x2F;python3.9&#x2F;multiprocessing&#x2F;reduction.py”, line 51, in dumps<br>    cls(buf, protocol).dump(obj)<br>_pickle.PicklingError: Can’t pickle &lt;function <lambda> at 0x7efcde37d8b0&gt;: attribute lookup <lambda> on <strong>main</strong> failed<br>这个错误表明在尝试将任务提交给子进程时出现了 pickling 错误，具体原因是无法 pickle lambda 函数。Lambda 函数通常无法序列化，因为它们在序列化时无法被正常地识别和重建。</p>
+<p>修改如下：</p>
+<p>from collections import defaultdict<br>from concurrent.futures import ProcessPoolExecutor as Executor<br>from time import sleep<br>​<br>​<br>def report_progress(futures, tag, callback):<br>    not_done &#x3D; 1<br>    done &#x3D; 0<br>    while not_done &gt; 0:<br>        not_done &#x3D; 0<br>        done &#x3D; 0<br>        for fut in futures:<br>            if fut.done():<br>                done +&#x3D;1<br>            else:<br>                not_done +&#x3D; 1<br>        sleep(0.5)<br>        if not_done &gt; 0 and callback:<br>            callback(tag, done, not_done)<br>​<br>​<br>def async_map(executor, mapper, data):<br>    futures &#x3D; []<br>    for datum in data:<br>        futures.append(executor.submit(mapper, datum))<br>    return futures<br>​<br>​<br>​<br>​<br>def map_reduce_less_naive(my_input, mapper, reducer, callback&#x3D;None):<br>    with Executor(max_workers&#x3D;2) as executor:<br>        futures &#x3D; async_map(executor, mapper, my_input)<br>        report_progress(futures, ‘map’, callback)<br>        #wait(futures).done<br>        map_results &#x3D; map(lambda f: f.result(), futures)<br>        distributor &#x3D; defaultdict(list)<br>        for key, value in map_results:<br>            distributor[key].append(value)<br>​<br>        futures &#x3D; async_map(executor, reducer, distributor.items())<br>        report_progress(futures, ‘reduce’, callback)<br>        #wait(futures).done<br>        results &#x3D; map(lambda f: f.result(), futures)<br>    return results<br>​<br>​<br>def emitter(word):<br>    #sleep(10)<br>    return word, 1<br>​<br>​<br>​<br>​<br>def counter(emitted):<br>    return emitted[0], sum(emitted[1])<br>​<br>​<br>def reporter(tag, done, not_done):<br>    print(f’Operation {tag}: {done}&#x2F;{done+not_done}’)<br>​<br>words &#x3D; ‘Python is great Python rocks’.split(‘ ‘)<br>a &#x3D; map_reduce_less_naive(words, emitter, counter, reporter)<br>​<br>for i in sorted(a, key&#x3D;lambda x: x[1]):<br>    print(i)<br>CPU_count vs. sched_getaffinity to determine the pool size</p>
+<p>cpu_count 取值是CPU的逻辑核心数</p>
+<p>Help on built-in function sched_getaffinity in module posix:<br>​<br>sched_getaffinity(pid, &#x2F;)<br>    Return the affinity of the process identified by pid (or the current process if zero).</p>
+<pre><code>The affinity is returned as a set of CPU identifiers.
+</code></pre>
+<p>os.sched_getaffinity()&#96; 函数返回分配给当前进程的CPU核心集合。在多核系统中，这通常是一个包含了当前进程可以运行的CPU核心的集合。每个核心都有一个唯一的标识符，这些标识符通常是整数。</p>
+<p>注意，这个函数返回的核心集合通常是系统分配给你的核心数。但是，在特定情况下，这可能会受到系统配置、权限限制或其他因素的影响。比如虚拟机，容器，系统的限制。</p>
+<p>多进程版本mapreduce</p>
+<p>from collections import defaultdict<br>from concurrent.futures import ProcessPoolExecutor as Executor<br>from time import sleep<br>​<br>​<br>def report_progress(futures, tag, callback):<br>    not_done &#x3D; 1<br>    done &#x3D; 0<br>    while not_done &gt; 0:<br>        not_done &#x3D; 0<br>        done &#x3D; 0<br>        for fut in futures:<br>            if fut.done():<br>                done +&#x3D;1<br>            else:<br>                not_done +&#x3D; 1<br>        sleep(0.5)<br>        if callback:<br>            callback(tag, done, not_done)<br>​<br>​<br>def async_map(executor, mapper, data):<br>    futures &#x3D; []<br>    for datum in data:<br>        futures.append(executor.submit(mapper, datum))<br>    return futures<br>​<br>​<br>def map_less_naive(executor, my_input, mapper):<br>    map_results &#x3D; async_map(executor, mapper, my_input)<br>    return map_results<br>​<br>​<br>def map_reduce_less_naive(my_input, mapper, reducer, callback&#x3D;None):<br>    with Executor(max_workers&#x3D;2) as executor:<br>        futures &#x3D; async_map(executor, mapper, my_input)<br>        report_progress(futures, ‘map’, callback)<br>        #wait(futures).done<br>        map_results &#x3D; map(lambda f: f.result(), futures)<br>        distributor &#x3D; defaultdict(list)<br>        for key, value in map_results:<br>            distributor[key].append(value)<br>​<br>        futures &#x3D; async_map(executor, reducer, distributor.items())<br>        report_progress(futures, ‘reduce’, callback)<br>        results &#x3D; map(lambda f: f.result(), futures)<br>    return results<br>​<br>​<br>def emitter(word):<br>    return word, 1<br>​<br>​<br>def counter(emitted):<br>    return emitted[0], sum(emitted[1])<br>​<br>​<br>def reporter(tag, done, not_done):<br>    print(f’Operation {tag}: {done}&#x2F;{done+not_done}’)<br>​<br>words &#x3D; ‘Python is great Python rocks’.split(‘ ‘)<br>a &#x3D; map_reduce_less_naive(words, emitter, counter, reporter)<br>​<br>for i in sorted(a, key&#x3D;lambda x: x[1]):<br>    print(i)<br>使用chunk分块读取数据:</p>
+<p>from collections import defaultdict<br>import multiprocessing as mp<br>import sys<br>from time import sleep<br>​<br>​<br>def report_progress(map_returns, tag, callback):<br>    done &#x3D; 0<br>    num_jobs &#x3D; len(map_returns)<br>    while num_jobs &gt; done:<br>        done &#x3D; 0<br>        for ret in map_returns:<br>            if ret.ready():<br>                done +&#x3D; 1<br>        sleep(0.5)<br>        if callback:<br>            callback(tag, done, num_jobs - done)<br>​<br>​<br>def chunk0(my_list, chunk_size):<br>    for i in range(0, len(my_list), chunk_size):   #requires a list<br>        yield my_list[i:i + chunk_size]<br>​<br>​<br>def chunk(my_iter, chunk_size):<br>    chunk_list &#x3D; []<br>    for elem in my_iter:<br>        chunk_list.append(elem)<br>        if len(chunk_list) &#x3D;&#x3D; chunk_size:<br>            yield chunk_list<br>            chunk_list &#x3D; []<br>    if len(chunk_list) &gt; 0:<br>        yield chunk_list<br>​<br>​<br>def chunk_runner(fun, data):<br>    ret &#x3D; []<br>    for datum in data:<br>        ret.append(fun(datum))<br>    return ret<br>​<br>def chunked_async_map(pool, mapper, data, chunk_size):<br>    async_returns &#x3D; []<br>    for data_part in chunk(data, chunk_size):<br>        async_returns.append(pool.apply_async(<br>            chunk_runner, (mapper, data_part)))  #RUNNER<br>    return async_returns<br>​<br>​<br>def map_reduce(pool, my_input, mapper, reducer, chunk_size, callback&#x3D;None):  #XXX<br>    map_returns &#x3D; chunked_async_map(pool, mapper, my_input, chunk_size)<br>    report_progress(map_returns, ‘map’, callback)<br>    map_results &#x3D; []<br>    for ret in map_returns:<br>        map_results.extend(ret.get())   # EXTEND<br>    distributor &#x3D; defaultdict(list)<br>    for key, value in map_results:<br>        distributor[key].append(value)<br>    returns &#x3D; chunked_async_map(pool, reducer, distributor.items(), chunk_size)<br>    report_progress(returns, ‘reduce’, callback)<br>    results &#x3D; []<br>    for ret in returns:<br>        results.extend(ret.get())<br>    return results<br>​<br>​<br>def emitter(word):<br>    return word, 1<br>​<br>​<br>def counter(emitted):<br>    return emitted[0], sum(emitted[1])<br>​<br>​<br>def reporter(tag, done, not_done):<br>    print(f’Operation {tag}: {done}&#x2F;{done+not_done}’)<br>​<br>​<br>if <strong>name</strong> &#x3D;&#x3D; ‘<strong>main</strong>‘:<br>    words &#x3D; [word<br>             for word in map(lambda x: x.strip().rstrip(),<br>                             ‘ ‘.join(open(‘text.txt’, ‘rt’, encoding&#x3D;’utf-8’).readlines()).split(‘ ‘))<br>             if word !&#x3D; ‘’ ]<br>​<br>    chunk_size &#x3D; int(sys.argv[1])<br>    pool &#x3D; mp.Pool()<br>    counts &#x3D; map_reduce(pool, words, emitter, counter, chunk_size, reporter)<br>    pool.close()<br>    pool.join()<br>​<br>    for count in sorted(counts, key&#x3D;lambda x: x[1]):<br>        print(count)<br>不同的块大小运行效率:</p>
+<p>$ time python3 chunk.py 10<br>Operation map: 1047&#x2F;35281<br>Operation map: 3470&#x2F;35281<br>Operation map: 8337&#x2F;35281<br>Operation map: 11402&#x2F;35281<br>Operation map: 13680&#x2F;35281<br>Operation map: 15751&#x2F;35281<br>Operation map: 17484&#x2F;35281<br>Operation map: 19155&#x2F;35281<br>Operation map: 22504&#x2F;35281<br>Operation map: 25469&#x2F;35281<br>Operation map: 29450&#x2F;35281<br>Operation map: 32024&#x2F;35281<br>Operation map: 33468&#x2F;35281<br>Operation map: 35281&#x2F;35281<br>Operation reduce: 26&#x2F;2923<br>Operation reduce: 2211&#x2F;2923<br>Operation reduce: 2923&#x2F;2923<br>python3 chunk.py 10  9.34s user 2.79s system 96% cpu 12.523 total<br>​<br>$ time python3 chunk.py 100<br>Operation map: 208&#x2F;3529<br>Operation map: 1358&#x2F;3529<br>Operation map: 3139&#x2F;3529<br>Operation map: 3529&#x2F;3529<br>Operation reduce: 8&#x2F;293<br>Operation reduce: 293&#x2F;293<br>python3 chunk.py 100  2.32s user 0.75s system 72% cpu 4.269 total<br>​<br>$ time python3 chunk.py 1000<br>Operation map: 39&#x2F;353<br>Operation map: 325&#x2F;353<br>Operation map: 353&#x2F;353<br>Operation reduce: 0&#x2F;30<br>Operation reduce: 30&#x2F;30<br>python3 chunk.py 1000  1.50s user 0.49s system 48% cpu 4.078 total<br>​<br>$ time python3 chunk.py 10000<br>Operation map: 7&#x2F;36<br>Operation map: 36&#x2F;36<br>Operation reduce: 0&#x2F;3<br>Operation reduce: 3&#x2F;3<br>python3 chunk.py 10000  1.69s user 0.29s system 41% cpu 4.802 total<br>​<br>$ time python3 chunk.py 100000<br>Operation map: 0&#x2F;4<br>Operation map: 4&#x2F;4<br>Operation reduce: 0&#x2F;1<br>Operation reduce: 1&#x2F;1<br>python3 chunk.py 100000  1.52s user 0.31s system 47% cpu 3.865 total<br>​<br>$ time python3 chunk.py 1000000<br>Operation map: 0&#x2F;1<br>Operation map: 0&#x2F;1<br>Operation map: 1&#x2F;1<br>Operation reduce: 0&#x2F;1<br>Operation reduce: 1&#x2F;1<br>python3 chunk.py 1000000  1.77s user 0.30s system 55% cpu 3.722 total<br>整合服务器和计算功能:</p>
+<p>server.py</p>
+<p>import asyncio<br>import marshal<br>import multiprocessing as mp<br>import pickle<br>from queue import Empty, Queue  # <XXX> PriorityQueue<br>import threading<br>import types<br>​<br>import chunk_mp_mapreduce as mr<br>​<br>​</p>
+<h1 id="multiprocessing-Queue"><a href="#multiprocessing-Queue" class="headerlink" title=" multiprocessing.Queue"></a><XXX> multiprocessing.Queue</h1><p>​<br>work_queue &#x3D; Queue()<br>results_queue &#x3D; Queue()<br>results &#x3D; {}<br>​<br>async def submit_job(job_id, reader, writer):<br>    writer.write(job_id.to_bytes(4, ‘little’))<br>    writer.close()<br>    code_size &#x3D; int.from_bytes(await reader.read(4), ‘little’)<br>    my_code &#x3D; marshal.loads(await reader.read(code_size))<br>    data_size &#x3D; int.from_bytes(await reader.read(4), ‘little’)<br>    data &#x3D; pickle.loads(await reader.read(data_size))<br>    work_queue.put_nowait((job_id, my_code, data))  # <XXX> Data not very efficient, no_wait and queue size<br>​<br>​<br>def get_results_queue():<br>    while results_queue.qsize() &gt; 0:   # <XXX> Not assured<br>        try:<br>            job_id, data &#x3D; results_queue.get_nowait()<br>            results[job_id] &#x3D; data<br>        except Empty:<br>            return<br>​<br>​<br>async def get_results(reader, writer):<br>    get_results_queue()<br>    job_id &#x3D; int.from_bytes(await reader.read(4), ‘little’)<br>    data &#x3D; pickle.dumps(None)<br>    if job_id in results:<br>        data &#x3D; pickle.dumps(results[job_id])<br>        del results[job_id]<br>    writer.write(len(data).to_bytes(4, ‘little’))<br>    writer.write(data)<br>​<br>​<br>async def accept_requests(reader, writer, job_id&#x3D;[0]):<br>    op &#x3D; await reader.read(1)<br>    if op[0] &#x3D;&#x3D; 0:<br>        await submit_job(job_id[0], reader, writer)  # XXX Errors in async<br>        job_id[0] +&#x3D; 1<br>    elif op[0] &#x3D;&#x3D; 1:<br>        await get_results(reader, writer)<br>​<br>​<br>def worker():  # daemon<br>    pool &#x3D; mp.Pool()<br>    while True:<br>        job_id, code, data &#x3D; work_queue.get()  # blocking<br>        func &#x3D; types.FunctionType(code, globals(), ‘mapper_and_reducer’)<br>        mapper, reducer &#x3D; func()<br>        counts &#x3D; mr.map_reduce(pool, data, mapper, reducer, 100, mr.reporter)<br>        results_queue.put((job_id, counts))<br>    pool.close()<br>    pool.join()<br>​<br>​<br>async def main():<br>    server &#x3D; await asyncio.start_server(accept_requests, ‘127.0.0.1’, 1936)<br>    worker_thread &#x3D; threading.Thread(target&#x3D;worker)   # <XXX> Daemon<br>    worker_thread.start()<br>    async with server:<br>        await server.serve_forever()<br>​<br>​<br>asyncio.run(main())<br>chunk_mp_mapreduce.py</p>
+<p>from collections import defaultdict<br>import marshal<br>import multiprocessing as mp<br>import sys<br>from time import sleep<br>import types<br>​<br>​<br>def report_progress(map_returns, tag, callback):<br>    done &#x3D; 0<br>    num_jobs &#x3D; len(map_returns)<br>    while num_jobs &gt; done:<br>        done &#x3D; 0<br>        for ret in map_returns:<br>            if ret.ready():<br>                done +&#x3D; 1<br>        sleep(0.5)<br>        if callback:<br>            callback(tag, done, num_jobs - done)<br>​<br>​<br>def chunk0(my_list, chunk_size):<br>    for i in range(0, len(my_list), chunk_size):   #requires a list<br>        yield my_list[i:i + chunk_size]<br>​<br>​<br>def chunk(my_iter, chunk_size):<br>    chunk_list &#x3D; []<br>    for elem in my_iter:<br>        chunk_list.append(elem)<br>        if len(chunk_list) &#x3D;&#x3D; chunk_size:<br>            yield chunk_list<br>            chunk_list &#x3D; []<br>    if len(chunk_list) &gt; 0:<br>        yield chunk_list<br>​<br>​<br>def chunk_runner(fun_marshal, data):<br>    fun &#x3D; types.FunctionType(marshal.loads(fun_marshal), globals(), ‘fun’)<br>    ret &#x3D; []<br>    for datum in data:<br>        print(fun(datum))<br>        ret.append(fun(datum))<br>    return ret<br>​<br>def chunked_async_map(pool, mapper, data, chunk_size):<br>    async_returns &#x3D; []<br>    for data_part in chunk(data, chunk_size):<br>        async_returns.append(pool.apply_async(<br>            chunk_runner, (marshal.dumps(mapper.<strong>code</strong>), data_part)))<br>    return async_returns<br>​<br>​<br>def map_reduce(pool, my_input, mapper, reducer, chunk_size, callback&#x3D;None):  #XXX<br>    map_returns &#x3D; chunked_async_map(pool, mapper, my_input, chunk_size)<br>    report_progress(map_returns, ‘map’, callback)<br>    map_results &#x3D; []<br>    for ret in map_returns:<br>        map_results.extend(ret.get())   # EXTEND<br>    distributor &#x3D; defaultdict(list)<br>    for key, value in map_results:<br>        distributor[key].append(value)<br>    returns &#x3D; chunked_async_map(pool, reducer, distributor.items(), chunk_size)<br>    report_progress(returns, ‘reduce’, callback)<br>    results &#x3D; []<br>    for ret in returns:<br>        results.extend(ret.get())<br>    return results<br>​<br>​<br>def reporter(tag, done, not_done):<br>    print(f’Operation {tag}: {done}&#x2F;{done+not_done}’)<br>新增处理Ctrl+C的信号，使得服务优雅终止：</p>
+<p>import asyncio<br>from functools import partial<br>import marshal<br>import multiprocessing as mp<br>import pickle<br>from queue import Empty, Queue<br>import signal<br>import threading<br>from time import sleep as sync_sleep<br>import types<br>​<br>import chunk_mp_mapreduce as mr<br>​<br>​<br>def handle_interrupt_signal(server):<br>    server.close()<br>    while server.is_serving():<br>        sync_sleep(0.1)<br>​<br>​<br>work_queue &#x3D; Queue()<br>results_queue &#x3D; Queue()<br>results &#x3D; {}<br>​<br>​<br>async def submit_job(job_id, reader, writer):<br>    writer.write(job_id.to_bytes(4, ‘little’))<br>    writer.close()<br>    code_size &#x3D; int.from_bytes(await reader.read(4), ‘little’)<br>    my_code &#x3D; marshal.loads(await reader.read(code_size))<br>    data_size &#x3D; int.from_bytes(await reader.read(4), ‘little’)<br>    data &#x3D; pickle.loads(await reader.read(data_size))<br>    work_queue.put_nowait((job_id, my_code, data))<br>​<br>​<br>def get_results_queue():<br>    while results_queue.qsize() &gt; 0:<br>        try:<br>            job_id, data &#x3D; results_queue.get_nowait()<br>            results[job_id] &#x3D; data<br>        except Empty:<br>            return<br>​<br>​<br>async def get_results(reader, writer):<br>    get_results_queue()<br>    job_id &#x3D; int.from_bytes(await reader.read(4), ‘little’)<br>    data &#x3D; pickle.dumps(None)<br>    if job_id in results:<br>        data &#x3D; pickle.dumps(results[job_id])<br>        del results[job_id]<br>    writer.write(len(data).to_bytes(4, ‘little’))<br>    writer.write(data)<br>​<br>​<br>async def accept_requests(reader, writer, job_id&#x3D;[0]):<br>    op &#x3D; await reader.read(1)<br>    if op[0] &#x3D;&#x3D; 0:<br>        await submit_job(job_id[0], reader, writer)  # XXX Errors in async<br>        job_id[0] +&#x3D; 1<br>    elif op[0] &#x3D;&#x3D; 1:<br>        await get_results(reader, writer)<br>​<br>​<br>def worker(pool):<br>    while True:<br>        job_id, code, data &#x3D; work_queue.get()<br>        if job_id &#x3D;&#x3D; -1:<br>            break<br>        func &#x3D; types.FunctionType(code, globals(), ‘mapper_and_reducer’)<br>        mapper, reducer &#x3D; func()<br>        counts &#x3D; mr.map_reduce(pool, data, mapper, reducer, 100, mr.reporter)<br>        results_queue.put((job_id, counts))<br>    print(‘Worker thread terminating’)<br>​<br>​<br>def init_worker():<br>    signal.signal(signal.SIGINT, signal.SIG_IGN)<br>​<br>​<br>async def main():<br>    server &#x3D; await asyncio.start_server(accept_requests, ‘127.0.0.1’, 1936)<br>    mp_pool &#x3D; mp.Pool(initializer&#x3D;init_worker)<br>    loop &#x3D; asyncio.get_running_loop()<br>    loop.add_signal_handler(signal.SIGINT, partial(handle_interrupt_signal, server&#x3D;server))<br>    worker_thread &#x3D; threading.Thread(target&#x3D;partial(worker, pool&#x3D;mp_pool))<br>    worker_thread.start()<br>    async with server:<br>        try:<br>            await server.serve_forever()<br>        except asyncio.exceptions.CancelledError:<br>            print(‘Server cancelled’)<br>    work_queue.put((-1, -1, -1))<br>    worker_thread.join()<br>    mp_pool.close()<br>    mp_pool.join()<br>    print(‘Bye Bye!’)<br>​<br>​<br>asyncio.run(main())<br>本章主要介绍了一个基于socket的简单版本的MapReduce框架，从单进程单线程演化为多进程多线程版本，最后还做了优雅停止的处理。</p>
+<p>下一章主要介绍NumPy的高性能计算。</p>
+
+</article>
+    
+    
+
+</div>
+<div class="trm-post-next-prev row">
+    <div class="col-lg-12">
+        <!-- title -->
+        <h5 class="trm-title-with-divider">
+            其他文章
+            <span data-number="02"></span>
+        </h5>
+    </div>
+    
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/05/24/Fast-Python%E7%AC%94%E8%AE%B0%E4%B8%80/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" #.">
+                    未分类
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/05/24/Fast-Python%E7%AC%94%E8%AE%B0%E4%B8%80/" class="trm-anima-link">
+                    Fast Python笔记一
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/05/24</li>
+                <li>19:50</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+</div>
+
+    
+
+
+
+                    <div class="trm-divider footer-divider"></div>
+
+                    <!-- footer -->
+                    <footer class="trm-scroll-animation">
+
+    
+
+    
+
+    
+        <div class="trm-footer-item">
+            <span>
+                由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v7.0.0
+            </span>
+            <span class="footer-separator" data-separator=" | "></span>
+            <span> 
+                主题 - 
+                <a rel="noopener" href='https://github.com/MaLuns/hexo-theme-async' target='_blank'>Async</a>
+                v2.1.8
+            </span>
+        </div>
+      
+
+     
+
+     
+</footer>
+ 
+                    <!-- footer end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- body end -->
+
+            
+
+            
+<div class="trm-fixed-container">
+    
+    
+        <div class="trm-fixed-btn" data-title="阅读模式" onclick="asyncFun.switchReadMode()">
+            <i class="iconfont fas fa-book-reader"></i>
+        </div>
+    
+    
+    <div id="trm-back-top" class="trm-fixed-btn" data-title="回到顶部">
+        <i class="iconfont fas fa-arrow-up"></i>
+    </div>
+</div>
+        </div>
+      </div>
+      <!-- scroll container end -->
+  </div>
+  <!-- app wrapper end -->
+
+  
+  <!-- Plugin -->
+
+
+
+
+    
+    
+<script src="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+
+    
+
+    
+
+    
+
+    <!-- 数学公式 -->
+    
+
+    <!-- 评论插件 -->
+    
+        
+
+        
+    
+
+
+
+<!-- CDN -->
+
+
+    
+
+    
+
+    
+
+
+
+
+    <!-- Service Worker -->
+    
+    <!-- baidu push -->
+    
+
+
+<script id="async-script" src="/js/main.js?v=2.1.8"></script>
+
+</body>
+
+</html>
