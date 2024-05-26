@@ -7,15 +7,15 @@
 <meta name="full-screen" content="yes">
 <meta name="theme-color" content="#317EFB" />
 <meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
-<meta name="description" content="本文主要记录Fast Python第三章，主要是介绍Python异步编程，实现一个简单的MapReduce服务端。 并发并行和顺序执行 Parallelism is the easiest concept to explain: tasks run in parallel when they are run-ning at the same time. Concurrent tasks may r">
+<meta name="description" content="本文主要记录Fast Python第三章，主要是介绍Python异步编程，实现一个简单的MapReduce服务端。 并发并行和顺序执行Parallelism is the easiest concept to explain: tasks run in parallel when they are run- ning at the same time. Concurrent tasks may r">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Fast Python笔记二">
 <meta property="og:url" content="http://example.com/2024/05/26/Fast-Python%E7%AC%94%E8%AE%B0%E4%BA%8C/index.html">
 <meta property="og:site_name" content="Cat YuanBao">
-<meta property="og:description" content="本文主要记录Fast Python第三章，主要是介绍Python异步编程，实现一个简单的MapReduce服务端。 并发并行和顺序执行 Parallelism is the easiest concept to explain: tasks run in parallel when they are run-ning at the same time. Concurrent tasks may r">
+<meta property="og:description" content="本文主要记录Fast Python第三章，主要是介绍Python异步编程，实现一个简单的MapReduce服务端。 并发并行和顺序执行Parallelism is the easiest concept to explain: tasks run in parallel when they are run- ning at the same time. Concurrent tasks may r">
 <meta property="og:locale">
 <meta property="article:published_time" content="2024-05-26T04:06:42.000Z">
-<meta property="article:modified_time" content="2024-05-26T04:07:22.757Z">
+<meta property="article:modified_time" content="2024-05-26T04:25:17.302Z">
 <meta property="article:author" content="橘猫元宝">
 <meta property="article:tag" content="cat">
 <meta name="twitter:card" content="summary">
@@ -62,7 +62,7 @@
 
 <!-- Variable -->
 <script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
-<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-05-26 12:07:22"};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-05-26 12:25:17"};</script>
 
 <!-- Theme mode css -->
 <link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
@@ -320,56 +320,907 @@
 <div class="trm-card ">
     <article id="article-container" class="trm-publication">
     <p>本文主要记录Fast Python第三章，主要是介绍Python异步编程，实现一个简单的MapReduce服务端。</p>
-<p>并发并行和顺序执行</p>
-<p>Parallelism is the easiest concept to explain: tasks run in parallel when they are run-<br>ning at the same time. Concurrent tasks may run in any order: they may be run in<br>parallel or in sequence, depending on the language and OS. So all parallel tasks are<br>concurrent but not the other way around.<br>​<br>Understanding sequential, concurrent, and parallel models. Sequential execution occurs<br>when all tasks are executed in sequence and never interrupted. Concurrent execution with<br>no parallelism adds the possibility of a task being interrupted by another and later resumed.<br>Parallelism occurs when several tasks are run at the same time.<br>Parallelism是多个任务同时执行（强调同时），Concurrent是多个任务以任意顺序执行（强调多个任务执行）。</p>
-<p>单进程协程服务器实例</p>
-<p>这里给出一个MapReduce的单进程+协程的服务器实例。</p>
+<h3 id="并发并行和顺序执行"><a href="#并发并行和顺序执行" class="headerlink" title="并发并行和顺序执行"></a>并发并行和顺序执行</h3><pre class="line-numbers language-bash"><code class="language-bash">Parallelism is the easiest concept to explain: tasks run <span class="token keyword">in</span> parallel when they are run-
+ning at the same time. Concurrent tasks may run <span class="token keyword">in</span> any order: they may be run <span class="token keyword">in</span>
+parallel or <span class="token keyword">in</span> sequence, depending on the language and OS. So all parallel tasks are
+concurrent but not the other way around.
+
+Understanding sequential, concurrent, and parallel models. Sequential execution occurs
+when all tasks are executed <span class="token keyword">in</span> sequence and never interrupted. Concurrent execution with
+no parallelism adds the possibility of a task being interrupted by another and later resumed.
+Parallelism occurs when several tasks are run at the same time.
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>Parallelism是多个任务同时执行（强调同时），Concurrent是多个任务以任意顺序执行（强调多个任务执行）。</p>
+<h3 id="单进程协程服务器实例"><a href="#单进程协程服务器实例" class="headerlink" title="单进程协程服务器实例"></a>单进程协程服务器实例</h3><p>这里给出一个MapReduce的单进程+协程的服务器实例。</p>
 <p>客户端可以提交任务，并获取执行结果，这里第一个版本只有简单的返回一个随机数，并没有计算word的次数 基于Python asyncio模块实现：</p>
-<p>import asyncio<br>import pickle<br>from random import randint<br>​<br>results &#x3D; {}<br>​<br>​<br>async def submit_job(reader, writer):<br>    job_id &#x3D; max(list(results.keys()) + [0]) + 1<br>    writer.write(job_id.to_bytes(4, ‘little’))<br>    writer.close()<br>    sleep_time &#x3D; randint(1, 4)<br>    await asyncio.sleep(sleep_time)<br>    results[job_id] &#x3D; sleep_time<br>​<br>​<br>async def get_results(reader, writer):<br>    job_id &#x3D; int.from_bytes(await reader.read(4), ‘little’)<br>    data &#x3D; pickle.dumps(results.get(job_id, None))<br>    writer.write(len(data).to_bytes(4, ‘little’))<br>    writer.write(data)<br>​<br>​<br>async def accept_requests(reader, writer):<br>    op &#x3D; await reader.read(1)<br>    if op[0] &#x3D;&#x3D; 0:<br>        await submit_job(reader, writer)<br>    elif op[0] &#x3D;&#x3D; 1:<br>        await get_results(reader, writer)<br>​<br>​<br>async def main():<br>    server &#x3D; await asyncio.start_server(accept_requests, ‘127.0.0.1’, 1936)<br>    async with server:<br>        await server.serve_forever()<br>​<br>​<br>print(‘listen at 172.0.0.1 1936 port’)<br>asyncio.run(main())<br>客户端实现：</p>
-<p>import marshal<br>import pickle<br>import socket<br>from time import sleep<br>​<br>​<br>def my_funs():<br>    def mapper(v):<br>        return v, 1  # XXX<br>​<br>    def reducer(my_args):<br>        v, obs &#x3D; my_args<br>        return v, sum(obs)<br>    return mapper, reducer<br>​<br>​<br>def do_request(my_funs, data):<br>    conn &#x3D; socket.create_connection((‘127.0.0.1’, 1936))<br>    conn.send(b’\x00’)<br>    my_code &#x3D; marshal.dumps(my_funs.<strong>code</strong>)<br>    conn.send(len(my_code).to_bytes(4, ‘little’, signed&#x3D;False))<br>    conn.send(my_code)<br>    my_data &#x3D; pickle.dumps(data)<br>    conn.send(len(my_data).to_bytes(4, ‘little’))<br>    conn.send(my_data)<br>    job_id &#x3D; int.from_bytes(conn.recv(4), ‘little’)<br>    conn.close()<br>​<br>    print(f’Getting data from job_id {job_id}’)<br>    result &#x3D; None<br>    while result is None:<br>        conn &#x3D; socket.create_connection((‘127.0.0.1’, 1936))<br>        conn.send(b’\x01’)<br>        conn.send(job_id.to_bytes(4, ‘little’))<br>        result_size &#x3D; int.from_bytes(conn.recv(4), ‘little’)<br>        result &#x3D; pickle.loads(conn.recv(result_size))<br>        conn.close()<br>        sleep(1)<br>    print(f’Result is {result} Number 1-4’)<br>​<br>​<br>if <strong>name</strong> &#x3D;&#x3D; ‘<strong>main</strong>‘:<br>    do_request(my_funs, ‘Python rocks. Python is great’.split(‘ ‘))<br>多运行几次的运行结果：</p>
-<p>$ python3 map_c.py<br>Getting data from job_id 8<br>Result is 1 Number 1-4<br>仅仅返回一个随机数。</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> asyncio
+<span class="token keyword">import</span> pickle
+<span class="token keyword">from</span> random <span class="token keyword">import</span> randint
+
+results <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+
+
+<span class="token keyword">async</span> <span class="token keyword">def</span> <span class="token function">submit_job</span><span class="token punctuation">(</span>reader<span class="token punctuation">,</span> writer<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    job_id <span class="token operator">=</span> max<span class="token punctuation">(</span>list<span class="token punctuation">(</span>results<span class="token punctuation">.</span>keys<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token number">1</span>
+    writer<span class="token punctuation">.</span>write<span class="token punctuation">(</span>job_id<span class="token punctuation">.</span>to_bytes<span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">,</span> <span class="token string">'little'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    writer<span class="token punctuation">.</span>close<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    sleep_time <span class="token operator">=</span> randint<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">)</span>
+    <span class="token keyword">await</span> asyncio<span class="token punctuation">.</span>sleep<span class="token punctuation">(</span>sleep_time<span class="token punctuation">)</span>
+    results<span class="token punctuation">[</span>job_id<span class="token punctuation">]</span> <span class="token operator">=</span> sleep_time
+
+
+<span class="token keyword">async</span> <span class="token keyword">def</span> <span class="token function">get_results</span><span class="token punctuation">(</span>reader<span class="token punctuation">,</span> writer<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    job_id <span class="token operator">=</span> int<span class="token punctuation">.</span>from_bytes<span class="token punctuation">(</span><span class="token keyword">await</span> reader<span class="token punctuation">.</span>read<span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">'little'</span><span class="token punctuation">)</span>
+    data <span class="token operator">=</span> pickle<span class="token punctuation">.</span>dumps<span class="token punctuation">(</span>results<span class="token punctuation">.</span>get<span class="token punctuation">(</span>job_id<span class="token punctuation">,</span> None<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    writer<span class="token punctuation">.</span>write<span class="token punctuation">(</span>len<span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">.</span>to_bytes<span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">,</span> <span class="token string">'little'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    writer<span class="token punctuation">.</span>write<span class="token punctuation">(</span>data<span class="token punctuation">)</span>
+
+
+<span class="token keyword">async</span> <span class="token keyword">def</span> <span class="token function">accept_requests</span><span class="token punctuation">(</span>reader<span class="token punctuation">,</span> writer<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    op <span class="token operator">=</span> <span class="token keyword">await</span> reader<span class="token punctuation">.</span>read<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> op<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">:</span>
+        <span class="token keyword">await</span> submit_job<span class="token punctuation">(</span>reader<span class="token punctuation">,</span> writer<span class="token punctuation">)</span>
+    <span class="token keyword">elif</span> op<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">==</span> <span class="token number">1</span><span class="token punctuation">:</span>
+        <span class="token keyword">await</span> get_results<span class="token punctuation">(</span>reader<span class="token punctuation">,</span> writer<span class="token punctuation">)</span>
+
+
+<span class="token keyword">async</span> <span class="token keyword">def</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    server <span class="token operator">=</span> <span class="token keyword">await</span> asyncio<span class="token punctuation">.</span>start_server<span class="token punctuation">(</span>accept_requests<span class="token punctuation">,</span> <span class="token string">'127.0.0.1'</span><span class="token punctuation">,</span> <span class="token number">1936</span><span class="token punctuation">)</span>
+    <span class="token keyword">async</span> <span class="token keyword">with</span> server<span class="token punctuation">:</span>
+        <span class="token keyword">await</span> server<span class="token punctuation">.</span>serve_forever<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'listen at 172.0.0.1 1936 port'</span><span class="token punctuation">)</span>
+asyncio<span class="token punctuation">.</span>run<span class="token punctuation">(</span>main<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>客户端实现：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> marshal
+<span class="token keyword">import</span> pickle
+<span class="token keyword">import</span> socket
+<span class="token keyword">from</span> time <span class="token keyword">import</span> sleep
+
+
+<span class="token keyword">def</span> <span class="token function">my_funs</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">mapper</span><span class="token punctuation">(</span>v<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span> v<span class="token punctuation">,</span> <span class="token number">1</span>  <span class="token comment" spellcheck="true"># XXX</span>
+
+    <span class="token keyword">def</span> <span class="token function">reducer</span><span class="token punctuation">(</span>my_args<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        v<span class="token punctuation">,</span> obs <span class="token operator">=</span> my_args
+        <span class="token keyword">return</span> v<span class="token punctuation">,</span> sum<span class="token punctuation">(</span>obs<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> mapper<span class="token punctuation">,</span> reducer
+
+
+<span class="token keyword">def</span> <span class="token function">do_request</span><span class="token punctuation">(</span>my_funs<span class="token punctuation">,</span> data<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    conn <span class="token operator">=</span> socket<span class="token punctuation">.</span>create_connection<span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token string">'127.0.0.1'</span><span class="token punctuation">,</span> <span class="token number">1936</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    conn<span class="token punctuation">.</span>send<span class="token punctuation">(</span>b<span class="token string">'\x00'</span><span class="token punctuation">)</span>
+    my_code <span class="token operator">=</span> marshal<span class="token punctuation">.</span>dumps<span class="token punctuation">(</span>my_funs<span class="token punctuation">.</span>__code__<span class="token punctuation">)</span>
+    conn<span class="token punctuation">.</span>send<span class="token punctuation">(</span>len<span class="token punctuation">(</span>my_code<span class="token punctuation">)</span><span class="token punctuation">.</span>to_bytes<span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">,</span> <span class="token string">'little'</span><span class="token punctuation">,</span> signed<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    conn<span class="token punctuation">.</span>send<span class="token punctuation">(</span>my_code<span class="token punctuation">)</span>
+    my_data <span class="token operator">=</span> pickle<span class="token punctuation">.</span>dumps<span class="token punctuation">(</span>data<span class="token punctuation">)</span>
+    conn<span class="token punctuation">.</span>send<span class="token punctuation">(</span>len<span class="token punctuation">(</span>my_data<span class="token punctuation">)</span><span class="token punctuation">.</span>to_bytes<span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">,</span> <span class="token string">'little'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    conn<span class="token punctuation">.</span>send<span class="token punctuation">(</span>my_data<span class="token punctuation">)</span>
+    job_id <span class="token operator">=</span> int<span class="token punctuation">.</span>from_bytes<span class="token punctuation">(</span>conn<span class="token punctuation">.</span>recv<span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">'little'</span><span class="token punctuation">)</span>
+    conn<span class="token punctuation">.</span>close<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">'Getting data from job_id {job_id}'</span><span class="token punctuation">)</span>
+    result <span class="token operator">=</span> None
+    <span class="token keyword">while</span> result <span class="token keyword">is</span> None<span class="token punctuation">:</span>
+        conn <span class="token operator">=</span> socket<span class="token punctuation">.</span>create_connection<span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token string">'127.0.0.1'</span><span class="token punctuation">,</span> <span class="token number">1936</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        conn<span class="token punctuation">.</span>send<span class="token punctuation">(</span>b<span class="token string">'\x01'</span><span class="token punctuation">)</span>
+        conn<span class="token punctuation">.</span>send<span class="token punctuation">(</span>job_id<span class="token punctuation">.</span>to_bytes<span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">,</span> <span class="token string">'little'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        result_size <span class="token operator">=</span> int<span class="token punctuation">.</span>from_bytes<span class="token punctuation">(</span>conn<span class="token punctuation">.</span>recv<span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">'little'</span><span class="token punctuation">)</span>
+        result <span class="token operator">=</span> pickle<span class="token punctuation">.</span>loads<span class="token punctuation">(</span>conn<span class="token punctuation">.</span>recv<span class="token punctuation">(</span>result_size<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        conn<span class="token punctuation">.</span>close<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        sleep<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">'Result is {result} Number 1-4'</span><span class="token punctuation">)</span>
+
+
+<span class="token keyword">if</span> __name__ <span class="token operator">==</span> <span class="token string">'__main__'</span><span class="token punctuation">:</span>
+    do_request<span class="token punctuation">(</span>my_funs<span class="token punctuation">,</span> <span class="token string">'Python rocks. Python is great'</span><span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">' '</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>多运行几次的运行结果：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ python3 map_c.py
+Getting data from job_id 8
+Result is 1 Number 1-4
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>仅仅返回一个随机数。</p>
 <p>实现MapReduce的基本算法：</p>
-<p>from collections import defaultdict<br>​<br>​<br>def map_reduce_ultra_naive(my_input, mapper, reducer):<br>    map_results &#x3D; map(mapper, my_input)<br>​<br>    distributor &#x3D; defaultdict(list)<br>    for key, value in map_results:<br>        distributor[key].append(value)<br>​<br>    print(distributor)<br>    return map(reducer, distributor.items())<br>​<br>​<br>words &#x3D; ‘Python is great Python rocks’.split(‘ ‘)<br>​<br>emiter &#x3D; lambda word: (word, 1)<br>counter &#x3D; lambda emitted: (emitted[0], sum(emitted[1]))<br>​<br>a &#x3D; list(map_reduce_ultra_naive(words, emiter, counter))<br>print(a)<br>使用 concurrent.futures 实现一个线程版本的mapreduse:</p>
-<p>from collections import defaultdict<br>from concurrent.futures import ThreadPoolExecutor as Executor<br>​<br>​<br>def map_reduce_still_naive(my_input, mapper, reducer):<br>    with Executor() as executor:<br>        map_results &#x3D; executor.map(mapper, my_input)<br>        distributor &#x3D; defaultdict(list)<br>        for key, value in map_results:<br>            distributor[key].append(value)<br>        results &#x3D; executor.map(reducer, distributor.items())<br>    return results<br>​<br>​<br>words &#x3D; filter(lambda x: x!&#x3D; ‘’, map(lambda x: x.strip().rstrip(), ‘ ‘.join(open(‘text.txt’, ‘rt’, encoding&#x3D;’utf-8’).readlines()).split(‘ ‘)))<br>​<br>emiter &#x3D; lambda word: (word, 1)<br>counter &#x3D; lambda emitted: (emitted[0], sum(emitted[1]))<br>​<br>a &#x3D; list(map_reduce_still_naive(words, emiter, counter))<br>​<br>for i in sorted(a, key&#x3D;lambda x: x[1]):<br>    print(i)<br>这段代码使用了 ThreadPoolExecutor 类来实现并发的 MapReduce 框架。ThreadPoolExecutor 可以创建一个线程池，可以让你并发地执行多个任务。</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">from</span> collections <span class="token keyword">import</span> defaultdict
+
+
+<span class="token keyword">def</span> <span class="token function">map_reduce_ultra_naive</span><span class="token punctuation">(</span>my_input<span class="token punctuation">,</span> mapper<span class="token punctuation">,</span> reducer<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    map_results <span class="token operator">=</span> map<span class="token punctuation">(</span>mapper<span class="token punctuation">,</span> my_input<span class="token punctuation">)</span>
+
+    distributor <span class="token operator">=</span> defaultdict<span class="token punctuation">(</span>list<span class="token punctuation">)</span>
+    <span class="token keyword">for</span> key<span class="token punctuation">,</span> value <span class="token keyword">in</span> map_results<span class="token punctuation">:</span>
+        distributor<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">.</span>append<span class="token punctuation">(</span>value<span class="token punctuation">)</span>
+
+    <span class="token keyword">print</span><span class="token punctuation">(</span>distributor<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> map<span class="token punctuation">(</span>reducer<span class="token punctuation">,</span> distributor<span class="token punctuation">.</span>items<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+
+words <span class="token operator">=</span> <span class="token string">'Python is great Python rocks'</span><span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">' '</span><span class="token punctuation">)</span>
+
+emiter <span class="token operator">=</span> <span class="token keyword">lambda</span> word<span class="token punctuation">:</span> <span class="token punctuation">(</span>word<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
+counter <span class="token operator">=</span> <span class="token keyword">lambda</span> emitted<span class="token punctuation">:</span> <span class="token punctuation">(</span>emitted<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> sum<span class="token punctuation">(</span>emitted<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+a <span class="token operator">=</span> list<span class="token punctuation">(</span>map_reduce_ultra_naive<span class="token punctuation">(</span>words<span class="token punctuation">,</span> emiter<span class="token punctuation">,</span> counter<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>a<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>使用 concurrent.futures 实现一个线程版本的mapreduse:</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">from</span> collections <span class="token keyword">import</span> defaultdict
+<span class="token keyword">from</span> concurrent<span class="token punctuation">.</span>futures <span class="token keyword">import</span> ThreadPoolExecutor <span class="token keyword">as</span> Executor
+
+
+<span class="token keyword">def</span> <span class="token function">map_reduce_still_naive</span><span class="token punctuation">(</span>my_input<span class="token punctuation">,</span> mapper<span class="token punctuation">,</span> reducer<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">with</span> Executor<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">as</span> executor<span class="token punctuation">:</span>
+        map_results <span class="token operator">=</span> executor<span class="token punctuation">.</span>map<span class="token punctuation">(</span>mapper<span class="token punctuation">,</span> my_input<span class="token punctuation">)</span>
+        distributor <span class="token operator">=</span> defaultdict<span class="token punctuation">(</span>list<span class="token punctuation">)</span>
+        <span class="token keyword">for</span> key<span class="token punctuation">,</span> value <span class="token keyword">in</span> map_results<span class="token punctuation">:</span>
+            distributor<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">.</span>append<span class="token punctuation">(</span>value<span class="token punctuation">)</span>
+        results <span class="token operator">=</span> executor<span class="token punctuation">.</span>map<span class="token punctuation">(</span>reducer<span class="token punctuation">,</span> distributor<span class="token punctuation">.</span>items<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> results
+
+
+words <span class="token operator">=</span> filter<span class="token punctuation">(</span><span class="token keyword">lambda</span> x<span class="token punctuation">:</span> x<span class="token operator">!=</span> <span class="token string">''</span><span class="token punctuation">,</span> map<span class="token punctuation">(</span><span class="token keyword">lambda</span> x<span class="token punctuation">:</span> x<span class="token punctuation">.</span>strip<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>rstrip<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">' '</span><span class="token punctuation">.</span>join<span class="token punctuation">(</span>open<span class="token punctuation">(</span><span class="token string">'text.txt'</span><span class="token punctuation">,</span> <span class="token string">'rt'</span><span class="token punctuation">,</span> encoding<span class="token operator">=</span><span class="token string">'utf-8'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>readlines<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">' '</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+emiter <span class="token operator">=</span> <span class="token keyword">lambda</span> word<span class="token punctuation">:</span> <span class="token punctuation">(</span>word<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
+counter <span class="token operator">=</span> <span class="token keyword">lambda</span> emitted<span class="token punctuation">:</span> <span class="token punctuation">(</span>emitted<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> sum<span class="token punctuation">(</span>emitted<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+a <span class="token operator">=</span> list<span class="token punctuation">(</span>map_reduce_still_naive<span class="token punctuation">(</span>words<span class="token punctuation">,</span> emiter<span class="token punctuation">,</span> counter<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token keyword">for</span> i <span class="token keyword">in</span> sorted<span class="token punctuation">(</span>a<span class="token punctuation">,</span> key<span class="token operator">=</span><span class="token keyword">lambda</span> x<span class="token punctuation">:</span> x<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这段代码使用了 ThreadPoolExecutor 类来实现并发的 MapReduce 框架。ThreadPoolExecutor 可以创建一个线程池，可以让你并发地执行多个任务。</p>
 <p>线程池中的线程个数取自 os.cpu_count() 一般为系统的逻辑核心数。</p>
 <p>实现一个带有任务进度显示的mapreduce版本：</p>
-<p>from collections import defaultdict<br>from concurrent.futures import ThreadPoolExecutor as Executor<br>from time import sleep<br>​<br>​<br>def report_progress(futures, tag, callback):<br>    not_done &#x3D; 1<br>    done &#x3D; 0<br>    while not_done &gt; 0:<br>        not_done &#x3D; 0<br>        done &#x3D; 0<br>        for fut in futures:<br>            if fut.done():<br>                done +&#x3D;1<br>            else:<br>                not_done +&#x3D; 1<br>        sleep(0.5)<br>        if not_done &gt; 0 and callback:<br>            callback(tag, done, not_done)<br>​<br>​<br>def async_map(executor, mapper, data):<br>    futures &#x3D; []<br>    for datum in data:<br>        futures.append(executor.submit(mapper, datum))<br>    return futures<br>​<br>​<br>def map_less_naive(executor, my_input, mapper):<br>    map_results &#x3D; async_map(executor, mapper, my_input)<br>    return map_results<br>​<br>​<br>def map_reduce_less_naive(my_input, mapper, reducer, callback&#x3D;None):<br>    with Executor(max_workers&#x3D;2) as executor:<br>        futures &#x3D; async_map(executor, mapper, my_input)<br>        report_progress(futures, ‘map’, callback)<br>        #wait(futures).done<br>        map_results &#x3D; map(lambda f: f.result(), futures)<br>        distributor &#x3D; defaultdict(list)<br>        for key, value in map_results:<br>            distributor[key].append(value)<br>​<br>        futures &#x3D; async_map(executor, reducer, distributor.items())<br>        report_progress(futures, ‘reduce’, callback)<br>        #wait(futures).done<br>        results &#x3D; map(lambda f: f.result(), futures)<br>    return results<br>​<br>​<br>def emitter(word):<br>    #sleep(10)<br>    return word, 1<br>​<br>​<br>counter &#x3D; lambda emitted: (emitted[0], sum(emitted[1]))<br>​<br>def reporter(tag, done, not_done):<br>    print(f’Operation {tag}: {done}&#x2F;{done+not_done}’)<br>​<br>words &#x3D; ‘Python is great Python rocks’.split(‘ ‘)<br>a &#x3D; map_reduce_less_naive(words, emitter, counter, reporter)<br>​<br>for i in sorted(a, key&#x3D;lambda x: x[1]):<br>    print(i)<br>​<br>#words &#x3D; ‘Python is great Python rocks’.split(‘ ‘)<br>​<br>#with Executor(max_workers&#x3D;4) as executor:</p>
-<h1 id="maps-map-less-naive-executor-words-emitter"><a href="#maps-map-less-naive-executor-words-emitter" class="headerlink" title="maps &#x3D; map_less_naive(executor, words, emitter)"></a>maps &#x3D; map_less_naive(executor, words, emitter)</h1><h1 id="print-maps-1"><a href="#print-maps-1" class="headerlink" title="print(maps[-1])"></a>print(maps[-1])</h1><h1 id="not-done-1"><a href="#not-done-1" class="headerlink" title="not_done &#x3D; 1"></a>not_done &#x3D; 1</h1><h1 id="while-not-done-0"><a href="#while-not-done-0" class="headerlink" title="while not_done &gt; 0:"></a>while not_done &gt; 0:</h1><h1 id="not-done-0"><a href="#not-done-0" class="headerlink" title="not_done &#x3D; 0"></a>not_done &#x3D; 0</h1><h1 id="for-fut-in-maps"><a href="#for-fut-in-maps" class="headerlink" title="for fut in maps:"></a>for fut in maps:</h1><h1 id="not-done-1-if-not-fut-done-else-0"><a href="#not-done-1-if-not-fut-done-else-0" class="headerlink" title="not_done +&#x3D; 1 if not fut.done() else 0"></a>not_done +&#x3D; 1 if not fut.done() else 0</h1><h1 id="sleep-1"><a href="#sleep-1" class="headerlink" title="sleep(1)"></a>sleep(1)</h1><h1 id="print-f’Still-not-finalized-not-done-’"><a href="#print-f’Still-not-finalized-not-done-’" class="headerlink" title="print(f’Still not finalized: {not_done}’)"></a>print(f’Still not finalized: {not_done}’)</h1><p>运行结果：</p>
-<p>Operation map: 3&#x2F;5<br>Operation reduce: 0&#x2F;4<br>(‘is’, 1)<br>(‘great’, 1)<br>(‘rocks’, 1)<br>(‘Python’, 2)<br>CPython 中的全局解释器锁（GIL）阻止了多个本地线程同时执行 Python 字节码，这确实限制了 CPU 密集型任务的真正并行性。因此，尽管提供的解决方案利用了线程的并发性，但由于 GIL 的限制，它并不能实现真正的并行性。</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">from</span> collections <span class="token keyword">import</span> defaultdict
+<span class="token keyword">from</span> concurrent<span class="token punctuation">.</span>futures <span class="token keyword">import</span> ThreadPoolExecutor <span class="token keyword">as</span> Executor
+<span class="token keyword">from</span> time <span class="token keyword">import</span> sleep
+
+
+<span class="token keyword">def</span> <span class="token function">report_progress</span><span class="token punctuation">(</span>futures<span class="token punctuation">,</span> tag<span class="token punctuation">,</span> callback<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    not_done <span class="token operator">=</span> <span class="token number">1</span>
+    done <span class="token operator">=</span> <span class="token number">0</span>
+    <span class="token keyword">while</span> not_done <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">:</span>
+        not_done <span class="token operator">=</span> <span class="token number">0</span>
+        done <span class="token operator">=</span> <span class="token number">0</span>
+        <span class="token keyword">for</span> fut <span class="token keyword">in</span> futures<span class="token punctuation">:</span>
+            <span class="token keyword">if</span> fut<span class="token punctuation">.</span>done<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+                done <span class="token operator">+=</span><span class="token number">1</span>
+            <span class="token keyword">else</span><span class="token punctuation">:</span>
+                not_done <span class="token operator">+=</span> <span class="token number">1</span>
+        sleep<span class="token punctuation">(</span><span class="token number">0.5</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> not_done <span class="token operator">></span> <span class="token number">0</span> <span class="token operator">and</span> callback<span class="token punctuation">:</span>
+            callback<span class="token punctuation">(</span>tag<span class="token punctuation">,</span> done<span class="token punctuation">,</span> not_done<span class="token punctuation">)</span>
+
+
+<span class="token keyword">def</span> <span class="token function">async_map</span><span class="token punctuation">(</span>executor<span class="token punctuation">,</span> mapper<span class="token punctuation">,</span> data<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    futures <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token keyword">for</span> datum <span class="token keyword">in</span> data<span class="token punctuation">:</span>
+        futures<span class="token punctuation">.</span>append<span class="token punctuation">(</span>executor<span class="token punctuation">.</span>submit<span class="token punctuation">(</span>mapper<span class="token punctuation">,</span> datum<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> futures
+
+
+<span class="token keyword">def</span> <span class="token function">map_less_naive</span><span class="token punctuation">(</span>executor<span class="token punctuation">,</span> my_input<span class="token punctuation">,</span> mapper<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    map_results <span class="token operator">=</span> async_map<span class="token punctuation">(</span>executor<span class="token punctuation">,</span> mapper<span class="token punctuation">,</span> my_input<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> map_results
+
+
+<span class="token keyword">def</span> <span class="token function">map_reduce_less_naive</span><span class="token punctuation">(</span>my_input<span class="token punctuation">,</span> mapper<span class="token punctuation">,</span> reducer<span class="token punctuation">,</span> callback<span class="token operator">=</span>None<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">with</span> Executor<span class="token punctuation">(</span>max_workers<span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">)</span> <span class="token keyword">as</span> executor<span class="token punctuation">:</span>
+        futures <span class="token operator">=</span> async_map<span class="token punctuation">(</span>executor<span class="token punctuation">,</span> mapper<span class="token punctuation">,</span> my_input<span class="token punctuation">)</span>
+        report_progress<span class="token punctuation">(</span>futures<span class="token punctuation">,</span> <span class="token string">'map'</span><span class="token punctuation">,</span> callback<span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true">#wait(futures).done</span>
+        map_results <span class="token operator">=</span> map<span class="token punctuation">(</span><span class="token keyword">lambda</span> f<span class="token punctuation">:</span> f<span class="token punctuation">.</span>result<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> futures<span class="token punctuation">)</span>
+        distributor <span class="token operator">=</span> defaultdict<span class="token punctuation">(</span>list<span class="token punctuation">)</span>
+        <span class="token keyword">for</span> key<span class="token punctuation">,</span> value <span class="token keyword">in</span> map_results<span class="token punctuation">:</span>
+            distributor<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">.</span>append<span class="token punctuation">(</span>value<span class="token punctuation">)</span>
+
+        futures <span class="token operator">=</span> async_map<span class="token punctuation">(</span>executor<span class="token punctuation">,</span> reducer<span class="token punctuation">,</span> distributor<span class="token punctuation">.</span>items<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        report_progress<span class="token punctuation">(</span>futures<span class="token punctuation">,</span> <span class="token string">'reduce'</span><span class="token punctuation">,</span> callback<span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true">#wait(futures).done</span>
+        results <span class="token operator">=</span> map<span class="token punctuation">(</span><span class="token keyword">lambda</span> f<span class="token punctuation">:</span> f<span class="token punctuation">.</span>result<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> futures<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> results
+
+
+<span class="token keyword">def</span> <span class="token function">emitter</span><span class="token punctuation">(</span>word<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true">#sleep(10)</span>
+    <span class="token keyword">return</span> word<span class="token punctuation">,</span> <span class="token number">1</span>
+
+
+counter <span class="token operator">=</span> <span class="token keyword">lambda</span> emitted<span class="token punctuation">:</span> <span class="token punctuation">(</span>emitted<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> sum<span class="token punctuation">(</span>emitted<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token keyword">def</span> <span class="token function">reporter</span><span class="token punctuation">(</span>tag<span class="token punctuation">,</span> done<span class="token punctuation">,</span> not_done<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">'Operation {tag}: {done}/{done+not_done}'</span><span class="token punctuation">)</span>
+
+words <span class="token operator">=</span> <span class="token string">'Python is great Python rocks'</span><span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">' '</span><span class="token punctuation">)</span>
+a <span class="token operator">=</span> map_reduce_less_naive<span class="token punctuation">(</span>words<span class="token punctuation">,</span> emitter<span class="token punctuation">,</span> counter<span class="token punctuation">,</span> reporter<span class="token punctuation">)</span>
+
+<span class="token keyword">for</span> i <span class="token keyword">in</span> sorted<span class="token punctuation">(</span>a<span class="token punctuation">,</span> key<span class="token operator">=</span><span class="token keyword">lambda</span> x<span class="token punctuation">:</span> x<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">#words = 'Python is great Python rocks'.split(' ')</span>
+
+<span class="token comment" spellcheck="true">#with Executor(max_workers=4) as executor:</span>
+<span class="token comment" spellcheck="true">#    maps = map_less_naive(executor, words, emitter)</span>
+<span class="token comment" spellcheck="true">#    print(maps[-1])</span>
+<span class="token comment" spellcheck="true">#    not_done = 1</span>
+<span class="token comment" spellcheck="true">#    while not_done > 0:</span>
+<span class="token comment" spellcheck="true">#        not_done = 0</span>
+<span class="token comment" spellcheck="true">#        for fut in maps:</span>
+<span class="token comment" spellcheck="true">#            not_done += 1 if not fut.done() else 0</span>
+<span class="token comment" spellcheck="true">#        sleep(1)</span>
+<span class="token comment" spellcheck="true">#        print(f'Still not finalized: {not_done}')</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">Operation map: 3/5
+Operation reduce: 0/4
+<span class="token punctuation">(</span><span class="token string">'is'</span>, 1<span class="token punctuation">)</span>
+<span class="token punctuation">(</span><span class="token string">'great'</span>, 1<span class="token punctuation">)</span>
+<span class="token punctuation">(</span><span class="token string">'rocks'</span>, 1<span class="token punctuation">)</span>
+<span class="token punctuation">(</span><span class="token string">'Python'</span>, 2<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>CPython 中的全局解释器锁（GIL）阻止了多个本地线程同时执行 Python 字节码，这确实限制了 CPU 密集型任务的真正并行性。因此，尽管提供的解决方案利用了线程的并发性，但由于 GIL 的限制，它并不能实现真正的并行性。</p>
 <p>要在 Python 中实现并行计算，特别是对于像这个 MapReduce 实现这样的 CPU 密集型任务，你通常会考虑使用多进程而不是多线程。多进程允许 Python 通过创建单独的进程来绕过 GIL，每个进程都有自己的 Python 解释器和内存空间。</p>
-<p>在 MapReduce 的背景下，你可以用 concurrent.futures 模块中的 ProcessPoolExecutor 替换 ThreadPoolExecutor 来实现真正的并行性。这将涉及启动多个 Python 进程，以便在 CPU 核心之间并行地执行映射和归约任务，从而更好地利用可用的硬件资源。</p>
+<p>在 MapReduce 的背景下，你可以用 <code>concurrent.futures</code> 模块中的 <code>ProcessPoolExecutor</code> 替换 <code>ThreadPoolExecutor</code> 来实现真正的并行性。这将涉及启动多个 Python 进程，以便在 CPU 核心之间并行地执行映射和归约任务，从而更好地利用可用的硬件资源。</p>
 <p>虽然 CPython 中的全局解释器锁（GIL）会限制 Python  字节码级别的并行执行，但是低级别的代码可以通过一些方式绕过这一限制。在进入低级别的解决方案时，你可以释放  GIL，并使用并行性来充分利用系统资源。这就是诸如 NumPy、SciPy 和 scikit-learn 这样的库所做的。它们在 C 或  Fortran 中编写了多线程代码，释放了 GIL，并且实际上是并行的。因此，在 Python  的线程环境中，你的代码仍然可以实现并行性。只是并行的部分不会用 Python 编写。</p>
-<p>关于PyPy和Jython</p>
-<p>PyPy 是另一个流行的 Python 解释器，与 CPython 不同，PyPy 有一个可选的 GIL。在默认情况下，PyPy 也会使用 GIL 来确保线程安全。但是，PyPy 具有一些可配置选项，允许在特定情况下禁用 GIL，以便在某些多线程场景中获得更好的性能。</p>
+<h3 id="关于PyPy和Jython"><a href="#关于PyPy和Jython" class="headerlink" title="关于PyPy和Jython"></a>关于PyPy和Jython</h3><p>PyPy 是另一个流行的 Python 解释器，与 CPython 不同，PyPy 有一个可选的 GIL。在默认情况下，PyPy 也会使用 GIL 来确保线程安全。但是，PyPy 具有一些可配置选项，允许在特定情况下禁用 GIL，以便在某些多线程场景中获得更好的性能。</p>
 <p>要注意的是，尽管 PyPy 允许禁用 GIL，但并不意味着它完全消除了多线程中的竞争条件或死锁等问题。因此，在使用 PyPy 进行多线程编程时，仍然需要谨慎处理共享资源并避免潜在的并发问题。</p>
 <p>Jython 是另一种 Python 解释器，它将 Python 代码转换为 Java 字节码，以在 Java 虚拟机 (JVM) 上运行。尽管 Jython 提供了与 Java 互操作性的优势，但是自2017年以来，Jython 的更新速度相对缓慢，并且目前处于较低的活跃状态。</p>
-<p>多进程版本实现并行</p>
-<p>由于GIL的存在，目前的版本并没有实现并行，无非利用多核心的优势，所以，需要使用多进程的方式，充分利用多核计算能力。</p>
-<p>pickle 多进程的问题</p>
-<p>在 Python 中，pickle 是一种用于序列化和反序列化 Python 对象的标准模块。然而，pickle 在多进程环境下存在一些限制，特别是在使用 multiprocessing 模块创建子进程时。</p>
+<h3 id="多进程版本实现并行"><a href="#多进程版本实现并行" class="headerlink" title="多进程版本实现并行"></a>多进程版本实现并行</h3><p>由于GIL的存在，目前的版本并没有实现并行，无非利用多核心的优势，所以，需要使用多进程的方式，充分利用多核计算能力。</p>
+<h4 id="pickle-多进程的问题"><a href="#pickle-多进程的问题" class="headerlink" title="pickle 多进程的问题"></a>pickle 多进程的问题</h4><p>在 Python 中，pickle 是一种用于序列化和反序列化 Python 对象的标准模块。然而，pickle 在多进程环境下存在一些限制，特别是在使用 multiprocessing 模块创建子进程时。</p>
 <p>具体来说，当使用 multiprocessing 模块创建的子进程尝试序列化或反序列化对象时，由于子进程无法直接访问父进程的内存空间，因此 pickle 会遇到一些问题，导致无法正常工作。</p>
-<p>为了解决这个问题，Python 提供了 multiprocessing 模块中的 multiprocessing.Manager 类，它允许在多进程环境中共享 Python 对象。这个类使用了一种特殊的代理对象来实现对象的共享和传递，从而规避了 pickle 在多进程中的限制。</p>
+<p>为了解决这个问题，Python 提供了 multiprocessing 模块中的 <code>multiprocessing.Manager</code> 类，它允许在多进程环境中共享 Python 对象。这个类使用了一种特殊的代理对象来实现对象的共享和传递，从而规避了 pickle 在多进程中的限制。</p>
 <p>因此，虽然在多进程环境中使用 pickle 可能会遇到一些问题，但通过使用 multiprocessing 模块中的管理器类，你仍然可以在多进程中有效地共享和传递 Python 对象。</p>
 <p>比如如下代码：</p>
-<p>from collections import defaultdict<br>from concurrent.futures import ProcessPoolExecutor as Executor<br>from time import sleep<br>​<br>from time import sleep<br>​<br>​<br>def report_progress(futures, tag, callback):<br>    not_done &#x3D; 1<br>    done &#x3D; 0<br>    while not_done &gt; 0:<br>        not_done &#x3D; 0<br>        done &#x3D; 0<br>        for fut in futures:<br>            if fut.done():<br>                done +&#x3D;1<br>            else:<br>                not_done +&#x3D; 1<br>        sleep(0.5)<br>        if not_done &gt; 0 and callback:<br>            callback(tag, done, not_done)<br>​<br>​<br>def async_map(executor, mapper, data):<br>    futures &#x3D; []<br>    for datum in data:<br>        futures.append(executor.submit(mapper, datum))<br>    return futures<br>​<br>​<br>​<br>​<br>def map_reduce_less_naive(my_input, mapper, reducer, callback&#x3D;None):<br>    with Executor(max_workers&#x3D;2) as executor:<br>        futures &#x3D; async_map(executor, mapper, my_input)<br>        report_progress(futures, ‘map’, callback)<br>        #wait(futures).done<br>        map_results &#x3D; map(lambda f: f.result(), futures)<br>        distributor &#x3D; defaultdict(list)<br>        for key, value in map_results:<br>            distributor[key].append(value)<br>​<br>        futures &#x3D; async_map(executor, reducer, distributor.items())<br>        report_progress(futures, ‘reduce’, callback)<br>        #wait(futures).done<br>        results &#x3D; map(lambda f: f.result(), futures)<br>    return results<br>​<br>​<br>def emitter(word):<br>    #sleep(10)<br>    return word, 1<br>​<br>​<br>counter &#x3D; lambda emitted: (emitted[0], sum(emitted[1]))<br>​<br>def reporter(tag, done, not_done):<br>    print(f’Operation {tag}: {done}&#x2F;{done+not_done}’)<br>​<br>words &#x3D; ‘Python is great Python rocks’.split(‘ ‘)<br>a &#x3D; map_reduce_less_naive(words, emitter, counter, reporter)<br>​<br>for i in sorted(a, key&#x3D;lambda x: x[1]):<br>    print(i)<br>报错如下：</p>
-<p>“””<br>Traceback (most recent call last):<br>  File “&#x2F;usr&#x2F;lib64&#x2F;python3.9&#x2F;multiprocessing&#x2F;queues.py”, line 244, in _feed<br>    obj &#x3D; _ForkingPickler.dumps(obj)<br>  File “&#x2F;usr&#x2F;lib64&#x2F;python3.9&#x2F;multiprocessing&#x2F;reduction.py”, line 51, in dumps<br>    cls(buf, protocol).dump(obj)<br>_pickle.PicklingError: Can’t pickle &lt;function <lambda> at 0x7efcde37d8b0&gt;: attribute lookup <lambda> on <strong>main</strong> failed<br>“””<br>​<br>The above exception was the direct cause of the following exception:<br>​<br>Traceback (most recent call last):<br>  File “&#x2F;root&#x2F;m_m.py”, line 63, in <module><br>    for i in sorted(a, key&#x3D;lambda x: x[1]):<br>  File “&#x2F;root&#x2F;m_m.py”, line 46, in <lambda><br>    results &#x3D; map(lambda f: f.result(), futures)<br>  File “&#x2F;usr&#x2F;lib64&#x2F;python3.9&#x2F;concurrent&#x2F;futures&#x2F;_base.py”, line 439, in result<br>    return self.__get_result()<br>  File “&#x2F;usr&#x2F;lib64&#x2F;python3.9&#x2F;concurrent&#x2F;futures&#x2F;_base.py”, line 391, in __get_result<br>    raise self._exception<br>  File “&#x2F;usr&#x2F;lib64&#x2F;python3.9&#x2F;multiprocessing&#x2F;queues.py”, line 244, in _feed<br>    obj &#x3D; _ForkingPickler.dumps(obj)<br>  File “&#x2F;usr&#x2F;lib64&#x2F;python3.9&#x2F;multiprocessing&#x2F;reduction.py”, line 51, in dumps<br>    cls(buf, protocol).dump(obj)<br>_pickle.PicklingError: Can’t pickle &lt;function <lambda> at 0x7efcde37d8b0&gt;: attribute lookup <lambda> on <strong>main</strong> failed<br>这个错误表明在尝试将任务提交给子进程时出现了 pickling 错误，具体原因是无法 pickle lambda 函数。Lambda 函数通常无法序列化，因为它们在序列化时无法被正常地识别和重建。</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">from</span> collections <span class="token keyword">import</span> defaultdict
+<span class="token keyword">from</span> concurrent<span class="token punctuation">.</span>futures <span class="token keyword">import</span> ProcessPoolExecutor <span class="token keyword">as</span> Executor
+<span class="token keyword">from</span> time <span class="token keyword">import</span> sleep
+
+<span class="token keyword">from</span> time <span class="token keyword">import</span> sleep
+
+
+<span class="token keyword">def</span> <span class="token function">report_progress</span><span class="token punctuation">(</span>futures<span class="token punctuation">,</span> tag<span class="token punctuation">,</span> callback<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    not_done <span class="token operator">=</span> <span class="token number">1</span>
+    done <span class="token operator">=</span> <span class="token number">0</span>
+    <span class="token keyword">while</span> not_done <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">:</span>
+        not_done <span class="token operator">=</span> <span class="token number">0</span>
+        done <span class="token operator">=</span> <span class="token number">0</span>
+        <span class="token keyword">for</span> fut <span class="token keyword">in</span> futures<span class="token punctuation">:</span>
+            <span class="token keyword">if</span> fut<span class="token punctuation">.</span>done<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+                done <span class="token operator">+=</span><span class="token number">1</span>
+            <span class="token keyword">else</span><span class="token punctuation">:</span>
+                not_done <span class="token operator">+=</span> <span class="token number">1</span>
+        sleep<span class="token punctuation">(</span><span class="token number">0.5</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> not_done <span class="token operator">></span> <span class="token number">0</span> <span class="token operator">and</span> callback<span class="token punctuation">:</span>
+            callback<span class="token punctuation">(</span>tag<span class="token punctuation">,</span> done<span class="token punctuation">,</span> not_done<span class="token punctuation">)</span>
+
+
+<span class="token keyword">def</span> <span class="token function">async_map</span><span class="token punctuation">(</span>executor<span class="token punctuation">,</span> mapper<span class="token punctuation">,</span> data<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    futures <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token keyword">for</span> datum <span class="token keyword">in</span> data<span class="token punctuation">:</span>
+        futures<span class="token punctuation">.</span>append<span class="token punctuation">(</span>executor<span class="token punctuation">.</span>submit<span class="token punctuation">(</span>mapper<span class="token punctuation">,</span> datum<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> futures
+
+
+
+
+<span class="token keyword">def</span> <span class="token function">map_reduce_less_naive</span><span class="token punctuation">(</span>my_input<span class="token punctuation">,</span> mapper<span class="token punctuation">,</span> reducer<span class="token punctuation">,</span> callback<span class="token operator">=</span>None<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">with</span> Executor<span class="token punctuation">(</span>max_workers<span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">)</span> <span class="token keyword">as</span> executor<span class="token punctuation">:</span>
+        futures <span class="token operator">=</span> async_map<span class="token punctuation">(</span>executor<span class="token punctuation">,</span> mapper<span class="token punctuation">,</span> my_input<span class="token punctuation">)</span>
+        report_progress<span class="token punctuation">(</span>futures<span class="token punctuation">,</span> <span class="token string">'map'</span><span class="token punctuation">,</span> callback<span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true">#wait(futures).done</span>
+        map_results <span class="token operator">=</span> map<span class="token punctuation">(</span><span class="token keyword">lambda</span> f<span class="token punctuation">:</span> f<span class="token punctuation">.</span>result<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> futures<span class="token punctuation">)</span>
+        distributor <span class="token operator">=</span> defaultdict<span class="token punctuation">(</span>list<span class="token punctuation">)</span>
+        <span class="token keyword">for</span> key<span class="token punctuation">,</span> value <span class="token keyword">in</span> map_results<span class="token punctuation">:</span>
+            distributor<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">.</span>append<span class="token punctuation">(</span>value<span class="token punctuation">)</span>
+
+        futures <span class="token operator">=</span> async_map<span class="token punctuation">(</span>executor<span class="token punctuation">,</span> reducer<span class="token punctuation">,</span> distributor<span class="token punctuation">.</span>items<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        report_progress<span class="token punctuation">(</span>futures<span class="token punctuation">,</span> <span class="token string">'reduce'</span><span class="token punctuation">,</span> callback<span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true">#wait(futures).done</span>
+        results <span class="token operator">=</span> map<span class="token punctuation">(</span><span class="token keyword">lambda</span> f<span class="token punctuation">:</span> f<span class="token punctuation">.</span>result<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> futures<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> results
+
+
+<span class="token keyword">def</span> <span class="token function">emitter</span><span class="token punctuation">(</span>word<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true">#sleep(10)</span>
+    <span class="token keyword">return</span> word<span class="token punctuation">,</span> <span class="token number">1</span>
+
+
+counter <span class="token operator">=</span> <span class="token keyword">lambda</span> emitted<span class="token punctuation">:</span> <span class="token punctuation">(</span>emitted<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> sum<span class="token punctuation">(</span>emitted<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token keyword">def</span> <span class="token function">reporter</span><span class="token punctuation">(</span>tag<span class="token punctuation">,</span> done<span class="token punctuation">,</span> not_done<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">'Operation {tag}: {done}/{done+not_done}'</span><span class="token punctuation">)</span>
+
+words <span class="token operator">=</span> <span class="token string">'Python is great Python rocks'</span><span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">' '</span><span class="token punctuation">)</span>
+a <span class="token operator">=</span> map_reduce_less_naive<span class="token punctuation">(</span>words<span class="token punctuation">,</span> emitter<span class="token punctuation">,</span> counter<span class="token punctuation">,</span> reporter<span class="token punctuation">)</span>
+
+<span class="token keyword">for</span> i <span class="token keyword">in</span> sorted<span class="token punctuation">(</span>a<span class="token punctuation">,</span> key<span class="token operator">=</span><span class="token keyword">lambda</span> x<span class="token punctuation">:</span> x<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>报错如下：</p>
+<pre class="line-numbers language-python"><code class="language-python">Traceback <span class="token punctuation">(</span>most recent call last<span class="token punctuation">)</span><span class="token punctuation">:</span>
+  File <span class="token string">"/usr/lib64/python3.9/multiprocessing/queues.py"</span><span class="token punctuation">,</span> line <span class="token number">244</span><span class="token punctuation">,</span> <span class="token keyword">in</span> _feed
+    obj <span class="token operator">=</span> _ForkingPickler<span class="token punctuation">.</span>dumps<span class="token punctuation">(</span>obj<span class="token punctuation">)</span>
+  File <span class="token string">"/usr/lib64/python3.9/multiprocessing/reduction.py"</span><span class="token punctuation">,</span> line <span class="token number">51</span><span class="token punctuation">,</span> <span class="token keyword">in</span> dumps
+    cls<span class="token punctuation">(</span>buf<span class="token punctuation">,</span> protocol<span class="token punctuation">)</span><span class="token punctuation">.</span>dump<span class="token punctuation">(</span>obj<span class="token punctuation">)</span>
+_pickle<span class="token punctuation">.</span>PicklingError<span class="token punctuation">:</span> Can't pickle <span class="token operator">&lt;</span>function <span class="token operator">&lt;</span><span class="token keyword">lambda</span><span class="token operator">></span> at <span class="token number">0x7efcde37d8b0</span><span class="token operator">></span><span class="token punctuation">:</span> attribute lookup <span class="token operator">&lt;</span><span class="token keyword">lambda</span><span class="token operator">></span> on __main__ failed
+
+The above exception was the direct cause of the following exception<span class="token punctuation">:</span>
+
+Traceback <span class="token punctuation">(</span>most recent call last<span class="token punctuation">)</span><span class="token punctuation">:</span>
+  File <span class="token string">"/root/m_m.py"</span><span class="token punctuation">,</span> line <span class="token number">63</span><span class="token punctuation">,</span> <span class="token keyword">in</span> <span class="token operator">&lt;</span>module<span class="token operator">></span>
+    <span class="token keyword">for</span> i <span class="token keyword">in</span> sorted<span class="token punctuation">(</span>a<span class="token punctuation">,</span> key<span class="token operator">=</span><span class="token keyword">lambda</span> x<span class="token punctuation">:</span> x<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+  File <span class="token string">"/root/m_m.py"</span><span class="token punctuation">,</span> line <span class="token number">46</span><span class="token punctuation">,</span> <span class="token keyword">in</span> <span class="token operator">&lt;</span><span class="token keyword">lambda</span><span class="token operator">></span>
+    results <span class="token operator">=</span> map<span class="token punctuation">(</span><span class="token keyword">lambda</span> f<span class="token punctuation">:</span> f<span class="token punctuation">.</span>result<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> futures<span class="token punctuation">)</span>
+  File <span class="token string">"/usr/lib64/python3.9/concurrent/futures/_base.py"</span><span class="token punctuation">,</span> line <span class="token number">439</span><span class="token punctuation">,</span> <span class="token keyword">in</span> result
+    <span class="token keyword">return</span> self<span class="token punctuation">.</span>__get_result<span class="token punctuation">(</span><span class="token punctuation">)</span>
+  File <span class="token string">"/usr/lib64/python3.9/concurrent/futures/_base.py"</span><span class="token punctuation">,</span> line <span class="token number">391</span><span class="token punctuation">,</span> <span class="token keyword">in</span> __get_result
+    <span class="token keyword">raise</span> self<span class="token punctuation">.</span>_exception
+  File <span class="token string">"/usr/lib64/python3.9/multiprocessing/queues.py"</span><span class="token punctuation">,</span> line <span class="token number">244</span><span class="token punctuation">,</span> <span class="token keyword">in</span> _feed
+    obj <span class="token operator">=</span> _ForkingPickler<span class="token punctuation">.</span>dumps<span class="token punctuation">(</span>obj<span class="token punctuation">)</span>
+  File <span class="token string">"/usr/lib64/python3.9/multiprocessing/reduction.py"</span><span class="token punctuation">,</span> line <span class="token number">51</span><span class="token punctuation">,</span> <span class="token keyword">in</span> dumps
+    cls<span class="token punctuation">(</span>buf<span class="token punctuation">,</span> protocol<span class="token punctuation">)</span><span class="token punctuation">.</span>dump<span class="token punctuation">(</span>obj<span class="token punctuation">)</span>
+_pickle<span class="token punctuation">.</span>PicklingError<span class="token punctuation">:</span> Can't pickle <span class="token operator">&lt;</span>function <span class="token operator">&lt;</span><span class="token keyword">lambda</span><span class="token operator">></span> at <span class="token number">0x7efcde37d8b0</span><span class="token operator">></span><span class="token punctuation">:</span> attribute lookup <span class="token operator">&lt;</span><span class="token keyword">lambda</span><span class="token operator">></span> on __main__ failed
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这个错误表明在尝试将任务提交给子进程时出现了 pickling 错误，具体原因是无法 pickle lambda 函数。Lambda 函数通常无法序列化，因为它们在序列化时无法被正常地识别和重建。</p>
 <p>修改如下：</p>
-<p>from collections import defaultdict<br>from concurrent.futures import ProcessPoolExecutor as Executor<br>from time import sleep<br>​<br>​<br>def report_progress(futures, tag, callback):<br>    not_done &#x3D; 1<br>    done &#x3D; 0<br>    while not_done &gt; 0:<br>        not_done &#x3D; 0<br>        done &#x3D; 0<br>        for fut in futures:<br>            if fut.done():<br>                done +&#x3D;1<br>            else:<br>                not_done +&#x3D; 1<br>        sleep(0.5)<br>        if not_done &gt; 0 and callback:<br>            callback(tag, done, not_done)<br>​<br>​<br>def async_map(executor, mapper, data):<br>    futures &#x3D; []<br>    for datum in data:<br>        futures.append(executor.submit(mapper, datum))<br>    return futures<br>​<br>​<br>​<br>​<br>def map_reduce_less_naive(my_input, mapper, reducer, callback&#x3D;None):<br>    with Executor(max_workers&#x3D;2) as executor:<br>        futures &#x3D; async_map(executor, mapper, my_input)<br>        report_progress(futures, ‘map’, callback)<br>        #wait(futures).done<br>        map_results &#x3D; map(lambda f: f.result(), futures)<br>        distributor &#x3D; defaultdict(list)<br>        for key, value in map_results:<br>            distributor[key].append(value)<br>​<br>        futures &#x3D; async_map(executor, reducer, distributor.items())<br>        report_progress(futures, ‘reduce’, callback)<br>        #wait(futures).done<br>        results &#x3D; map(lambda f: f.result(), futures)<br>    return results<br>​<br>​<br>def emitter(word):<br>    #sleep(10)<br>    return word, 1<br>​<br>​<br>​<br>​<br>def counter(emitted):<br>    return emitted[0], sum(emitted[1])<br>​<br>​<br>def reporter(tag, done, not_done):<br>    print(f’Operation {tag}: {done}&#x2F;{done+not_done}’)<br>​<br>words &#x3D; ‘Python is great Python rocks’.split(‘ ‘)<br>a &#x3D; map_reduce_less_naive(words, emitter, counter, reporter)<br>​<br>for i in sorted(a, key&#x3D;lambda x: x[1]):<br>    print(i)<br>CPU_count vs. sched_getaffinity to determine the pool size</p>
-<p>cpu_count 取值是CPU的逻辑核心数</p>
-<p>Help on built-in function sched_getaffinity in module posix:<br>​<br>sched_getaffinity(pid, &#x2F;)<br>    Return the affinity of the process identified by pid (or the current process if zero).</p>
-<pre><code>The affinity is returned as a set of CPU identifiers.
-</code></pre>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">from</span> collections <span class="token keyword">import</span> defaultdict
+<span class="token keyword">from</span> concurrent<span class="token punctuation">.</span>futures <span class="token keyword">import</span> ProcessPoolExecutor <span class="token keyword">as</span> Executor
+<span class="token keyword">from</span> time <span class="token keyword">import</span> sleep
+
+
+<span class="token keyword">def</span> <span class="token function">report_progress</span><span class="token punctuation">(</span>futures<span class="token punctuation">,</span> tag<span class="token punctuation">,</span> callback<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    not_done <span class="token operator">=</span> <span class="token number">1</span>
+    done <span class="token operator">=</span> <span class="token number">0</span>
+    <span class="token keyword">while</span> not_done <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">:</span>
+        not_done <span class="token operator">=</span> <span class="token number">0</span>
+        done <span class="token operator">=</span> <span class="token number">0</span>
+        <span class="token keyword">for</span> fut <span class="token keyword">in</span> futures<span class="token punctuation">:</span>
+            <span class="token keyword">if</span> fut<span class="token punctuation">.</span>done<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+                done <span class="token operator">+=</span><span class="token number">1</span>
+            <span class="token keyword">else</span><span class="token punctuation">:</span>
+                not_done <span class="token operator">+=</span> <span class="token number">1</span>
+        sleep<span class="token punctuation">(</span><span class="token number">0.5</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> not_done <span class="token operator">></span> <span class="token number">0</span> <span class="token operator">and</span> callback<span class="token punctuation">:</span>
+            callback<span class="token punctuation">(</span>tag<span class="token punctuation">,</span> done<span class="token punctuation">,</span> not_done<span class="token punctuation">)</span>
+
+
+<span class="token keyword">def</span> <span class="token function">async_map</span><span class="token punctuation">(</span>executor<span class="token punctuation">,</span> mapper<span class="token punctuation">,</span> data<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    futures <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token keyword">for</span> datum <span class="token keyword">in</span> data<span class="token punctuation">:</span>
+        futures<span class="token punctuation">.</span>append<span class="token punctuation">(</span>executor<span class="token punctuation">.</span>submit<span class="token punctuation">(</span>mapper<span class="token punctuation">,</span> datum<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> futures
+
+
+
+
+<span class="token keyword">def</span> <span class="token function">map_reduce_less_naive</span><span class="token punctuation">(</span>my_input<span class="token punctuation">,</span> mapper<span class="token punctuation">,</span> reducer<span class="token punctuation">,</span> callback<span class="token operator">=</span>None<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">with</span> Executor<span class="token punctuation">(</span>max_workers<span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">)</span> <span class="token keyword">as</span> executor<span class="token punctuation">:</span>
+        futures <span class="token operator">=</span> async_map<span class="token punctuation">(</span>executor<span class="token punctuation">,</span> mapper<span class="token punctuation">,</span> my_input<span class="token punctuation">)</span>
+        report_progress<span class="token punctuation">(</span>futures<span class="token punctuation">,</span> <span class="token string">'map'</span><span class="token punctuation">,</span> callback<span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true">#wait(futures).done</span>
+        map_results <span class="token operator">=</span> map<span class="token punctuation">(</span><span class="token keyword">lambda</span> f<span class="token punctuation">:</span> f<span class="token punctuation">.</span>result<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> futures<span class="token punctuation">)</span>
+        distributor <span class="token operator">=</span> defaultdict<span class="token punctuation">(</span>list<span class="token punctuation">)</span>
+        <span class="token keyword">for</span> key<span class="token punctuation">,</span> value <span class="token keyword">in</span> map_results<span class="token punctuation">:</span>
+            distributor<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">.</span>append<span class="token punctuation">(</span>value<span class="token punctuation">)</span>
+
+        futures <span class="token operator">=</span> async_map<span class="token punctuation">(</span>executor<span class="token punctuation">,</span> reducer<span class="token punctuation">,</span> distributor<span class="token punctuation">.</span>items<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        report_progress<span class="token punctuation">(</span>futures<span class="token punctuation">,</span> <span class="token string">'reduce'</span><span class="token punctuation">,</span> callback<span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true">#wait(futures).done</span>
+        results <span class="token operator">=</span> map<span class="token punctuation">(</span><span class="token keyword">lambda</span> f<span class="token punctuation">:</span> f<span class="token punctuation">.</span>result<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> futures<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> results
+
+
+<span class="token keyword">def</span> <span class="token function">emitter</span><span class="token punctuation">(</span>word<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true">#sleep(10)</span>
+    <span class="token keyword">return</span> word<span class="token punctuation">,</span> <span class="token number">1</span>
+
+
+
+
+<span class="token keyword">def</span> <span class="token function">counter</span><span class="token punctuation">(</span>emitted<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> emitted<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> sum<span class="token punctuation">(</span>emitted<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+
+<span class="token keyword">def</span> <span class="token function">reporter</span><span class="token punctuation">(</span>tag<span class="token punctuation">,</span> done<span class="token punctuation">,</span> not_done<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">'Operation {tag}: {done}/{done+not_done}'</span><span class="token punctuation">)</span>
+
+words <span class="token operator">=</span> <span class="token string">'Python is great Python rocks'</span><span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">' '</span><span class="token punctuation">)</span>
+a <span class="token operator">=</span> map_reduce_less_naive<span class="token punctuation">(</span>words<span class="token punctuation">,</span> emitter<span class="token punctuation">,</span> counter<span class="token punctuation">,</span> reporter<span class="token punctuation">)</span>
+
+<span class="token keyword">for</span> i <span class="token keyword">in</span> sorted<span class="token punctuation">(</span>a<span class="token punctuation">,</span> key<span class="token operator">=</span><span class="token keyword">lambda</span> x<span class="token punctuation">:</span> x<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="CPU-count-vs-sched-getaffinity-to-determine-the-pool-size"><a href="#CPU-count-vs-sched-getaffinity-to-determine-the-pool-size" class="headerlink" title="CPU_count vs. sched_getaffinity to determine the pool size"></a>CPU_count vs. sched_getaffinity to determine the pool size</h4><p>cpu_count 取值是CPU的逻辑核心数</p>
+<pre class="line-numbers language-bash"><code class="language-bash">Help on built-in <span class="token keyword">function</span> sched_getaffinity <span class="token keyword">in</span> module posix:
+
+sched_getaffinity<span class="token punctuation">(</span>pid, /<span class="token punctuation">)</span>
+    Return the affinity of the process identified by pid <span class="token punctuation">(</span>or the current process <span class="token keyword">if</span> zero<span class="token punctuation">)</span>.
+    
+    The affinity is returned as a <span class="token keyword">set</span> of CPU identifiers.
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 <p>os.sched_getaffinity()&#96; 函数返回分配给当前进程的CPU核心集合。在多核系统中，这通常是一个包含了当前进程可以运行的CPU核心的集合。每个核心都有一个唯一的标识符，这些标识符通常是整数。</p>
 <p>注意，这个函数返回的核心集合通常是系统分配给你的核心数。但是，在特定情况下，这可能会受到系统配置、权限限制或其他因素的影响。比如虚拟机，容器，系统的限制。</p>
-<p>多进程版本mapreduce</p>
-<p>from collections import defaultdict<br>from concurrent.futures import ProcessPoolExecutor as Executor<br>from time import sleep<br>​<br>​<br>def report_progress(futures, tag, callback):<br>    not_done &#x3D; 1<br>    done &#x3D; 0<br>    while not_done &gt; 0:<br>        not_done &#x3D; 0<br>        done &#x3D; 0<br>        for fut in futures:<br>            if fut.done():<br>                done +&#x3D;1<br>            else:<br>                not_done +&#x3D; 1<br>        sleep(0.5)<br>        if callback:<br>            callback(tag, done, not_done)<br>​<br>​<br>def async_map(executor, mapper, data):<br>    futures &#x3D; []<br>    for datum in data:<br>        futures.append(executor.submit(mapper, datum))<br>    return futures<br>​<br>​<br>def map_less_naive(executor, my_input, mapper):<br>    map_results &#x3D; async_map(executor, mapper, my_input)<br>    return map_results<br>​<br>​<br>def map_reduce_less_naive(my_input, mapper, reducer, callback&#x3D;None):<br>    with Executor(max_workers&#x3D;2) as executor:<br>        futures &#x3D; async_map(executor, mapper, my_input)<br>        report_progress(futures, ‘map’, callback)<br>        #wait(futures).done<br>        map_results &#x3D; map(lambda f: f.result(), futures)<br>        distributor &#x3D; defaultdict(list)<br>        for key, value in map_results:<br>            distributor[key].append(value)<br>​<br>        futures &#x3D; async_map(executor, reducer, distributor.items())<br>        report_progress(futures, ‘reduce’, callback)<br>        results &#x3D; map(lambda f: f.result(), futures)<br>    return results<br>​<br>​<br>def emitter(word):<br>    return word, 1<br>​<br>​<br>def counter(emitted):<br>    return emitted[0], sum(emitted[1])<br>​<br>​<br>def reporter(tag, done, not_done):<br>    print(f’Operation {tag}: {done}&#x2F;{done+not_done}’)<br>​<br>words &#x3D; ‘Python is great Python rocks’.split(‘ ‘)<br>a &#x3D; map_reduce_less_naive(words, emitter, counter, reporter)<br>​<br>for i in sorted(a, key&#x3D;lambda x: x[1]):<br>    print(i)<br>使用chunk分块读取数据:</p>
-<p>from collections import defaultdict<br>import multiprocessing as mp<br>import sys<br>from time import sleep<br>​<br>​<br>def report_progress(map_returns, tag, callback):<br>    done &#x3D; 0<br>    num_jobs &#x3D; len(map_returns)<br>    while num_jobs &gt; done:<br>        done &#x3D; 0<br>        for ret in map_returns:<br>            if ret.ready():<br>                done +&#x3D; 1<br>        sleep(0.5)<br>        if callback:<br>            callback(tag, done, num_jobs - done)<br>​<br>​<br>def chunk0(my_list, chunk_size):<br>    for i in range(0, len(my_list), chunk_size):   #requires a list<br>        yield my_list[i:i + chunk_size]<br>​<br>​<br>def chunk(my_iter, chunk_size):<br>    chunk_list &#x3D; []<br>    for elem in my_iter:<br>        chunk_list.append(elem)<br>        if len(chunk_list) &#x3D;&#x3D; chunk_size:<br>            yield chunk_list<br>            chunk_list &#x3D; []<br>    if len(chunk_list) &gt; 0:<br>        yield chunk_list<br>​<br>​<br>def chunk_runner(fun, data):<br>    ret &#x3D; []<br>    for datum in data:<br>        ret.append(fun(datum))<br>    return ret<br>​<br>def chunked_async_map(pool, mapper, data, chunk_size):<br>    async_returns &#x3D; []<br>    for data_part in chunk(data, chunk_size):<br>        async_returns.append(pool.apply_async(<br>            chunk_runner, (mapper, data_part)))  #RUNNER<br>    return async_returns<br>​<br>​<br>def map_reduce(pool, my_input, mapper, reducer, chunk_size, callback&#x3D;None):  #XXX<br>    map_returns &#x3D; chunked_async_map(pool, mapper, my_input, chunk_size)<br>    report_progress(map_returns, ‘map’, callback)<br>    map_results &#x3D; []<br>    for ret in map_returns:<br>        map_results.extend(ret.get())   # EXTEND<br>    distributor &#x3D; defaultdict(list)<br>    for key, value in map_results:<br>        distributor[key].append(value)<br>    returns &#x3D; chunked_async_map(pool, reducer, distributor.items(), chunk_size)<br>    report_progress(returns, ‘reduce’, callback)<br>    results &#x3D; []<br>    for ret in returns:<br>        results.extend(ret.get())<br>    return results<br>​<br>​<br>def emitter(word):<br>    return word, 1<br>​<br>​<br>def counter(emitted):<br>    return emitted[0], sum(emitted[1])<br>​<br>​<br>def reporter(tag, done, not_done):<br>    print(f’Operation {tag}: {done}&#x2F;{done+not_done}’)<br>​<br>​<br>if <strong>name</strong> &#x3D;&#x3D; ‘<strong>main</strong>‘:<br>    words &#x3D; [word<br>             for word in map(lambda x: x.strip().rstrip(),<br>                             ‘ ‘.join(open(‘text.txt’, ‘rt’, encoding&#x3D;’utf-8’).readlines()).split(‘ ‘))<br>             if word !&#x3D; ‘’ ]<br>​<br>    chunk_size &#x3D; int(sys.argv[1])<br>    pool &#x3D; mp.Pool()<br>    counts &#x3D; map_reduce(pool, words, emitter, counter, chunk_size, reporter)<br>    pool.close()<br>    pool.join()<br>​<br>    for count in sorted(counts, key&#x3D;lambda x: x[1]):<br>        print(count)<br>不同的块大小运行效率:</p>
-<p>$ time python3 chunk.py 10<br>Operation map: 1047&#x2F;35281<br>Operation map: 3470&#x2F;35281<br>Operation map: 8337&#x2F;35281<br>Operation map: 11402&#x2F;35281<br>Operation map: 13680&#x2F;35281<br>Operation map: 15751&#x2F;35281<br>Operation map: 17484&#x2F;35281<br>Operation map: 19155&#x2F;35281<br>Operation map: 22504&#x2F;35281<br>Operation map: 25469&#x2F;35281<br>Operation map: 29450&#x2F;35281<br>Operation map: 32024&#x2F;35281<br>Operation map: 33468&#x2F;35281<br>Operation map: 35281&#x2F;35281<br>Operation reduce: 26&#x2F;2923<br>Operation reduce: 2211&#x2F;2923<br>Operation reduce: 2923&#x2F;2923<br>python3 chunk.py 10  9.34s user 2.79s system 96% cpu 12.523 total<br>​<br>$ time python3 chunk.py 100<br>Operation map: 208&#x2F;3529<br>Operation map: 1358&#x2F;3529<br>Operation map: 3139&#x2F;3529<br>Operation map: 3529&#x2F;3529<br>Operation reduce: 8&#x2F;293<br>Operation reduce: 293&#x2F;293<br>python3 chunk.py 100  2.32s user 0.75s system 72% cpu 4.269 total<br>​<br>$ time python3 chunk.py 1000<br>Operation map: 39&#x2F;353<br>Operation map: 325&#x2F;353<br>Operation map: 353&#x2F;353<br>Operation reduce: 0&#x2F;30<br>Operation reduce: 30&#x2F;30<br>python3 chunk.py 1000  1.50s user 0.49s system 48% cpu 4.078 total<br>​<br>$ time python3 chunk.py 10000<br>Operation map: 7&#x2F;36<br>Operation map: 36&#x2F;36<br>Operation reduce: 0&#x2F;3<br>Operation reduce: 3&#x2F;3<br>python3 chunk.py 10000  1.69s user 0.29s system 41% cpu 4.802 total<br>​<br>$ time python3 chunk.py 100000<br>Operation map: 0&#x2F;4<br>Operation map: 4&#x2F;4<br>Operation reduce: 0&#x2F;1<br>Operation reduce: 1&#x2F;1<br>python3 chunk.py 100000  1.52s user 0.31s system 47% cpu 3.865 total<br>​<br>$ time python3 chunk.py 1000000<br>Operation map: 0&#x2F;1<br>Operation map: 0&#x2F;1<br>Operation map: 1&#x2F;1<br>Operation reduce: 0&#x2F;1<br>Operation reduce: 1&#x2F;1<br>python3 chunk.py 1000000  1.77s user 0.30s system 55% cpu 3.722 total<br>整合服务器和计算功能:</p>
+<h3 id="多进程版本mapreduce"><a href="#多进程版本mapreduce" class="headerlink" title="多进程版本mapreduce"></a>多进程版本mapreduce</h3><pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">from</span> collections <span class="token keyword">import</span> defaultdict
+<span class="token keyword">from</span> concurrent<span class="token punctuation">.</span>futures <span class="token keyword">import</span> ProcessPoolExecutor <span class="token keyword">as</span> Executor
+<span class="token keyword">from</span> time <span class="token keyword">import</span> sleep
+
+
+<span class="token keyword">def</span> <span class="token function">report_progress</span><span class="token punctuation">(</span>futures<span class="token punctuation">,</span> tag<span class="token punctuation">,</span> callback<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    not_done <span class="token operator">=</span> <span class="token number">1</span>
+    done <span class="token operator">=</span> <span class="token number">0</span>
+    <span class="token keyword">while</span> not_done <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">:</span>
+        not_done <span class="token operator">=</span> <span class="token number">0</span>
+        done <span class="token operator">=</span> <span class="token number">0</span>
+        <span class="token keyword">for</span> fut <span class="token keyword">in</span> futures<span class="token punctuation">:</span>
+            <span class="token keyword">if</span> fut<span class="token punctuation">.</span>done<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+                done <span class="token operator">+=</span><span class="token number">1</span>
+            <span class="token keyword">else</span><span class="token punctuation">:</span>
+                not_done <span class="token operator">+=</span> <span class="token number">1</span>
+        sleep<span class="token punctuation">(</span><span class="token number">0.5</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> callback<span class="token punctuation">:</span>
+            callback<span class="token punctuation">(</span>tag<span class="token punctuation">,</span> done<span class="token punctuation">,</span> not_done<span class="token punctuation">)</span>
+
+
+<span class="token keyword">def</span> <span class="token function">async_map</span><span class="token punctuation">(</span>executor<span class="token punctuation">,</span> mapper<span class="token punctuation">,</span> data<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    futures <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token keyword">for</span> datum <span class="token keyword">in</span> data<span class="token punctuation">:</span>
+        futures<span class="token punctuation">.</span>append<span class="token punctuation">(</span>executor<span class="token punctuation">.</span>submit<span class="token punctuation">(</span>mapper<span class="token punctuation">,</span> datum<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> futures
+
+
+<span class="token keyword">def</span> <span class="token function">map_less_naive</span><span class="token punctuation">(</span>executor<span class="token punctuation">,</span> my_input<span class="token punctuation">,</span> mapper<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    map_results <span class="token operator">=</span> async_map<span class="token punctuation">(</span>executor<span class="token punctuation">,</span> mapper<span class="token punctuation">,</span> my_input<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> map_results
+
+
+<span class="token keyword">def</span> <span class="token function">map_reduce_less_naive</span><span class="token punctuation">(</span>my_input<span class="token punctuation">,</span> mapper<span class="token punctuation">,</span> reducer<span class="token punctuation">,</span> callback<span class="token operator">=</span>None<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">with</span> Executor<span class="token punctuation">(</span>max_workers<span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">)</span> <span class="token keyword">as</span> executor<span class="token punctuation">:</span>
+        futures <span class="token operator">=</span> async_map<span class="token punctuation">(</span>executor<span class="token punctuation">,</span> mapper<span class="token punctuation">,</span> my_input<span class="token punctuation">)</span>
+        report_progress<span class="token punctuation">(</span>futures<span class="token punctuation">,</span> <span class="token string">'map'</span><span class="token punctuation">,</span> callback<span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true">#wait(futures).done</span>
+        map_results <span class="token operator">=</span> map<span class="token punctuation">(</span><span class="token keyword">lambda</span> f<span class="token punctuation">:</span> f<span class="token punctuation">.</span>result<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> futures<span class="token punctuation">)</span>
+        distributor <span class="token operator">=</span> defaultdict<span class="token punctuation">(</span>list<span class="token punctuation">)</span>
+        <span class="token keyword">for</span> key<span class="token punctuation">,</span> value <span class="token keyword">in</span> map_results<span class="token punctuation">:</span>
+            distributor<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">.</span>append<span class="token punctuation">(</span>value<span class="token punctuation">)</span>
+
+        futures <span class="token operator">=</span> async_map<span class="token punctuation">(</span>executor<span class="token punctuation">,</span> reducer<span class="token punctuation">,</span> distributor<span class="token punctuation">.</span>items<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        report_progress<span class="token punctuation">(</span>futures<span class="token punctuation">,</span> <span class="token string">'reduce'</span><span class="token punctuation">,</span> callback<span class="token punctuation">)</span>
+        results <span class="token operator">=</span> map<span class="token punctuation">(</span><span class="token keyword">lambda</span> f<span class="token punctuation">:</span> f<span class="token punctuation">.</span>result<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> futures<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> results
+
+
+<span class="token keyword">def</span> <span class="token function">emitter</span><span class="token punctuation">(</span>word<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> word<span class="token punctuation">,</span> <span class="token number">1</span>
+
+
+<span class="token keyword">def</span> <span class="token function">counter</span><span class="token punctuation">(</span>emitted<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> emitted<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> sum<span class="token punctuation">(</span>emitted<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+
+<span class="token keyword">def</span> <span class="token function">reporter</span><span class="token punctuation">(</span>tag<span class="token punctuation">,</span> done<span class="token punctuation">,</span> not_done<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">'Operation {tag}: {done}/{done+not_done}'</span><span class="token punctuation">)</span>
+
+words <span class="token operator">=</span> <span class="token string">'Python is great Python rocks'</span><span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">' '</span><span class="token punctuation">)</span>
+a <span class="token operator">=</span> map_reduce_less_naive<span class="token punctuation">(</span>words<span class="token punctuation">,</span> emitter<span class="token punctuation">,</span> counter<span class="token punctuation">,</span> reporter<span class="token punctuation">)</span>
+
+<span class="token keyword">for</span> i <span class="token keyword">in</span> sorted<span class="token punctuation">(</span>a<span class="token punctuation">,</span> key<span class="token operator">=</span><span class="token keyword">lambda</span> x<span class="token punctuation">:</span> x<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>使用chunk分块读取数据:</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">from</span> collections <span class="token keyword">import</span> defaultdict
+<span class="token keyword">import</span> multiprocessing <span class="token keyword">as</span> mp
+<span class="token keyword">import</span> sys
+<span class="token keyword">from</span> time <span class="token keyword">import</span> sleep
+
+
+<span class="token keyword">def</span> <span class="token function">report_progress</span><span class="token punctuation">(</span>map_returns<span class="token punctuation">,</span> tag<span class="token punctuation">,</span> callback<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    done <span class="token operator">=</span> <span class="token number">0</span>
+    num_jobs <span class="token operator">=</span> len<span class="token punctuation">(</span>map_returns<span class="token punctuation">)</span>
+    <span class="token keyword">while</span> num_jobs <span class="token operator">></span> done<span class="token punctuation">:</span>
+        done <span class="token operator">=</span> <span class="token number">0</span>
+        <span class="token keyword">for</span> ret <span class="token keyword">in</span> map_returns<span class="token punctuation">:</span>
+            <span class="token keyword">if</span> ret<span class="token punctuation">.</span>ready<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+                done <span class="token operator">+=</span> <span class="token number">1</span>
+        sleep<span class="token punctuation">(</span><span class="token number">0.5</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> callback<span class="token punctuation">:</span>
+            callback<span class="token punctuation">(</span>tag<span class="token punctuation">,</span> done<span class="token punctuation">,</span> num_jobs <span class="token operator">-</span> done<span class="token punctuation">)</span>
+
+
+<span class="token keyword">def</span> <span class="token function">chunk0</span><span class="token punctuation">(</span>my_list<span class="token punctuation">,</span> chunk_size<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> len<span class="token punctuation">(</span>my_list<span class="token punctuation">)</span><span class="token punctuation">,</span> chunk_size<span class="token punctuation">)</span><span class="token punctuation">:</span>   <span class="token comment" spellcheck="true">#requires a list</span>
+        <span class="token keyword">yield</span> my_list<span class="token punctuation">[</span>i<span class="token punctuation">:</span>i <span class="token operator">+</span> chunk_size<span class="token punctuation">]</span>
+
+
+<span class="token keyword">def</span> <span class="token function">chunk</span><span class="token punctuation">(</span>my_iter<span class="token punctuation">,</span> chunk_size<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    chunk_list <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token keyword">for</span> elem <span class="token keyword">in</span> my_iter<span class="token punctuation">:</span>
+        chunk_list<span class="token punctuation">.</span>append<span class="token punctuation">(</span>elem<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> len<span class="token punctuation">(</span>chunk_list<span class="token punctuation">)</span> <span class="token operator">==</span> chunk_size<span class="token punctuation">:</span>
+            <span class="token keyword">yield</span> chunk_list
+            chunk_list <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token keyword">if</span> len<span class="token punctuation">(</span>chunk_list<span class="token punctuation">)</span> <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">:</span>
+        <span class="token keyword">yield</span> chunk_list
+
+
+<span class="token keyword">def</span> <span class="token function">chunk_runner</span><span class="token punctuation">(</span>fun<span class="token punctuation">,</span> data<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    ret <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token keyword">for</span> datum <span class="token keyword">in</span> data<span class="token punctuation">:</span>
+        ret<span class="token punctuation">.</span>append<span class="token punctuation">(</span>fun<span class="token punctuation">(</span>datum<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> ret
+
+<span class="token keyword">def</span> <span class="token function">chunked_async_map</span><span class="token punctuation">(</span>pool<span class="token punctuation">,</span> mapper<span class="token punctuation">,</span> data<span class="token punctuation">,</span> chunk_size<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    async_returns <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token keyword">for</span> data_part <span class="token keyword">in</span> chunk<span class="token punctuation">(</span>data<span class="token punctuation">,</span> chunk_size<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        async_returns<span class="token punctuation">.</span>append<span class="token punctuation">(</span>pool<span class="token punctuation">.</span>apply_async<span class="token punctuation">(</span>
+            chunk_runner<span class="token punctuation">,</span> <span class="token punctuation">(</span>mapper<span class="token punctuation">,</span> data_part<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true">#RUNNER</span>
+    <span class="token keyword">return</span> async_returns
+
+
+<span class="token keyword">def</span> <span class="token function">map_reduce</span><span class="token punctuation">(</span>pool<span class="token punctuation">,</span> my_input<span class="token punctuation">,</span> mapper<span class="token punctuation">,</span> reducer<span class="token punctuation">,</span> chunk_size<span class="token punctuation">,</span> callback<span class="token operator">=</span>None<span class="token punctuation">)</span><span class="token punctuation">:</span>  <span class="token comment" spellcheck="true">#XXX</span>
+    map_returns <span class="token operator">=</span> chunked_async_map<span class="token punctuation">(</span>pool<span class="token punctuation">,</span> mapper<span class="token punctuation">,</span> my_input<span class="token punctuation">,</span> chunk_size<span class="token punctuation">)</span>
+    report_progress<span class="token punctuation">(</span>map_returns<span class="token punctuation">,</span> <span class="token string">'map'</span><span class="token punctuation">,</span> callback<span class="token punctuation">)</span>
+    map_results <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token keyword">for</span> ret <span class="token keyword">in</span> map_returns<span class="token punctuation">:</span>
+        map_results<span class="token punctuation">.</span>extend<span class="token punctuation">(</span>ret<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>   <span class="token comment" spellcheck="true"># EXTEND</span>
+    distributor <span class="token operator">=</span> defaultdict<span class="token punctuation">(</span>list<span class="token punctuation">)</span>
+    <span class="token keyword">for</span> key<span class="token punctuation">,</span> value <span class="token keyword">in</span> map_results<span class="token punctuation">:</span>
+        distributor<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">.</span>append<span class="token punctuation">(</span>value<span class="token punctuation">)</span>
+    returns <span class="token operator">=</span> chunked_async_map<span class="token punctuation">(</span>pool<span class="token punctuation">,</span> reducer<span class="token punctuation">,</span> distributor<span class="token punctuation">.</span>items<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> chunk_size<span class="token punctuation">)</span>
+    report_progress<span class="token punctuation">(</span>returns<span class="token punctuation">,</span> <span class="token string">'reduce'</span><span class="token punctuation">,</span> callback<span class="token punctuation">)</span>
+    results <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token keyword">for</span> ret <span class="token keyword">in</span> returns<span class="token punctuation">:</span>
+        results<span class="token punctuation">.</span>extend<span class="token punctuation">(</span>ret<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> results
+
+
+<span class="token keyword">def</span> <span class="token function">emitter</span><span class="token punctuation">(</span>word<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> word<span class="token punctuation">,</span> <span class="token number">1</span>
+
+
+<span class="token keyword">def</span> <span class="token function">counter</span><span class="token punctuation">(</span>emitted<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> emitted<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> sum<span class="token punctuation">(</span>emitted<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+
+<span class="token keyword">def</span> <span class="token function">reporter</span><span class="token punctuation">(</span>tag<span class="token punctuation">,</span> done<span class="token punctuation">,</span> not_done<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">'Operation {tag}: {done}/{done+not_done}'</span><span class="token punctuation">)</span>
+
+
+<span class="token keyword">if</span> __name__ <span class="token operator">==</span> <span class="token string">'__main__'</span><span class="token punctuation">:</span>
+    words <span class="token operator">=</span> <span class="token punctuation">[</span>word
+             <span class="token keyword">for</span> word <span class="token keyword">in</span> map<span class="token punctuation">(</span><span class="token keyword">lambda</span> x<span class="token punctuation">:</span> x<span class="token punctuation">.</span>strip<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>rstrip<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                             <span class="token string">' '</span><span class="token punctuation">.</span>join<span class="token punctuation">(</span>open<span class="token punctuation">(</span><span class="token string">'text.txt'</span><span class="token punctuation">,</span> <span class="token string">'rt'</span><span class="token punctuation">,</span> encoding<span class="token operator">=</span><span class="token string">'utf-8'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>readlines<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">' '</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+             <span class="token keyword">if</span> word <span class="token operator">!=</span> <span class="token string">''</span> <span class="token punctuation">]</span>
+
+    chunk_size <span class="token operator">=</span> int<span class="token punctuation">(</span>sys<span class="token punctuation">.</span>argv<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    pool <span class="token operator">=</span> mp<span class="token punctuation">.</span>Pool<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    counts <span class="token operator">=</span> map_reduce<span class="token punctuation">(</span>pool<span class="token punctuation">,</span> words<span class="token punctuation">,</span> emitter<span class="token punctuation">,</span> counter<span class="token punctuation">,</span> chunk_size<span class="token punctuation">,</span> reporter<span class="token punctuation">)</span>
+    pool<span class="token punctuation">.</span>close<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    pool<span class="token punctuation">.</span>join<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">for</span> count <span class="token keyword">in</span> sorted<span class="token punctuation">(</span>counts<span class="token punctuation">,</span> key<span class="token operator">=</span><span class="token keyword">lambda</span> x<span class="token punctuation">:</span> x<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span>count<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>不同的块大小运行效率:</p>
+<pre><code>$ time python3 chunk.py 10     
+Operation map: 1047/35281
+Operation map: 3470/35281
+Operation map: 8337/35281
+Operation map: 11402/35281
+Operation map: 13680/35281
+Operation map: 15751/35281
+Operation map: 17484/35281
+Operation map: 19155/35281
+Operation map: 22504/35281
+Operation map: 25469/35281
+Operation map: 29450/35281
+Operation map: 32024/35281
+Operation map: 33468/35281
+Operation map: 35281/35281
+Operation reduce: 26/2923
+Operation reduce: 2211/2923
+Operation reduce: 2923/2923
+python3 chunk.py 10  9.34s user 2.79s system 96% cpu 12.523 total
+
+$ time python3 chunk.py 100
+Operation map: 208/3529
+Operation map: 1358/3529
+Operation map: 3139/3529
+Operation map: 3529/3529
+Operation reduce: 8/293
+Operation reduce: 293/293
+python3 chunk.py 100  2.32s user 0.75s system 72% cpu 4.269 total
+
+$ time python3 chunk.py 1000
+Operation map: 39/353
+Operation map: 325/353
+Operation map: 353/353
+Operation reduce: 0/30
+Operation reduce: 30/30
+python3 chunk.py 1000  1.50s user 0.49s system 48% cpu 4.078 total
+
+$ time python3 chunk.py 10000
+Operation map: 7/36
+Operation map: 36/36
+Operation reduce: 0/3
+Operation reduce: 3/3
+python3 chunk.py 10000  1.69s user 0.29s system 41% cpu 4.802 total
+
+$ time python3 chunk.py 100000
+Operation map: 0/4
+Operation map: 4/4
+Operation reduce: 0/1
+Operation reduce: 1/1
+python3 chunk.py 100000  1.52s user 0.31s system 47% cpu 3.865 total
+
+$ time python3 chunk.py 1000000
+Operation map: 0/1
+Operation map: 0/1
+Operation map: 1/1
+Operation reduce: 0/1
+Operation reduce: 1/1
+python3 chunk.py 1000000  1.77s user 0.30s system 55% cpu 3.722 total
+</code></pre>
+<p>整合服务器和计算功能:</p>
 <p>server.py</p>
-<p>import asyncio<br>import marshal<br>import multiprocessing as mp<br>import pickle<br>from queue import Empty, Queue  # <XXX> PriorityQueue<br>import threading<br>import types<br>​<br>import chunk_mp_mapreduce as mr<br>​<br>​</p>
-<h1 id="multiprocessing-Queue"><a href="#multiprocessing-Queue" class="headerlink" title=" multiprocessing.Queue"></a><XXX> multiprocessing.Queue</h1><p>​<br>work_queue &#x3D; Queue()<br>results_queue &#x3D; Queue()<br>results &#x3D; {}<br>​<br>async def submit_job(job_id, reader, writer):<br>    writer.write(job_id.to_bytes(4, ‘little’))<br>    writer.close()<br>    code_size &#x3D; int.from_bytes(await reader.read(4), ‘little’)<br>    my_code &#x3D; marshal.loads(await reader.read(code_size))<br>    data_size &#x3D; int.from_bytes(await reader.read(4), ‘little’)<br>    data &#x3D; pickle.loads(await reader.read(data_size))<br>    work_queue.put_nowait((job_id, my_code, data))  # <XXX> Data not very efficient, no_wait and queue size<br>​<br>​<br>def get_results_queue():<br>    while results_queue.qsize() &gt; 0:   # <XXX> Not assured<br>        try:<br>            job_id, data &#x3D; results_queue.get_nowait()<br>            results[job_id] &#x3D; data<br>        except Empty:<br>            return<br>​<br>​<br>async def get_results(reader, writer):<br>    get_results_queue()<br>    job_id &#x3D; int.from_bytes(await reader.read(4), ‘little’)<br>    data &#x3D; pickle.dumps(None)<br>    if job_id in results:<br>        data &#x3D; pickle.dumps(results[job_id])<br>        del results[job_id]<br>    writer.write(len(data).to_bytes(4, ‘little’))<br>    writer.write(data)<br>​<br>​<br>async def accept_requests(reader, writer, job_id&#x3D;[0]):<br>    op &#x3D; await reader.read(1)<br>    if op[0] &#x3D;&#x3D; 0:<br>        await submit_job(job_id[0], reader, writer)  # XXX Errors in async<br>        job_id[0] +&#x3D; 1<br>    elif op[0] &#x3D;&#x3D; 1:<br>        await get_results(reader, writer)<br>​<br>​<br>def worker():  # daemon<br>    pool &#x3D; mp.Pool()<br>    while True:<br>        job_id, code, data &#x3D; work_queue.get()  # blocking<br>        func &#x3D; types.FunctionType(code, globals(), ‘mapper_and_reducer’)<br>        mapper, reducer &#x3D; func()<br>        counts &#x3D; mr.map_reduce(pool, data, mapper, reducer, 100, mr.reporter)<br>        results_queue.put((job_id, counts))<br>    pool.close()<br>    pool.join()<br>​<br>​<br>async def main():<br>    server &#x3D; await asyncio.start_server(accept_requests, ‘127.0.0.1’, 1936)<br>    worker_thread &#x3D; threading.Thread(target&#x3D;worker)   # <XXX> Daemon<br>    worker_thread.start()<br>    async with server:<br>        await server.serve_forever()<br>​<br>​<br>asyncio.run(main())<br>chunk_mp_mapreduce.py</p>
-<p>from collections import defaultdict<br>import marshal<br>import multiprocessing as mp<br>import sys<br>from time import sleep<br>import types<br>​<br>​<br>def report_progress(map_returns, tag, callback):<br>    done &#x3D; 0<br>    num_jobs &#x3D; len(map_returns)<br>    while num_jobs &gt; done:<br>        done &#x3D; 0<br>        for ret in map_returns:<br>            if ret.ready():<br>                done +&#x3D; 1<br>        sleep(0.5)<br>        if callback:<br>            callback(tag, done, num_jobs - done)<br>​<br>​<br>def chunk0(my_list, chunk_size):<br>    for i in range(0, len(my_list), chunk_size):   #requires a list<br>        yield my_list[i:i + chunk_size]<br>​<br>​<br>def chunk(my_iter, chunk_size):<br>    chunk_list &#x3D; []<br>    for elem in my_iter:<br>        chunk_list.append(elem)<br>        if len(chunk_list) &#x3D;&#x3D; chunk_size:<br>            yield chunk_list<br>            chunk_list &#x3D; []<br>    if len(chunk_list) &gt; 0:<br>        yield chunk_list<br>​<br>​<br>def chunk_runner(fun_marshal, data):<br>    fun &#x3D; types.FunctionType(marshal.loads(fun_marshal), globals(), ‘fun’)<br>    ret &#x3D; []<br>    for datum in data:<br>        print(fun(datum))<br>        ret.append(fun(datum))<br>    return ret<br>​<br>def chunked_async_map(pool, mapper, data, chunk_size):<br>    async_returns &#x3D; []<br>    for data_part in chunk(data, chunk_size):<br>        async_returns.append(pool.apply_async(<br>            chunk_runner, (marshal.dumps(mapper.<strong>code</strong>), data_part)))<br>    return async_returns<br>​<br>​<br>def map_reduce(pool, my_input, mapper, reducer, chunk_size, callback&#x3D;None):  #XXX<br>    map_returns &#x3D; chunked_async_map(pool, mapper, my_input, chunk_size)<br>    report_progress(map_returns, ‘map’, callback)<br>    map_results &#x3D; []<br>    for ret in map_returns:<br>        map_results.extend(ret.get())   # EXTEND<br>    distributor &#x3D; defaultdict(list)<br>    for key, value in map_results:<br>        distributor[key].append(value)<br>    returns &#x3D; chunked_async_map(pool, reducer, distributor.items(), chunk_size)<br>    report_progress(returns, ‘reduce’, callback)<br>    results &#x3D; []<br>    for ret in returns:<br>        results.extend(ret.get())<br>    return results<br>​<br>​<br>def reporter(tag, done, not_done):<br>    print(f’Operation {tag}: {done}&#x2F;{done+not_done}’)<br>新增处理Ctrl+C的信号，使得服务优雅终止：</p>
-<p>import asyncio<br>from functools import partial<br>import marshal<br>import multiprocessing as mp<br>import pickle<br>from queue import Empty, Queue<br>import signal<br>import threading<br>from time import sleep as sync_sleep<br>import types<br>​<br>import chunk_mp_mapreduce as mr<br>​<br>​<br>def handle_interrupt_signal(server):<br>    server.close()<br>    while server.is_serving():<br>        sync_sleep(0.1)<br>​<br>​<br>work_queue &#x3D; Queue()<br>results_queue &#x3D; Queue()<br>results &#x3D; {}<br>​<br>​<br>async def submit_job(job_id, reader, writer):<br>    writer.write(job_id.to_bytes(4, ‘little’))<br>    writer.close()<br>    code_size &#x3D; int.from_bytes(await reader.read(4), ‘little’)<br>    my_code &#x3D; marshal.loads(await reader.read(code_size))<br>    data_size &#x3D; int.from_bytes(await reader.read(4), ‘little’)<br>    data &#x3D; pickle.loads(await reader.read(data_size))<br>    work_queue.put_nowait((job_id, my_code, data))<br>​<br>​<br>def get_results_queue():<br>    while results_queue.qsize() &gt; 0:<br>        try:<br>            job_id, data &#x3D; results_queue.get_nowait()<br>            results[job_id] &#x3D; data<br>        except Empty:<br>            return<br>​<br>​<br>async def get_results(reader, writer):<br>    get_results_queue()<br>    job_id &#x3D; int.from_bytes(await reader.read(4), ‘little’)<br>    data &#x3D; pickle.dumps(None)<br>    if job_id in results:<br>        data &#x3D; pickle.dumps(results[job_id])<br>        del results[job_id]<br>    writer.write(len(data).to_bytes(4, ‘little’))<br>    writer.write(data)<br>​<br>​<br>async def accept_requests(reader, writer, job_id&#x3D;[0]):<br>    op &#x3D; await reader.read(1)<br>    if op[0] &#x3D;&#x3D; 0:<br>        await submit_job(job_id[0], reader, writer)  # XXX Errors in async<br>        job_id[0] +&#x3D; 1<br>    elif op[0] &#x3D;&#x3D; 1:<br>        await get_results(reader, writer)<br>​<br>​<br>def worker(pool):<br>    while True:<br>        job_id, code, data &#x3D; work_queue.get()<br>        if job_id &#x3D;&#x3D; -1:<br>            break<br>        func &#x3D; types.FunctionType(code, globals(), ‘mapper_and_reducer’)<br>        mapper, reducer &#x3D; func()<br>        counts &#x3D; mr.map_reduce(pool, data, mapper, reducer, 100, mr.reporter)<br>        results_queue.put((job_id, counts))<br>    print(‘Worker thread terminating’)<br>​<br>​<br>def init_worker():<br>    signal.signal(signal.SIGINT, signal.SIG_IGN)<br>​<br>​<br>async def main():<br>    server &#x3D; await asyncio.start_server(accept_requests, ‘127.0.0.1’, 1936)<br>    mp_pool &#x3D; mp.Pool(initializer&#x3D;init_worker)<br>    loop &#x3D; asyncio.get_running_loop()<br>    loop.add_signal_handler(signal.SIGINT, partial(handle_interrupt_signal, server&#x3D;server))<br>    worker_thread &#x3D; threading.Thread(target&#x3D;partial(worker, pool&#x3D;mp_pool))<br>    worker_thread.start()<br>    async with server:<br>        try:<br>            await server.serve_forever()<br>        except asyncio.exceptions.CancelledError:<br>            print(‘Server cancelled’)<br>    work_queue.put((-1, -1, -1))<br>    worker_thread.join()<br>    mp_pool.close()<br>    mp_pool.join()<br>    print(‘Bye Bye!’)<br>​<br>​<br>asyncio.run(main())<br>本章主要介绍了一个基于socket的简单版本的MapReduce框架，从单进程单线程演化为多进程多线程版本，最后还做了优雅停止的处理。</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> asyncio
+<span class="token keyword">import</span> marshal
+<span class="token keyword">import</span> multiprocessing <span class="token keyword">as</span> mp
+<span class="token keyword">import</span> pickle
+<span class="token keyword">from</span> queue <span class="token keyword">import</span> Empty<span class="token punctuation">,</span> Queue  <span class="token comment" spellcheck="true"># &lt;XXX> PriorityQueue</span>
+<span class="token keyword">import</span> threading
+<span class="token keyword">import</span> types
+
+<span class="token keyword">import</span> chunk_mp_mapreduce <span class="token keyword">as</span> mr
+
+
+<span class="token comment" spellcheck="true"># &lt;XXX> multiprocessing.Queue</span>
+
+work_queue <span class="token operator">=</span> Queue<span class="token punctuation">(</span><span class="token punctuation">)</span>
+results_queue <span class="token operator">=</span> Queue<span class="token punctuation">(</span><span class="token punctuation">)</span>
+results <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+
+<span class="token keyword">async</span> <span class="token keyword">def</span> <span class="token function">submit_job</span><span class="token punctuation">(</span>job_id<span class="token punctuation">,</span> reader<span class="token punctuation">,</span> writer<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    writer<span class="token punctuation">.</span>write<span class="token punctuation">(</span>job_id<span class="token punctuation">.</span>to_bytes<span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">,</span> <span class="token string">'little'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    writer<span class="token punctuation">.</span>close<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    code_size <span class="token operator">=</span> int<span class="token punctuation">.</span>from_bytes<span class="token punctuation">(</span><span class="token keyword">await</span> reader<span class="token punctuation">.</span>read<span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">'little'</span><span class="token punctuation">)</span>
+    my_code <span class="token operator">=</span> marshal<span class="token punctuation">.</span>loads<span class="token punctuation">(</span><span class="token keyword">await</span> reader<span class="token punctuation">.</span>read<span class="token punctuation">(</span>code_size<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    data_size <span class="token operator">=</span> int<span class="token punctuation">.</span>from_bytes<span class="token punctuation">(</span><span class="token keyword">await</span> reader<span class="token punctuation">.</span>read<span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">'little'</span><span class="token punctuation">)</span>
+    data <span class="token operator">=</span> pickle<span class="token punctuation">.</span>loads<span class="token punctuation">(</span><span class="token keyword">await</span> reader<span class="token punctuation">.</span>read<span class="token punctuation">(</span>data_size<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    work_queue<span class="token punctuation">.</span>put_nowait<span class="token punctuation">(</span><span class="token punctuation">(</span>job_id<span class="token punctuation">,</span> my_code<span class="token punctuation">,</span> data<span class="token punctuation">)</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># &lt;XXX> Data not very efficient, no_wait and queue size</span>
+
+
+<span class="token keyword">def</span> <span class="token function">get_results_queue</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">while</span> results_queue<span class="token punctuation">.</span>qsize<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">:</span>   <span class="token comment" spellcheck="true"># &lt;XXX> Not assured</span>
+        <span class="token keyword">try</span><span class="token punctuation">:</span>
+            job_id<span class="token punctuation">,</span> data <span class="token operator">=</span> results_queue<span class="token punctuation">.</span>get_nowait<span class="token punctuation">(</span><span class="token punctuation">)</span>
+            results<span class="token punctuation">[</span>job_id<span class="token punctuation">]</span> <span class="token operator">=</span> data
+        <span class="token keyword">except</span> Empty<span class="token punctuation">:</span>
+            <span class="token keyword">return</span>
+
+
+<span class="token keyword">async</span> <span class="token keyword">def</span> <span class="token function">get_results</span><span class="token punctuation">(</span>reader<span class="token punctuation">,</span> writer<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    get_results_queue<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    job_id <span class="token operator">=</span> int<span class="token punctuation">.</span>from_bytes<span class="token punctuation">(</span><span class="token keyword">await</span> reader<span class="token punctuation">.</span>read<span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">'little'</span><span class="token punctuation">)</span>
+    data <span class="token operator">=</span> pickle<span class="token punctuation">.</span>dumps<span class="token punctuation">(</span>None<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> job_id <span class="token keyword">in</span> results<span class="token punctuation">:</span>
+        data <span class="token operator">=</span> pickle<span class="token punctuation">.</span>dumps<span class="token punctuation">(</span>results<span class="token punctuation">[</span>job_id<span class="token punctuation">]</span><span class="token punctuation">)</span>
+        <span class="token keyword">del</span> results<span class="token punctuation">[</span>job_id<span class="token punctuation">]</span>
+    writer<span class="token punctuation">.</span>write<span class="token punctuation">(</span>len<span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">.</span>to_bytes<span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">,</span> <span class="token string">'little'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    writer<span class="token punctuation">.</span>write<span class="token punctuation">(</span>data<span class="token punctuation">)</span>
+
+
+<span class="token keyword">async</span> <span class="token keyword">def</span> <span class="token function">accept_requests</span><span class="token punctuation">(</span>reader<span class="token punctuation">,</span> writer<span class="token punctuation">,</span> job_id<span class="token operator">=</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    op <span class="token operator">=</span> <span class="token keyword">await</span> reader<span class="token punctuation">.</span>read<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> op<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">:</span>
+        <span class="token keyword">await</span> submit_job<span class="token punctuation">(</span>job_id<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> reader<span class="token punctuation">,</span> writer<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># XXX Errors in async</span>
+        job_id<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">+=</span> <span class="token number">1</span>
+    <span class="token keyword">elif</span> op<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">==</span> <span class="token number">1</span><span class="token punctuation">:</span>
+        <span class="token keyword">await</span> get_results<span class="token punctuation">(</span>reader<span class="token punctuation">,</span> writer<span class="token punctuation">)</span>
+
+
+<span class="token keyword">def</span> <span class="token function">worker</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>  <span class="token comment" spellcheck="true"># daemon</span>
+    pool <span class="token operator">=</span> mp<span class="token punctuation">.</span>Pool<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">while</span> <span class="token boolean">True</span><span class="token punctuation">:</span>
+        job_id<span class="token punctuation">,</span> code<span class="token punctuation">,</span> data <span class="token operator">=</span> work_queue<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># blocking</span>
+        func <span class="token operator">=</span> types<span class="token punctuation">.</span>FunctionType<span class="token punctuation">(</span>code<span class="token punctuation">,</span> globals<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">'mapper_and_reducer'</span><span class="token punctuation">)</span>
+        mapper<span class="token punctuation">,</span> reducer <span class="token operator">=</span> func<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        counts <span class="token operator">=</span> mr<span class="token punctuation">.</span>map_reduce<span class="token punctuation">(</span>pool<span class="token punctuation">,</span> data<span class="token punctuation">,</span> mapper<span class="token punctuation">,</span> reducer<span class="token punctuation">,</span> <span class="token number">100</span><span class="token punctuation">,</span> mr<span class="token punctuation">.</span>reporter<span class="token punctuation">)</span>
+        results_queue<span class="token punctuation">.</span>put<span class="token punctuation">(</span><span class="token punctuation">(</span>job_id<span class="token punctuation">,</span> counts<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    pool<span class="token punctuation">.</span>close<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    pool<span class="token punctuation">.</span>join<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+
+<span class="token keyword">async</span> <span class="token keyword">def</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    server <span class="token operator">=</span> <span class="token keyword">await</span> asyncio<span class="token punctuation">.</span>start_server<span class="token punctuation">(</span>accept_requests<span class="token punctuation">,</span> <span class="token string">'127.0.0.1'</span><span class="token punctuation">,</span> <span class="token number">1936</span><span class="token punctuation">)</span>
+    worker_thread <span class="token operator">=</span> threading<span class="token punctuation">.</span>Thread<span class="token punctuation">(</span>target<span class="token operator">=</span>worker<span class="token punctuation">)</span>   <span class="token comment" spellcheck="true"># &lt;XXX> Daemon</span>
+    worker_thread<span class="token punctuation">.</span>start<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">async</span> <span class="token keyword">with</span> server<span class="token punctuation">:</span>
+        <span class="token keyword">await</span> server<span class="token punctuation">.</span>serve_forever<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+
+asyncio<span class="token punctuation">.</span>run<span class="token punctuation">(</span>main<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>chunk_mp_mapreduce.py</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">from</span> collections <span class="token keyword">import</span> defaultdict
+<span class="token keyword">import</span> marshal
+<span class="token keyword">import</span> multiprocessing <span class="token keyword">as</span> mp
+<span class="token keyword">import</span> sys
+<span class="token keyword">from</span> time <span class="token keyword">import</span> sleep
+<span class="token keyword">import</span> types
+
+
+<span class="token keyword">def</span> <span class="token function">report_progress</span><span class="token punctuation">(</span>map_returns<span class="token punctuation">,</span> tag<span class="token punctuation">,</span> callback<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    done <span class="token operator">=</span> <span class="token number">0</span>
+    num_jobs <span class="token operator">=</span> len<span class="token punctuation">(</span>map_returns<span class="token punctuation">)</span>
+    <span class="token keyword">while</span> num_jobs <span class="token operator">></span> done<span class="token punctuation">:</span>
+        done <span class="token operator">=</span> <span class="token number">0</span>
+        <span class="token keyword">for</span> ret <span class="token keyword">in</span> map_returns<span class="token punctuation">:</span>
+            <span class="token keyword">if</span> ret<span class="token punctuation">.</span>ready<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+                done <span class="token operator">+=</span> <span class="token number">1</span>
+        sleep<span class="token punctuation">(</span><span class="token number">0.5</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> callback<span class="token punctuation">:</span>
+            callback<span class="token punctuation">(</span>tag<span class="token punctuation">,</span> done<span class="token punctuation">,</span> num_jobs <span class="token operator">-</span> done<span class="token punctuation">)</span>
+
+
+<span class="token keyword">def</span> <span class="token function">chunk0</span><span class="token punctuation">(</span>my_list<span class="token punctuation">,</span> chunk_size<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> len<span class="token punctuation">(</span>my_list<span class="token punctuation">)</span><span class="token punctuation">,</span> chunk_size<span class="token punctuation">)</span><span class="token punctuation">:</span>   <span class="token comment" spellcheck="true">#requires a list</span>
+        <span class="token keyword">yield</span> my_list<span class="token punctuation">[</span>i<span class="token punctuation">:</span>i <span class="token operator">+</span> chunk_size<span class="token punctuation">]</span>
+
+
+<span class="token keyword">def</span> <span class="token function">chunk</span><span class="token punctuation">(</span>my_iter<span class="token punctuation">,</span> chunk_size<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    chunk_list <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token keyword">for</span> elem <span class="token keyword">in</span> my_iter<span class="token punctuation">:</span>
+        chunk_list<span class="token punctuation">.</span>append<span class="token punctuation">(</span>elem<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> len<span class="token punctuation">(</span>chunk_list<span class="token punctuation">)</span> <span class="token operator">==</span> chunk_size<span class="token punctuation">:</span>
+            <span class="token keyword">yield</span> chunk_list
+            chunk_list <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token keyword">if</span> len<span class="token punctuation">(</span>chunk_list<span class="token punctuation">)</span> <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">:</span>
+        <span class="token keyword">yield</span> chunk_list
+
+
+<span class="token keyword">def</span> <span class="token function">chunk_runner</span><span class="token punctuation">(</span>fun_marshal<span class="token punctuation">,</span> data<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    fun <span class="token operator">=</span> types<span class="token punctuation">.</span>FunctionType<span class="token punctuation">(</span>marshal<span class="token punctuation">.</span>loads<span class="token punctuation">(</span>fun_marshal<span class="token punctuation">)</span><span class="token punctuation">,</span> globals<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">'fun'</span><span class="token punctuation">)</span>
+    ret <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token keyword">for</span> datum <span class="token keyword">in</span> data<span class="token punctuation">:</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span>fun<span class="token punctuation">(</span>datum<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        ret<span class="token punctuation">.</span>append<span class="token punctuation">(</span>fun<span class="token punctuation">(</span>datum<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> ret
+
+<span class="token keyword">def</span> <span class="token function">chunked_async_map</span><span class="token punctuation">(</span>pool<span class="token punctuation">,</span> mapper<span class="token punctuation">,</span> data<span class="token punctuation">,</span> chunk_size<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    async_returns <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token keyword">for</span> data_part <span class="token keyword">in</span> chunk<span class="token punctuation">(</span>data<span class="token punctuation">,</span> chunk_size<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        async_returns<span class="token punctuation">.</span>append<span class="token punctuation">(</span>pool<span class="token punctuation">.</span>apply_async<span class="token punctuation">(</span>
+            chunk_runner<span class="token punctuation">,</span> <span class="token punctuation">(</span>marshal<span class="token punctuation">.</span>dumps<span class="token punctuation">(</span>mapper<span class="token punctuation">.</span>__code__<span class="token punctuation">)</span><span class="token punctuation">,</span> data_part<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> async_returns
+
+
+<span class="token keyword">def</span> <span class="token function">map_reduce</span><span class="token punctuation">(</span>pool<span class="token punctuation">,</span> my_input<span class="token punctuation">,</span> mapper<span class="token punctuation">,</span> reducer<span class="token punctuation">,</span> chunk_size<span class="token punctuation">,</span> callback<span class="token operator">=</span>None<span class="token punctuation">)</span><span class="token punctuation">:</span>  <span class="token comment" spellcheck="true">#XXX</span>
+    map_returns <span class="token operator">=</span> chunked_async_map<span class="token punctuation">(</span>pool<span class="token punctuation">,</span> mapper<span class="token punctuation">,</span> my_input<span class="token punctuation">,</span> chunk_size<span class="token punctuation">)</span>
+    report_progress<span class="token punctuation">(</span>map_returns<span class="token punctuation">,</span> <span class="token string">'map'</span><span class="token punctuation">,</span> callback<span class="token punctuation">)</span>
+    map_results <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token keyword">for</span> ret <span class="token keyword">in</span> map_returns<span class="token punctuation">:</span>
+        map_results<span class="token punctuation">.</span>extend<span class="token punctuation">(</span>ret<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>   <span class="token comment" spellcheck="true"># EXTEND</span>
+    distributor <span class="token operator">=</span> defaultdict<span class="token punctuation">(</span>list<span class="token punctuation">)</span>
+    <span class="token keyword">for</span> key<span class="token punctuation">,</span> value <span class="token keyword">in</span> map_results<span class="token punctuation">:</span>
+        distributor<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">.</span>append<span class="token punctuation">(</span>value<span class="token punctuation">)</span>
+    returns <span class="token operator">=</span> chunked_async_map<span class="token punctuation">(</span>pool<span class="token punctuation">,</span> reducer<span class="token punctuation">,</span> distributor<span class="token punctuation">.</span>items<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> chunk_size<span class="token punctuation">)</span>
+    report_progress<span class="token punctuation">(</span>returns<span class="token punctuation">,</span> <span class="token string">'reduce'</span><span class="token punctuation">,</span> callback<span class="token punctuation">)</span>
+    results <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token keyword">for</span> ret <span class="token keyword">in</span> returns<span class="token punctuation">:</span>
+        results<span class="token punctuation">.</span>extend<span class="token punctuation">(</span>ret<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> results
+
+
+<span class="token keyword">def</span> <span class="token function">reporter</span><span class="token punctuation">(</span>tag<span class="token punctuation">,</span> done<span class="token punctuation">,</span> not_done<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">'Operation {tag}: {done}/{done+not_done}'</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>新增处理Ctrl+C的信号，使得服务优雅终止：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> asyncio
+<span class="token keyword">from</span> functools <span class="token keyword">import</span> partial
+<span class="token keyword">import</span> marshal
+<span class="token keyword">import</span> multiprocessing <span class="token keyword">as</span> mp
+<span class="token keyword">import</span> pickle
+<span class="token keyword">from</span> queue <span class="token keyword">import</span> Empty<span class="token punctuation">,</span> Queue
+<span class="token keyword">import</span> signal
+<span class="token keyword">import</span> threading
+<span class="token keyword">from</span> time <span class="token keyword">import</span> sleep <span class="token keyword">as</span> sync_sleep
+<span class="token keyword">import</span> types
+
+<span class="token keyword">import</span> chunk_mp_mapreduce <span class="token keyword">as</span> mr
+
+
+<span class="token keyword">def</span> <span class="token function">handle_interrupt_signal</span><span class="token punctuation">(</span>server<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    server<span class="token punctuation">.</span>close<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">while</span> server<span class="token punctuation">.</span>is_serving<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        sync_sleep<span class="token punctuation">(</span><span class="token number">0.1</span><span class="token punctuation">)</span>
+
+
+work_queue <span class="token operator">=</span> Queue<span class="token punctuation">(</span><span class="token punctuation">)</span>
+results_queue <span class="token operator">=</span> Queue<span class="token punctuation">(</span><span class="token punctuation">)</span>
+results <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+
+
+<span class="token keyword">async</span> <span class="token keyword">def</span> <span class="token function">submit_job</span><span class="token punctuation">(</span>job_id<span class="token punctuation">,</span> reader<span class="token punctuation">,</span> writer<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    writer<span class="token punctuation">.</span>write<span class="token punctuation">(</span>job_id<span class="token punctuation">.</span>to_bytes<span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">,</span> <span class="token string">'little'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    writer<span class="token punctuation">.</span>close<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    code_size <span class="token operator">=</span> int<span class="token punctuation">.</span>from_bytes<span class="token punctuation">(</span><span class="token keyword">await</span> reader<span class="token punctuation">.</span>read<span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">'little'</span><span class="token punctuation">)</span>
+    my_code <span class="token operator">=</span> marshal<span class="token punctuation">.</span>loads<span class="token punctuation">(</span><span class="token keyword">await</span> reader<span class="token punctuation">.</span>read<span class="token punctuation">(</span>code_size<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    data_size <span class="token operator">=</span> int<span class="token punctuation">.</span>from_bytes<span class="token punctuation">(</span><span class="token keyword">await</span> reader<span class="token punctuation">.</span>read<span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">'little'</span><span class="token punctuation">)</span>
+    data <span class="token operator">=</span> pickle<span class="token punctuation">.</span>loads<span class="token punctuation">(</span><span class="token keyword">await</span> reader<span class="token punctuation">.</span>read<span class="token punctuation">(</span>data_size<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    work_queue<span class="token punctuation">.</span>put_nowait<span class="token punctuation">(</span><span class="token punctuation">(</span>job_id<span class="token punctuation">,</span> my_code<span class="token punctuation">,</span> data<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+
+<span class="token keyword">def</span> <span class="token function">get_results_queue</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">while</span> results_queue<span class="token punctuation">.</span>qsize<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">:</span>
+        <span class="token keyword">try</span><span class="token punctuation">:</span>
+            job_id<span class="token punctuation">,</span> data <span class="token operator">=</span> results_queue<span class="token punctuation">.</span>get_nowait<span class="token punctuation">(</span><span class="token punctuation">)</span>
+            results<span class="token punctuation">[</span>job_id<span class="token punctuation">]</span> <span class="token operator">=</span> data
+        <span class="token keyword">except</span> Empty<span class="token punctuation">:</span>
+            <span class="token keyword">return</span>
+
+
+<span class="token keyword">async</span> <span class="token keyword">def</span> <span class="token function">get_results</span><span class="token punctuation">(</span>reader<span class="token punctuation">,</span> writer<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    get_results_queue<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    job_id <span class="token operator">=</span> int<span class="token punctuation">.</span>from_bytes<span class="token punctuation">(</span><span class="token keyword">await</span> reader<span class="token punctuation">.</span>read<span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">'little'</span><span class="token punctuation">)</span>
+    data <span class="token operator">=</span> pickle<span class="token punctuation">.</span>dumps<span class="token punctuation">(</span>None<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> job_id <span class="token keyword">in</span> results<span class="token punctuation">:</span>
+        data <span class="token operator">=</span> pickle<span class="token punctuation">.</span>dumps<span class="token punctuation">(</span>results<span class="token punctuation">[</span>job_id<span class="token punctuation">]</span><span class="token punctuation">)</span>
+        <span class="token keyword">del</span> results<span class="token punctuation">[</span>job_id<span class="token punctuation">]</span>
+    writer<span class="token punctuation">.</span>write<span class="token punctuation">(</span>len<span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">.</span>to_bytes<span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">,</span> <span class="token string">'little'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    writer<span class="token punctuation">.</span>write<span class="token punctuation">(</span>data<span class="token punctuation">)</span>
+
+
+<span class="token keyword">async</span> <span class="token keyword">def</span> <span class="token function">accept_requests</span><span class="token punctuation">(</span>reader<span class="token punctuation">,</span> writer<span class="token punctuation">,</span> job_id<span class="token operator">=</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    op <span class="token operator">=</span> <span class="token keyword">await</span> reader<span class="token punctuation">.</span>read<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> op<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">:</span>
+        <span class="token keyword">await</span> submit_job<span class="token punctuation">(</span>job_id<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> reader<span class="token punctuation">,</span> writer<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># XXX Errors in async</span>
+        job_id<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">+=</span> <span class="token number">1</span>
+    <span class="token keyword">elif</span> op<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">==</span> <span class="token number">1</span><span class="token punctuation">:</span>
+        <span class="token keyword">await</span> get_results<span class="token punctuation">(</span>reader<span class="token punctuation">,</span> writer<span class="token punctuation">)</span>
+
+
+<span class="token keyword">def</span> <span class="token function">worker</span><span class="token punctuation">(</span>pool<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">while</span> <span class="token boolean">True</span><span class="token punctuation">:</span>
+        job_id<span class="token punctuation">,</span> code<span class="token punctuation">,</span> data <span class="token operator">=</span> work_queue<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> job_id <span class="token operator">==</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">:</span>
+            <span class="token keyword">break</span>
+        func <span class="token operator">=</span> types<span class="token punctuation">.</span>FunctionType<span class="token punctuation">(</span>code<span class="token punctuation">,</span> globals<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">'mapper_and_reducer'</span><span class="token punctuation">)</span>
+        mapper<span class="token punctuation">,</span> reducer <span class="token operator">=</span> func<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        counts <span class="token operator">=</span> mr<span class="token punctuation">.</span>map_reduce<span class="token punctuation">(</span>pool<span class="token punctuation">,</span> data<span class="token punctuation">,</span> mapper<span class="token punctuation">,</span> reducer<span class="token punctuation">,</span> <span class="token number">100</span><span class="token punctuation">,</span> mr<span class="token punctuation">.</span>reporter<span class="token punctuation">)</span>
+        results_queue<span class="token punctuation">.</span>put<span class="token punctuation">(</span><span class="token punctuation">(</span>job_id<span class="token punctuation">,</span> counts<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'Worker thread terminating'</span><span class="token punctuation">)</span>
+
+
+<span class="token keyword">def</span> <span class="token function">init_worker</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    signal<span class="token punctuation">.</span>signal<span class="token punctuation">(</span>signal<span class="token punctuation">.</span>SIGINT<span class="token punctuation">,</span> signal<span class="token punctuation">.</span>SIG_IGN<span class="token punctuation">)</span>
+
+
+<span class="token keyword">async</span> <span class="token keyword">def</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    server <span class="token operator">=</span> <span class="token keyword">await</span> asyncio<span class="token punctuation">.</span>start_server<span class="token punctuation">(</span>accept_requests<span class="token punctuation">,</span> <span class="token string">'127.0.0.1'</span><span class="token punctuation">,</span> <span class="token number">1936</span><span class="token punctuation">)</span>
+    mp_pool <span class="token operator">=</span> mp<span class="token punctuation">.</span>Pool<span class="token punctuation">(</span>initializer<span class="token operator">=</span>init_worker<span class="token punctuation">)</span>
+    loop <span class="token operator">=</span> asyncio<span class="token punctuation">.</span>get_running_loop<span class="token punctuation">(</span><span class="token punctuation">)</span>    
+    loop<span class="token punctuation">.</span>add_signal_handler<span class="token punctuation">(</span>signal<span class="token punctuation">.</span>SIGINT<span class="token punctuation">,</span> partial<span class="token punctuation">(</span>handle_interrupt_signal<span class="token punctuation">,</span> server<span class="token operator">=</span>server<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    worker_thread <span class="token operator">=</span> threading<span class="token punctuation">.</span>Thread<span class="token punctuation">(</span>target<span class="token operator">=</span>partial<span class="token punctuation">(</span>worker<span class="token punctuation">,</span> pool<span class="token operator">=</span>mp_pool<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    worker_thread<span class="token punctuation">.</span>start<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">async</span> <span class="token keyword">with</span> server<span class="token punctuation">:</span>
+        <span class="token keyword">try</span><span class="token punctuation">:</span>
+            <span class="token keyword">await</span> server<span class="token punctuation">.</span>serve_forever<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token keyword">except</span> asyncio<span class="token punctuation">.</span>exceptions<span class="token punctuation">.</span>CancelledError<span class="token punctuation">:</span>
+            <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'Server cancelled'</span><span class="token punctuation">)</span>
+    work_queue<span class="token punctuation">.</span>put<span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    worker_thread<span class="token punctuation">.</span>join<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    mp_pool<span class="token punctuation">.</span>close<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    mp_pool<span class="token punctuation">.</span>join<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'Bye Bye!'</span><span class="token punctuation">)</span>
+
+
+asyncio<span class="token punctuation">.</span>run<span class="token punctuation">(</span>main<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>本章主要介绍了一个基于socket的简单版本的MapReduce框架，从单进程单线程演化为多进程多线程版本，最后还做了优雅停止的处理。</p>
 <p>下一章主要介绍NumPy的高性能计算。</p>
 
 </article>
