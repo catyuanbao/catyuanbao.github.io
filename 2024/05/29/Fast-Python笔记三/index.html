@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="x5-fullscreen" content="true">
+<meta name="full-screen" content="yes">
+<meta name="theme-color" content="#317EFB" />
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
+<meta name="description" content="本文主要记录Fast Python第四章，主要是介绍numpy的高性能计算。 什么是NumpyNumPy是一个用于科学计算的Python库，提供了多维数组对象以及用于处理这些数组的各种函数。它是Python科学计算生态系统的核心组件之一，许多其他库（如SciPy、Pandas和Matplotlib）都是基于NumPy构建的。 NumPy的性能出色主要归因于以下几个方面：  底层实现：NumPy的底">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Fast Python笔记三">
+<meta property="og:url" content="http://example.com/2024/05/29/Fast-Python%E7%AC%94%E8%AE%B0%E4%B8%89/index.html">
+<meta property="og:site_name" content="Cat YuanBao">
+<meta property="og:description" content="本文主要记录Fast Python第四章，主要是介绍numpy的高性能计算。 什么是NumpyNumPy是一个用于科学计算的Python库，提供了多维数组对象以及用于处理这些数组的各种函数。它是Python科学计算生态系统的核心组件之一，许多其他库（如SciPy、Pandas和Matplotlib）都是基于NumPy构建的。 NumPy的性能出色主要归因于以下几个方面：  底层实现：NumPy的底">
+<meta property="og:locale">
+<meta property="og:image" content="http://example.com/img/404.jpg">
+<meta property="og:image" content="http://example.com/img/404.jpg">
+<meta property="article:published_time" content="2024-05-28T16:02:56.000Z">
+<meta property="article:modified_time" content="2024-05-28T16:03:12.652Z">
+<meta property="article:author" content="橘猫元宝">
+<meta property="article:tag" content="cat">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/img/404.jpg">
+
+    <meta name="keywords" content="cat">
+
+
+<title >Fast Python笔记三</title>
+
+<!-- Favicon -->
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='16x16' ></link>
+
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='32x32' ></link>
+
+
+
+
+<!-- Plugin -->
+
+
+
+
+    
+<link rel="stylesheet" href="/css/plugins/bootstrap.row.css">
+
+    
+<link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.css">
+
+    
+    
+
+
+
+
+<!-- Icon -->
+
+    
+<link rel="stylesheet" href="/css/plugins/font-awesome.min.css">
+
+
+
+
+<!-- Variable -->
+<script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-05-29 00:03:12"};</script>
+
+<!-- Theme mode css -->
+<link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
+<script>
+    let defaultMode = ASYNC_CONFIG.theme.default !=='auto' ?  ASYNC_CONFIG.theme.default : (window.matchMedia("(prefers-color-scheme: light)").matches ? 'style-light' : 'style-dark')
+    let catchMode = localStorage.getItem('theme-mode') || defaultMode;
+    let type = catchMode === 'style-dark' ? 'add' : 'remove';
+    document.documentElement.classList[type]('dark')
+</script>
+
+<!-- CDN -->
+
+
+    
+    
+
+
+
+<!-- Site Analytics -->
+ 
+<meta name="generator" content="Hexo 7.0.0"><link rel="stylesheet" href="/css/prism.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+<body>
+
+  <!-- app wrapper -->
+  <div class="trm-app-frame">
+
+    <!-- page preloader -->
+    <div class="trm-preloader">
+    <div class="trm-holder">
+        <div class="preloader">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+    <!-- page preloader end -->
+
+    <!-- change mode preloader -->
+    <div class="trm-mode-swich-animation-frame">
+    <div class="trm-mode-swich-animation">
+        <i class="i-sun"><i class="iconfont far fa-sun"></i></i>
+        <div class="trm-horizon"></div>
+        <i class="i-moon"><i class="iconfont far fa-moon"></i></i>
+    </div>
+</div>
+    <!-- change mode preloader end -->
+
+      <!-- scroll container -->
+      <div id="trm-dynamic-content" class="trm-swup-animation">
+        <div id="trm-scroll-container" class="trm-scroll-container" style="opacity: 0">
+            <!-- top bar -->
+            <header class="trm-top-bar">
+	<div class="container">
+		<div class="trm-left-side">
+			<!-- logo -->
+<a href="/" class="trm-logo-frame trm-anima-link">
+    
+        <img alt="logo" src="/img/favicon.svg">
+    
+    
+        <div class="trm-logo-text">
+            元宝<span>橘猫</span>
+        </div>
+    
+</a>
+<!-- logo end -->
+		</div>
+		<div class="trm-right-side">
+			<!-- menu -->
+<div class="trm-menu">
+    <nav>
+        <ul>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/" target="">
+                    首页
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/archives/" target="">
+                    归档
+                </a>
+                
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+<!-- menu end -->
+			
+    <!-- mode switcher place -->
+    <div class="trm-mode-switcher-place">
+        <div class="trm-mode-switcher">
+            <i class="iconfont far fa-sun"></i>
+            <input class="tgl tgl-light" id="trm-swich" type="checkbox">
+            <label class="trm-swich" for="trm-swich"></label>
+            <i class="iconfont far fa-moon"></i>
+        </div>
+    </div>
+    <!-- mode switcher place end -->
+
+			
+		</div>
+		<div class="trm-menu-btn">
+			<span></span>
+		</div>
+	</div>
+</header>
+            <!-- top bar end -->
+
+            <!-- body -->
+            
+<div class="trm-content-start">
+    <!-- banner -->
+    <div class="trm-banner">
+    
+    <!-- banner cover -->
+    <img style="object-position:top;object-fit:cover;" alt="banner" class="trm-banner-cover" src="/img/banner.png">
+    <!-- banner cover end -->
+    
+
+    <!-- banner content -->
+    <div class="trm-banner-content trm-overlay">
+        <div class="container">
+            <div class="row">
+                
+                <div class="col-lg-4"></div>
+                
+                <div class="col-lg-8">
+
+                    <!-- banner title -->
+                    <div class="trm-banner-text ">
+                        <div class="trm-label trm-mb-20">
+                            NEWS LETTER
+                        </div>
+                        <h1 class="trm-mb-30 trm-hsmb-font">
+                            Fast Python笔记三
+                        </h1>
+
+                        
+                            <ul class="trm-breadcrumbs trm-label">
+                                <li>
+                                    <a href="/" class="trm-anima-link">Home</a>
+                                </li>
+                                <li>
+                                    <span>
+                                        2024
+                                    </span>
+                                </li>
+                            </ul>
+                        
+                    </div>
+                    <!-- banner title end -->
+
+                    <!-- scroll hint -->
+                    <span id="scroll-triger" class="trm-scroll-hint-frame">
+                        <div class="trm-scroll-hint"></div>
+                        <span class="trm-label">Scroll down</span>
+                    </span>
+                    <!-- scroll hint end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- banner content end -->
+</div>
+    <!-- banner end -->
+    <div class="container">
+        <div class="row">
+            
+                <div class="trm-page-sidebar col-lg-4 hidden-sm">
+                    <!-- main card -->
+                    <div class="trm-main-card-frame trm-sidebar">
+    <div class="trm-main-card"> 
+        <!-- card header -->
+<div class="trm-mc-header">
+    <div class="trm-avatar-frame trm-mb-20">
+        <img alt="Avatar" class="trm-avatar" src="/img/cat.jpg">
+    </div>
+    <h5 class="trm-name trm-mb-15">
+        橘猫元宝
+    </h5>
+    
+</div>
+<!-- card header end -->
+        <!-- sidebar social -->
+
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<div class="trm-social">
+    
+        <a href="https://github.com" title="Github" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-github"></i>
+        </a>
+    
+</div>
+
+<!-- sidebar social end -->
+        <!-- info -->
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<ul class="trm-table trm-mb-20">
+    
+        <li>
+            <div class="trm-label">
+                Residence:
+            </div>
+            <div class="trm-label trm-label-light">
+                Mars
+            </div>
+        </li>
+    
+</ul>
+<!-- info end -->
+
+        
+    </div>
+</div>
+                    <!-- main card end -->
+                </div>
+            
+            <div class="trm-page-content col-lg-8">
+                <div id="trm-content" class="trm-content">
+                    <div class="trm-post-info row hidden-sm">
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-calendar-alt trm-icon"></i><br>
+            05/29
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-clock trm-icon"></i><br>
+            00:02
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div id="post-author" class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-user trm-icon"></i><br>
+            橘猫元宝
+        </div>
+    </div>
+</div>
+<div class="trm-card ">
+    <article id="article-container" class="trm-publication">
+    <p>本文主要记录Fast Python第四章，主要是介绍numpy的高性能计算。</p>
+<h3 id="什么是Numpy"><a href="#什么是Numpy" class="headerlink" title="什么是Numpy"></a>什么是Numpy</h3><p>NumPy是一个用于科学计算的Python库，提供了多维数组对象以及用于处理这些数组的各种函数。它是Python科学计算生态系统的核心组件之一，许多其他库（如SciPy、Pandas和Matplotlib）都是基于NumPy构建的。</p>
+<p>NumPy的性能出色主要归因于以下几个方面：</p>
+<ol>
+<li><strong>底层实现</strong>：NumPy的底层数据结构是由C语言实现的，这使得它的运算速度非常快。在底层，NumPy数组是一块连续的内存块，这意味着数据可以在内存中高效地存储和访问，而不需要进行额外的解析或转换。</li>
+<li><strong>矢量化操作</strong>：NumPy支持矢量化操作，即在整个数组上执行操作而无需显式编写循环。这种方式利用了现代CPU的SIMD（Single Instruction, Multiple Data）指令集，可以在单个指令中处理多个数据，从而提高了计算速度。</li>
+<li><strong>优化的算法和函数</strong>：NumPy中的许多函数和算法都经过了优化，以提高性能。这些函数通常使用了高效的算法，例如快速傅立叶变换（FFT）或线性代数运算。</li>
+<li><strong>内置并行处理</strong>：NumPy可以利用多核处理器进行并行计算。在某些操作中，NumPy会自动并行化处理数据，从而加速计算过程。</li>
+<li><strong>Cython和C API</strong>：NumPy提供了Cython和C API接口，这使得可以通过Cython或直接使用C语言来编写高性能的扩展。这意味着可以在需要更高性能的部分使用C语言进行优化。</li>
+</ol>
+<p>总的来说，NumPy的性能优势来自于其高效的底层实现、矢量化操作、优化的算法和函数以及并行处理能力，使其成为处理大规模数据集和进行高性能科学计算的理想选择。</p>
+<h3 id="旋转图片的实例"><a href="#旋转图片的实例" class="headerlink" title="旋转图片的实例"></a>旋转图片的实例</h3><p>通过读取logo图片的信息，体验numpy</p>
+<pre class="line-numbers language-python3"><code class="language-python3">import sys
+import numpy as np
+from PIL import Image
+
+image = Image.open('./logo.png').convert('L') # 灰度图片
+print('image size', image.size)
+width, height = image.size
+image_arr = np.array(image)
+print("Array shape, array type:", image_arr.shape, image_arr.dtype)
+print("Array size * item size: ", image_arr.nbytes)
+print("Array nbytes:", image_arr.nbytes)
+print("sys.getsizeof:", sys.getsizeof(image_arr))
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ python3 readlogo.py 
+image size <span class="token punctuation">(</span>182, 45<span class="token punctuation">)</span>
+Array shape, array type: <span class="token punctuation">(</span>45, 182<span class="token punctuation">)</span> uint8
+Array size * item size:  8190
+Array nbytes: 8190
+sys.getsizeof: 8318
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里可以看出np.array使用的内存空间</p>
+<p>更多的操作，主要是对图片做反转，裁剪等处理：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> sys
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">from</span> PIL <span class="token keyword">import</span> Image
+
+image <span class="token operator">=</span> Image<span class="token punctuation">.</span>open<span class="token punctuation">(</span><span class="token string">'./logo.png'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>convert<span class="token punctuation">(</span><span class="token string">'L'</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true"># 灰度图片</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'image size'</span><span class="token punctuation">,</span> image<span class="token punctuation">.</span>size<span class="token punctuation">)</span>
+width<span class="token punctuation">,</span> height <span class="token operator">=</span> image<span class="token punctuation">.</span>size
+image_arr <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span>image<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>image_arr<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Array shape, array type:"</span><span class="token punctuation">,</span> image_arr<span class="token punctuation">.</span>shape<span class="token punctuation">,</span> image_arr<span class="token punctuation">.</span>dtype<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Array size * item size: "</span><span class="token punctuation">,</span> image_arr<span class="token punctuation">.</span>nbytes<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Array nbytes:"</span><span class="token punctuation">,</span> image_arr<span class="token punctuation">.</span>nbytes<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"sys.getsizeof:"</span><span class="token punctuation">,</span> sys<span class="token punctuation">.</span>getsizeof<span class="token punctuation">(</span>image_arr<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+flipped_from_view <span class="token operator">=</span> np<span class="token punctuation">.</span>flipud<span class="token punctuation">(</span>image_arr<span class="token punctuation">)</span> <span class="token comment" spellcheck="true"># 垂直方向上下翻转</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>flipped_from_view<span class="token punctuation">)</span>
+
+flipped_from_copy <span class="token operator">=</span> np<span class="token punctuation">.</span>flipud<span class="token punctuation">(</span>image_arr<span class="token punctuation">)</span><span class="token punctuation">.</span>copy<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true"># 翻转的copy</span>
+image_arr<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token punctuation">:</span>width<span class="token operator">//</span><span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">0</span>
+removed <span class="token operator">=</span> Image<span class="token punctuation">.</span>fromarray<span class="token punctuation">(</span>image_arr<span class="token punctuation">,</span> <span class="token string">"L"</span><span class="token punctuation">)</span>
+image<span class="token punctuation">.</span>save<span class="token punctuation">(</span><span class="token string">"image.png"</span><span class="token punctuation">)</span>
+removed<span class="token punctuation">.</span>save<span class="token punctuation">(</span><span class="token string">"removed.png"</span><span class="token punctuation">)</span>
+
+
+flipped_from_view_image <span class="token operator">=</span> Image<span class="token punctuation">.</span>fromarray<span class="token punctuation">(</span>flipped_from_view<span class="token punctuation">,</span> <span class="token string">"L"</span><span class="token punctuation">)</span>
+flipped_from_view_image<span class="token punctuation">.</span>save<span class="token punctuation">(</span><span class="token string">"flipped_view.png"</span><span class="token punctuation">)</span>
+flipped_from_copy_image <span class="token operator">=</span> Image<span class="token punctuation">.</span>fromarray<span class="token punctuation">(</span>flipped_from_copy<span class="token punctuation">,</span> <span class="token string">"L"</span><span class="token punctuation">)</span>
+flipped_from_copy_image<span class="token punctuation">.</span>save<span class="token punctuation">(</span><span class="token string">"flipped_copy.png"</span><span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>flipped_from_copy<span class="token punctuation">.</span>base<span class="token punctuation">,</span> flipped_from_view<span class="token punctuation">.</span>base<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>flipped_from_view<span class="token punctuation">.</span>base <span class="token keyword">is</span> image_arr<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>flipped_from_view<span class="token punctuation">.</span>base <span class="token operator">==</span> image_arr<span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>np<span class="token punctuation">.</span>shares_memory<span class="token punctuation">(</span>image_arr<span class="token punctuation">,</span> flipped_from_copy<span class="token punctuation">)</span><span class="token punctuation">,</span>
+np<span class="token punctuation">.</span>shares_memory<span class="token punctuation">(</span>image_arr<span class="token punctuation">,</span> flipped_from_view<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">image size <span class="token punctuation">(</span>182, 45<span class="token punctuation">)</span>
+<span class="token punctuation">[</span><span class="token punctuation">[</span>255 255 255 <span class="token punctuation">..</span>. 255 255 255<span class="token punctuation">]</span>
+ <span class="token punctuation">[</span>255 255 255 <span class="token punctuation">..</span>. 255 255 255<span class="token punctuation">]</span>
+ <span class="token punctuation">[</span>255 255 255 <span class="token punctuation">..</span>. 255 255 255<span class="token punctuation">]</span>
+ <span class="token punctuation">..</span>.
+ <span class="token punctuation">[</span>147  52  91 <span class="token punctuation">..</span>.  52  52  80<span class="token punctuation">]</span>
+ <span class="token punctuation">[</span>109  52 129 <span class="token punctuation">..</span>.  52  52  80<span class="token punctuation">]</span>
+ <span class="token punctuation">[</span> 70  52 167 <span class="token punctuation">..</span>.  93 136 219<span class="token punctuation">]</span><span class="token punctuation">]</span>
+Array shape, array type: <span class="token punctuation">(</span>45, 182<span class="token punctuation">)</span> uint8
+Array size * item size:  8190
+Array nbytes: 8190
+sys.getsizeof: 8318
+<span class="token punctuation">[</span><span class="token punctuation">[</span> 70  52 167 <span class="token punctuation">..</span>.  93 136 219<span class="token punctuation">]</span>
+ <span class="token punctuation">[</span>109  52 129 <span class="token punctuation">..</span>.  52  52  80<span class="token punctuation">]</span>
+ <span class="token punctuation">[</span>147  52  91 <span class="token punctuation">..</span>.  52  52  80<span class="token punctuation">]</span>
+ <span class="token punctuation">..</span>.
+ <span class="token punctuation">[</span>255 255 255 <span class="token punctuation">..</span>. 255 255 255<span class="token punctuation">]</span>
+ <span class="token punctuation">[</span>255 255 255 <span class="token punctuation">..</span>. 255 255 255<span class="token punctuation">]</span>
+ <span class="token punctuation">[</span>255 255 255 <span class="token punctuation">..</span>. 255 255 255<span class="token punctuation">]</span><span class="token punctuation">]</span>
+None <span class="token punctuation">[</span><span class="token punctuation">[</span>  0   0   0 <span class="token punctuation">..</span>. 255 255 255<span class="token punctuation">]</span>
+ <span class="token punctuation">[</span>  0   0   0 <span class="token punctuation">..</span>. 255 255 255<span class="token punctuation">]</span>
+ <span class="token punctuation">[</span>  0   0   0 <span class="token punctuation">..</span>. 255 255 255<span class="token punctuation">]</span>
+ <span class="token punctuation">..</span>.
+ <span class="token punctuation">[</span>  0   0   0 <span class="token punctuation">..</span>.  52  52  80<span class="token punctuation">]</span>
+ <span class="token punctuation">[</span>  0   0   0 <span class="token punctuation">..</span>.  52  52  80<span class="token punctuation">]</span>
+ <span class="token punctuation">[</span>  0   0   0 <span class="token punctuation">..</span>.  93 136 219<span class="token punctuation">]</span><span class="token punctuation">]</span>
+True
+<span class="token punctuation">[</span><span class="token punctuation">[</span> True  True  True <span class="token punctuation">..</span>.  True  True  True<span class="token punctuation">]</span>
+ <span class="token punctuation">[</span> True  True  True <span class="token punctuation">..</span>.  True  True  True<span class="token punctuation">]</span>
+ <span class="token punctuation">[</span> True  True  True <span class="token punctuation">..</span>.  True  True  True<span class="token punctuation">]</span>
+ <span class="token punctuation">..</span>.
+ <span class="token punctuation">[</span> True  True  True <span class="token punctuation">..</span>.  True  True  True<span class="token punctuation">]</span>
+ <span class="token punctuation">[</span> True  True  True <span class="token punctuation">..</span>.  True  True  True<span class="token punctuation">]</span>
+ <span class="token punctuation">[</span> True  True  True <span class="token punctuation">..</span>.  True  True  True<span class="token punctuation">]</span><span class="token punctuation">]</span>
+False True
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这个实例就是简单介绍一个numpy的常用API。</p>
+<h4 id="dtype-类似C的数据类型"><a href="#dtype-类似C的数据类型" class="headerlink" title="dtype 类似C的数据类型"></a>dtype 类似C的数据类型</h4><p>dtype这里是一个uint16</p>
+<p>对不同大小的array做性能分析：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> sys
+<span class="token keyword">import</span> timeit
+
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+
+<span class="token keyword">for</span> size <span class="token keyword">in</span> <span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">,</span> <span class="token number">100</span><span class="token punctuation">,</span> <span class="token number">1000</span><span class="token punctuation">,</span> <span class="token number">10000</span><span class="token punctuation">,</span> <span class="token number">100000</span><span class="token punctuation">,</span> <span class="token number">200000</span><span class="token punctuation">,</span> <span class="token number">400000</span><span class="token punctuation">,</span> <span class="token number">800000</span><span class="token punctuation">,</span> <span class="token number">1000000</span><span class="token punctuation">]</span><span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>size<span class="token punctuation">,</span> end<span class="token operator">=</span><span class="token string">","</span><span class="token punctuation">)</span>
+    my_array <span class="token operator">=</span> np<span class="token punctuation">.</span>arange<span class="token punctuation">(</span>size<span class="token punctuation">,</span> dtype<span class="token operator">=</span>np<span class="token punctuation">.</span>uint16<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">#print(sys.getsizeof(my_array))</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>my_array<span class="token punctuation">.</span>data<span class="token punctuation">.</span>nbytes<span class="token punctuation">,</span> end<span class="token operator">=</span><span class="token string">","</span><span class="token punctuation">)</span>
+    view_time <span class="token operator">=</span> timeit<span class="token punctuation">.</span>timeit<span class="token punctuation">(</span>
+        <span class="token string">"my_array.view()"</span><span class="token punctuation">,</span>
+        f<span class="token string">"import numpy; my_array = numpy.arange({size})"</span><span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>view_time<span class="token punctuation">,</span> end<span class="token operator">=</span><span class="token string">","</span><span class="token punctuation">)</span>
+    copy_time <span class="token operator">=</span> timeit<span class="token punctuation">.</span>timeit<span class="token punctuation">(</span>
+        <span class="token string">"my_array.copy()"</span><span class="token punctuation">,</span>
+        f<span class="token string">"import numpy; my_array = numpy.arange({size})"</span><span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>copy_time<span class="token punctuation">)</span>
+    copy_gc_time <span class="token operator">=</span> timeit<span class="token punctuation">.</span>timeit<span class="token punctuation">(</span>
+        <span class="token string">"my_array.copy()"</span><span class="token punctuation">,</span>
+        f<span class="token string">"import numpy; import gc; gc.enable(); my_array = numpy.arange({size})"</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">#print(copy_gc_time)</span>
+
+    <span class="token comment" spellcheck="true">#print()</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果：</p>
+<pre><code>1,2,0.33122671500314027,1.02028772799531
+10,20,0.3211531379929511,0.983253287995467
+100,200,0.3156438300065929,1.0039328319980996
+1000,2000,0.30216424498939887,1.6083622139994986
+10000,20000,0.32938497100258246,11.79029412199452
+</code></pre>
+<p>这里可以看出view方法，运行时间基本是固定的，copy是随对象长度线性增长的。</p>
+<h3 id="理解numpy的机制"><a href="#理解numpy的机制" class="headerlink" title="理解numpy的机制"></a>理解numpy的机制</h3><pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+linear <span class="token operator">=</span> np<span class="token punctuation">.</span>arange<span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">,</span> dtype<span class="token operator">=</span>np<span class="token punctuation">.</span>uint32<span class="token punctuation">)</span> <span class="token comment" spellcheck="true"># 类似C语言的数组</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>linear<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在底层，NumPy 数组的实现确实与 C 语言的数组有一些相似之处。NumPy 数组在内存中是连续存储的，这意味着数组的元素在内存中是相邻的。这种布局使得 NumPy 能够利用现代计算机体系结构的优势，如CPU的高速缓存以及SIMD（Single Instruction, Multiple Data）指令集。</p>
+<p>另外，NumPy 数组的数据类型与 C 语言的数据类型有一定的对应关系。例如，<code>np.uint32</code> 对应于无符号的 32 位整数，在内存中的表示与 C 语言中的 <code>uint32_t</code> 类型是相似的。</p>
+<p>然而，需要注意的是，NumPy 数组是 Python 的对象，它封装了底层的 C 数组，并提供了丰富的操作和函数，以便在 Python 中进行高效的数组处理。虽然底层实现类似于 C 数组，但在编程时，使用 NumPy 数组更加方便和灵活，因为它提供了丰富的功能和高级的抽象。</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+linear <span class="token operator">=</span> np<span class="token punctuation">.</span>arange<span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">,</span> dtype<span class="token operator">=</span>np<span class="token punctuation">.</span>uint32<span class="token punctuation">)</span> <span class="token comment" spellcheck="true"># 类似C语言的数组</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>linear<span class="token punctuation">)</span>
+
+m2x5 <span class="token operator">=</span> linear<span class="token punctuation">.</span>reshape<span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>np<span class="token punctuation">.</span>shares_memory<span class="token punctuation">(</span>linear<span class="token punctuation">,</span> m2x5<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true"># 底层内存是共享的</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"2x5"</span><span class="token punctuation">,</span> m2x5<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>
+m5x2 <span class="token operator">=</span> m2x5<span class="token punctuation">.</span>T
+<span class="token keyword">print</span><span class="token punctuation">(</span>np<span class="token punctuation">.</span>shares_memory<span class="token punctuation">(</span>m2x5<span class="token punctuation">,</span> m5x2<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"5x2"</span><span class="token punctuation">,</span> m5x2<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><img src="/images/base_mem.png" alt="alt text" loading="lazy" onerror='this.onerror=null;this.src="/img/404.jpg"'></p>
+<p>不管数据维度如何变化，底层的引用数据都是原始的1份。</p>
+<h4 id="关于strides"><a href="#关于strides" class="headerlink" title="关于strides"></a>关于strides</h4><p>在 NumPy 中，strides（步幅）是一个描述数组在内存中如何存储的属性。它是一个元组，每个元素对应一个维度，表示在该维度上相邻两个元素之间在内存中的距离（以字节为单位）。通常，如果数组是连续存储的（即在内存中是按照相邻顺序存储的），那么步幅将是数组每个维度的元素大小乘以后续维度的尺寸。</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+linear <span class="token operator">=</span> np<span class="token punctuation">.</span>arange<span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">,</span> dtype<span class="token operator">=</span>np<span class="token punctuation">.</span>uint32<span class="token punctuation">)</span> <span class="token comment" spellcheck="true"># 类似C语言的数组</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>linear<span class="token punctuation">)</span>
+
+m2x5 <span class="token operator">=</span> linear<span class="token punctuation">.</span>reshape<span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>np<span class="token punctuation">.</span>shares_memory<span class="token punctuation">(</span>linear<span class="token punctuation">,</span> m2x5<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true"># 底层内存是共享的</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"2x5"</span><span class="token punctuation">,</span> m2x5<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>
+m5x2 <span class="token operator">=</span> m2x5<span class="token punctuation">.</span>T
+<span class="token keyword">print</span><span class="token punctuation">(</span>np<span class="token punctuation">.</span>shares_memory<span class="token punctuation">(</span>m2x5<span class="token punctuation">,</span> m5x2<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"5x2"</span><span class="token punctuation">,</span> m5x2<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"linear"</span><span class="token punctuation">,</span> linear<span class="token punctuation">.</span>strides<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"2x5 strides"</span><span class="token punctuation">,</span> m2x5<span class="token punctuation">.</span>strides<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"5x2 strides"</span><span class="token punctuation">,</span> m5x2<span class="token punctuation">.</span>strides<span class="token punctuation">)</span>
+
+back <span class="token operator">=</span> linear<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"back"</span><span class="token punctuation">,</span> back<span class="token punctuation">.</span>shape<span class="token punctuation">,</span> back<span class="token punctuation">.</span>strides<span class="token punctuation">,</span> back<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> back<span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果：</p>
+<pre><code>[0 1 2 3 4 5 6 7 8 9]
+True
+2x5 (2, 5)
+True
+5x2 (5, 2)
+linear (4,)
+2x5 strides (20, 4)
+5x2 strides (4, 20)
+back (10,) (-4,) 9 0
+</code></pre>
+<h4 id="使用view处理图片"><a href="#使用view处理图片" class="headerlink" title="使用view处理图片"></a>使用view处理图片</h4><pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">from</span> PIL <span class="token keyword">import</span> Image
+
+image <span class="token operator">=</span> Image<span class="token punctuation">.</span>open<span class="token punctuation">(</span><span class="token string">"../manning-logo.png"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>convert<span class="token punctuation">(</span><span class="token string">"L"</span><span class="token punctuation">)</span>
+width<span class="token punctuation">,</span> height <span class="token operator">=</span> image<span class="token punctuation">.</span>size
+image_arr <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span>image<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"original array"</span><span class="token punctuation">,</span> image_arr<span class="token punctuation">.</span>shape<span class="token punctuation">,</span> image_arr<span class="token punctuation">.</span>strides<span class="token punctuation">,</span> image_arr<span class="token punctuation">.</span>dtype<span class="token punctuation">)</span>
+image<span class="token punctuation">.</span>save<span class="token punctuation">(</span><span class="token string">"view_initial.png"</span><span class="token punctuation">)</span>
+
+invert_rows_arr <span class="token operator">=</span> image_arr<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token punctuation">:</span><span class="token punctuation">]</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"invert rows"</span><span class="token punctuation">,</span> invert_rows_arr<span class="token punctuation">.</span>shape<span class="token punctuation">,</span> invert_rows_arr<span class="token punctuation">.</span>strides<span class="token punctuation">,</span>
+      np<span class="token punctuation">.</span>shares_memory<span class="token punctuation">(</span>invert_rows_arr<span class="token punctuation">,</span> image_arr<span class="token punctuation">)</span><span class="token punctuation">)</span>
+Image<span class="token punctuation">.</span>fromarray<span class="token punctuation">(</span>invert_rows_arr<span class="token punctuation">)</span><span class="token punctuation">.</span>save<span class="token punctuation">(</span><span class="token string">"invert_x.png"</span><span class="token punctuation">)</span>
+
+invert_cols_arr <span class="token operator">=</span> image_arr<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"invert columns"</span><span class="token punctuation">,</span> invert_cols_arr<span class="token punctuation">.</span>shape<span class="token punctuation">,</span> invert_cols_arr<span class="token punctuation">.</span>strides<span class="token punctuation">,</span>
+      np<span class="token punctuation">.</span>shares_memory<span class="token punctuation">(</span>invert_cols_arr<span class="token punctuation">,</span> image_arr<span class="token punctuation">)</span><span class="token punctuation">)</span>
+Image<span class="token punctuation">.</span>fromarray<span class="token punctuation">(</span>invert_cols_arr<span class="token punctuation">)</span><span class="token punctuation">.</span>save<span class="token punctuation">(</span><span class="token string">"invert_y.png"</span><span class="token punctuation">)</span>
+
+
+view_swap_arr <span class="token operator">=</span> image_arr<span class="token punctuation">.</span>reshape<span class="token punctuation">(</span>image_arr<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> image_arr<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># Same can be done with swapaxes</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"view_swap"</span><span class="token punctuation">,</span> view_swap_arr<span class="token punctuation">.</span>shape<span class="token punctuation">,</span> view_swap_arr<span class="token punctuation">.</span>strides<span class="token punctuation">,</span>
+      np<span class="token punctuation">.</span>shares_memory<span class="token punctuation">(</span>view_swap_arr<span class="token punctuation">,</span> image_arr<span class="token punctuation">)</span><span class="token punctuation">)</span>
+Image<span class="token punctuation">.</span>fromarray<span class="token punctuation">(</span>view_swap_arr<span class="token punctuation">,</span> <span class="token string">"L"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>save<span class="token punctuation">(</span><span class="token string">"view_swap.png"</span><span class="token punctuation">)</span>
+
+trans_arr <span class="token operator">=</span> image_arr<span class="token punctuation">.</span>T
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"transpose"</span><span class="token punctuation">,</span> trans_arr<span class="token punctuation">.</span>shape<span class="token punctuation">,</span> trans_arr<span class="token punctuation">.</span>strides<span class="token punctuation">,</span>
+      np<span class="token punctuation">.</span>shares_memory<span class="token punctuation">(</span>trans_arr<span class="token punctuation">,</span> image_arr<span class="token punctuation">)</span><span class="token punctuation">)</span>
+Image<span class="token punctuation">.</span>fromarray<span class="token punctuation">(</span>trans_arr<span class="token punctuation">,</span> <span class="token string">"L"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>save<span class="token punctuation">(</span><span class="token string">"transpose.png"</span><span class="token punctuation">)</span>
+
+rot_arr <span class="token operator">=</span> np<span class="token punctuation">.</span>rot90<span class="token punctuation">(</span>image_arr<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"rot_arr"</span><span class="token punctuation">,</span> rot_arr<span class="token punctuation">.</span>shape<span class="token punctuation">,</span> rot_arr<span class="token punctuation">.</span>strides<span class="token punctuation">,</span>
+      np<span class="token punctuation">.</span>shares_memory<span class="token punctuation">(</span>rot_arr<span class="token punctuation">,</span> image_arr<span class="token punctuation">)</span><span class="token punctuation">)</span>
+Image<span class="token punctuation">.</span>fromarray<span class="token punctuation">(</span>rot_arr<span class="token punctuation">,</span> <span class="token string">"L"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>save<span class="token punctuation">(</span><span class="token string">"rot90.png"</span><span class="token punctuation">)</span>
+
+
+slice_arr <span class="token operator">=</span> image_arr<span class="token punctuation">[</span><span class="token number">15</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token number">77</span><span class="token punctuation">:</span><span class="token punctuation">]</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"slice_arr"</span><span class="token punctuation">,</span> slice_arr<span class="token punctuation">.</span>shape<span class="token punctuation">,</span> slice_arr<span class="token punctuation">.</span>strides<span class="token punctuation">,</span>
+      np<span class="token punctuation">.</span>shares_memory<span class="token punctuation">(</span>slice_arr<span class="token punctuation">,</span> image_arr<span class="token punctuation">)</span><span class="token punctuation">)</span>
+Image<span class="token punctuation">.</span>fromarray<span class="token punctuation">(</span>slice_arr<span class="token punctuation">,</span> <span class="token string">"L"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>save<span class="token punctuation">(</span><span class="token string">"slice.png"</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="使用array编程"><a href="#使用array编程" class="headerlink" title="使用array编程"></a>使用array编程</h4><p>array和Python List的对比：</p>
+<p>NumPy 数组和 Python 列表是两种不同的数据结构，它们在很多方面都有所不同。以下是它们的对比：</p>
+<ol>
+<li><strong>内存效率</strong>：<ul>
+<li>NumPy 数组是由连续的内存块表示的，而 Python 列表是由分散的对象组成的。这意味着 NumPy 数组在存储和访问时更加高效，尤其是对于大型数据集来说，它减少了内存开销和提高了访问速度。</li>
+</ul>
+</li>
+<li><strong>类型限制</strong>：<ul>
+<li>NumPy 数组要求所有的元素都具有相同的数据类型，这使得它更适合于数值计算和科学计算。</li>
+<li>Python 列表可以包含不同类型的对象，因此它们更加灵活，但在处理数值计算时可能会更慢。</li>
+</ul>
+</li>
+<li><strong>性能</strong>：<ul>
+<li>由于 NumPy 数组是基于 C 语言实现的，因此它们在执行数值计算时通常比 Python 列表更快。</li>
+<li>Python 列表是动态数组，它们的操作可能会涉及动态内存分配和引用计数等操作，因此在某些情况下可能会比较慢。</li>
+</ul>
+</li>
+<li><strong>功能</strong>：<ul>
+<li>NumPy 提供了丰富的数学函数和操作，如矩阵乘法、线性代数、傅立叶变换等，这些功能使得它非常适合于科学计算和数据分析。</li>
+<li>Python 列表提供了基本的操作，如追加、插入、删除等，以及一些高级操作，如列表解析和生成器表达式。</li>
+</ul>
+</li>
+<li><strong>使用场景</strong>：<ul>
+<li>如果你需要处理大规模数据集或进行数值计算和科学计算，那么 NumPy 数组是更好的选择。</li>
+<li>如果你的数据结构比较简单，或者需要处理不同类型的对象，那么 Python 列表可能更适合。</li>
+</ul>
+</li>
+</ol>
+<p>综上所述，NumPy 数组和 Python 列表在功能、性能和使用场景上有所不同，开发者可以根据实际需求选择合适的数据结构。</p>
+<h4 id="计算向量相加"><a href="#计算向量相加" class="headerlink" title="计算向量相加"></a>计算向量相加</h4><pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+
+
+<span class="token keyword">def</span> <span class="token function">sum_arrays</span><span class="token punctuation">(</span>a<span class="token punctuation">,</span> b<span class="token punctuation">)</span><span class="token punctuation">:</span>  <span class="token comment" spellcheck="true"># Assumes both are the same size</span>
+    my_sum <span class="token operator">=</span> np<span class="token punctuation">.</span>empty<span class="token punctuation">(</span>a<span class="token punctuation">.</span>size<span class="token punctuation">,</span> dtype<span class="token operator">=</span>a<span class="token punctuation">.</span>dtype<span class="token punctuation">)</span>
+    <span class="token keyword">for</span> i<span class="token punctuation">,</span> <span class="token punctuation">(</span>a1<span class="token punctuation">,</span> b1<span class="token punctuation">)</span> <span class="token keyword">in</span> enumerate<span class="token punctuation">(</span>zip<span class="token punctuation">(</span>np<span class="token punctuation">.</span>nditer<span class="token punctuation">(</span>a<span class="token punctuation">)</span><span class="token punctuation">,</span> np<span class="token punctuation">.</span>nditer<span class="token punctuation">(</span>b<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        my_sum<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> a1 <span class="token operator">+</span> b1
+    <span class="token keyword">return</span> my_sum<span class="token punctuation">.</span>reshape<span class="token punctuation">(</span>a<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>
+
+
+array_100000 <span class="token operator">=</span> np<span class="token punctuation">.</span>arange<span class="token punctuation">(</span><span class="token number">100000</span><span class="token punctuation">)</span>
+sum_arrays<span class="token punctuation">(</span>array_100000<span class="token punctuation">,</span> np<span class="token punctuation">.</span>ones<span class="token punctuation">(</span>array_100000<span class="token punctuation">.</span>shape<span class="token punctuation">)</span><span class="token punctuation">)</span>
+array_100000 <span class="token operator">=</span> np<span class="token punctuation">.</span>arange<span class="token punctuation">(</span><span class="token number">100000</span><span class="token punctuation">)</span>
+array_100000 <span class="token operator">+=</span> array_100000
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>array_100000<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre><code>$ python3 vadd.py 
+[     0      2      4 ... 199994 199996 199998]
+</code></pre>
+<h4 id="更多关于向量计算的实例"><a href="#更多关于向量计算的实例" class="headerlink" title="更多关于向量计算的实例"></a>更多关于向量计算的实例</h4><pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+
+
+<span class="token keyword">def</span> <span class="token function">sum_arrays</span><span class="token punctuation">(</span>a<span class="token punctuation">,</span> b<span class="token punctuation">)</span><span class="token punctuation">:</span>  <span class="token comment" spellcheck="true"># Assumes both are the same size</span>
+    my_sum <span class="token operator">=</span> np<span class="token punctuation">.</span>empty<span class="token punctuation">(</span>a<span class="token punctuation">.</span>size<span class="token punctuation">,</span> dtype<span class="token operator">=</span>a<span class="token punctuation">.</span>dtype<span class="token punctuation">)</span>
+    <span class="token keyword">for</span> i<span class="token punctuation">,</span> <span class="token punctuation">(</span>a1<span class="token punctuation">,</span> b1<span class="token punctuation">)</span> <span class="token keyword">in</span> enumerate<span class="token punctuation">(</span>zip<span class="token punctuation">(</span>np<span class="token punctuation">.</span>nditer<span class="token punctuation">(</span>a<span class="token punctuation">)</span><span class="token punctuation">,</span> np<span class="token punctuation">.</span>nditer<span class="token punctuation">(</span>b<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        my_sum<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> a1 <span class="token operator">+</span> b1
+    <span class="token keyword">return</span> my_sum<span class="token punctuation">.</span>reshape<span class="token punctuation">(</span>a<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>
+
+
+array_100000 <span class="token operator">=</span> np<span class="token punctuation">.</span>arange<span class="token punctuation">(</span><span class="token number">100000</span><span class="token punctuation">)</span>
+sum_arrays<span class="token punctuation">(</span>array_100000<span class="token punctuation">,</span> np<span class="token punctuation">.</span>ones<span class="token punctuation">(</span>array_100000<span class="token punctuation">.</span>shape<span class="token punctuation">)</span><span class="token punctuation">)</span>
+array_100000 <span class="token operator">=</span> np<span class="token punctuation">.</span>arange<span class="token punctuation">(</span><span class="token number">100000</span><span class="token punctuation">)</span>
+array_100000 <span class="token operator">+=</span> array_100000
+
+x <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">20</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">250</span><span class="token punctuation">,</span> <span class="token number">500</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+             dtype<span class="token operator">=</span>np<span class="token punctuation">.</span>uint8<span class="token punctuation">)</span>
+y <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">25</span><span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">,</span> dtype<span class="token operator">=</span>np<span class="token punctuation">.</span>uint8<span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>sum_arrays<span class="token punctuation">(</span>x<span class="token punctuation">,</span> y<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+a <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">20</span><span class="token punctuation">,</span> <span class="token number">21</span><span class="token punctuation">,</span> <span class="token number">9</span><span class="token punctuation">]</span><span class="token punctuation">,</span> dtype<span class="token operator">=</span>np<span class="token punctuation">.</span>uint8<span class="token punctuation">)</span>
+b <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">10</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">25</span><span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">]</span><span class="token punctuation">,</span> dtype<span class="token operator">=</span>np<span class="token punctuation">.</span>uint8<span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>sum_arrays<span class="token punctuation">(</span>a<span class="token punctuation">,</span> b<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"add one"</span><span class="token punctuation">,</span> a <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"mutiply by two"</span><span class="token punctuation">,</span> a <span class="token operator">*</span> <span class="token number">2</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"add a vector"</span><span class="token punctuation">,</span> a <span class="token operator">+</span> <span class="token punctuation">[</span><span class="token number">10</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">25</span><span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"multiply by a vector"</span><span class="token punctuation">,</span> a <span class="token operator">*</span> <span class="token punctuation">[</span><span class="token number">10</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">25</span><span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"dot (inner) product"</span><span class="token punctuation">,</span> a<span class="token punctuation">.</span>dot<span class="token punctuation">(</span>b<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"add a vector to itself"</span><span class="token punctuation">,</span> x <span class="token operator">+</span> x<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"add a vector with column size"</span><span class="token punctuation">,</span> x <span class="token operator">+</span> <span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># print("add a vector with row size", x + [-1, -2, -3])</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"add a vector with row size"</span><span class="token punctuation">,</span> <span class="token punctuation">(</span>x<span class="token punctuation">.</span>T <span class="token operator">+</span> <span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">.</span>T<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"inner product"</span><span class="token punctuation">,</span> np<span class="token punctuation">.</span>inner<span class="token punctuation">(</span>a<span class="token punctuation">,</span> b<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"matrix multiplication"</span><span class="token punctuation">,</span> x<span class="token punctuation">.</span>dot<span class="token punctuation">(</span>y<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># print(x.T.dot(y))</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"matmul "</span><span class="token punctuation">,</span> a @ b<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"matmul"</span><span class="token punctuation">,</span> x @ y<span class="token punctuation">)</span>
+
+x<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">0</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"assignement broadcasting"</span><span class="token punctuation">,</span> x<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="Numpy的底层依赖"><a href="#Numpy的底层依赖" class="headerlink" title="Numpy的底层依赖"></a>Numpy的底层依赖</h4><p><img src="/images/arch_numpy.png" alt="alt text" loading="lazy" onerror='this.onerror=null;this.src="/img/404.jpg"'></p>
+<p>底层依赖的是OpenBLAS,ATLAS, MKL,Veclib等实现</p>
+<pre class="line-numbers language-python"><code class="language-python">$ python3
+Python <span class="token number">3.9</span><span class="token punctuation">.</span><span class="token number">16</span> <span class="token punctuation">(</span>main<span class="token punctuation">,</span> Dec  <span class="token number">8</span> <span class="token number">2022</span><span class="token punctuation">,</span> <span class="token number">00</span><span class="token punctuation">:</span><span class="token number">00</span><span class="token punctuation">:</span><span class="token number">00</span><span class="token punctuation">)</span> 
+<span class="token punctuation">[</span>GCC <span class="token number">11.3</span><span class="token punctuation">.</span><span class="token number">1</span> <span class="token number">20221121</span> <span class="token punctuation">(</span>Red Hat <span class="token number">11.3</span><span class="token punctuation">.</span><span class="token number">1</span><span class="token operator">-</span><span class="token number">4</span><span class="token punctuation">)</span><span class="token punctuation">]</span> on linux
+Type <span class="token string">"help"</span><span class="token punctuation">,</span> <span class="token string">"copyright"</span><span class="token punctuation">,</span> <span class="token string">"credits"</span> <span class="token operator">or</span> <span class="token string">"license"</span> <span class="token keyword">for</span> more information<span class="token punctuation">.</span>
+<span class="token operator">>></span><span class="token operator">></span> <span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token operator">>></span><span class="token operator">></span> np<span class="token punctuation">.</span>show_config<span class="token punctuation">(</span><span class="token punctuation">)</span>
+Build Dependencies<span class="token punctuation">:</span>
+  blas<span class="token punctuation">:</span>
+    detection method<span class="token punctuation">:</span> pkgconfig
+    found<span class="token punctuation">:</span> true
+    include directory<span class="token punctuation">:</span> <span class="token operator">/</span>usr<span class="token operator">/</span>local<span class="token operator">/</span>include
+    lib directory<span class="token punctuation">:</span> <span class="token operator">/</span>usr<span class="token operator">/</span>local<span class="token operator">/</span>lib
+    name<span class="token punctuation">:</span> openblas64
+    openblas configuration<span class="token punctuation">:</span> USE_64BITINT<span class="token operator">=</span><span class="token number">1</span> DYNAMIC_ARCH<span class="token operator">=</span><span class="token number">1</span> DYNAMIC_OLDER<span class="token operator">=</span> NO_CBLAS<span class="token operator">=</span>
+      NO_LAPACK<span class="token operator">=</span> NO_LAPACKE<span class="token operator">=</span> NO_AFFINITY<span class="token operator">=</span><span class="token number">1</span> USE_OPENMP<span class="token operator">=</span> HASWELL MAX_THREADS<span class="token operator">=</span><span class="token number">2</span>
+    pc file directory<span class="token punctuation">:</span> <span class="token operator">/</span>usr<span class="token operator">/</span>local<span class="token operator">/</span>lib<span class="token operator">/</span>pkgconfig
+    version<span class="token punctuation">:</span> <span class="token number">0.3</span><span class="token punctuation">.</span><span class="token number">23.</span>dev
+  lapack<span class="token punctuation">:</span>
+    detection method<span class="token punctuation">:</span> internal
+    found<span class="token punctuation">:</span> true
+    include directory<span class="token punctuation">:</span> unknown
+    lib directory<span class="token punctuation">:</span> unknown
+    name<span class="token punctuation">:</span> dep139810746332592
+    openblas configuration<span class="token punctuation">:</span> unknown
+    pc file directory<span class="token punctuation">:</span> unknown
+    version<span class="token punctuation">:</span> <span class="token number">1.26</span><span class="token punctuation">.</span><span class="token number">4</span>
+Compilers<span class="token punctuation">:</span>
+  c<span class="token punctuation">:</span>
+    args<span class="token punctuation">:</span> <span class="token operator">-</span>fno<span class="token operator">-</span>strict<span class="token operator">-</span>aliasing
+    commands<span class="token punctuation">:</span> cc
+    linker<span class="token punctuation">:</span> ld<span class="token punctuation">.</span>bfd
+    linker args<span class="token punctuation">:</span> <span class="token operator">-</span>Wl<span class="token punctuation">,</span><span class="token operator">-</span><span class="token operator">-</span>strip<span class="token operator">-</span>debug<span class="token punctuation">,</span> <span class="token operator">-</span>fno<span class="token operator">-</span>strict<span class="token operator">-</span>aliasing
+    name<span class="token punctuation">:</span> gcc
+    version<span class="token punctuation">:</span> <span class="token number">10.2</span><span class="token punctuation">.</span><span class="token number">1</span>
+  c<span class="token operator">+</span><span class="token operator">+</span><span class="token punctuation">:</span>
+    commands<span class="token punctuation">:</span> c<span class="token operator">+</span><span class="token operator">+</span>
+    linker<span class="token punctuation">:</span> ld<span class="token punctuation">.</span>bfd
+    linker args<span class="token punctuation">:</span> <span class="token operator">-</span>Wl<span class="token punctuation">,</span><span class="token operator">-</span><span class="token operator">-</span>strip<span class="token operator">-</span>debug
+    name<span class="token punctuation">:</span> gcc
+    version<span class="token punctuation">:</span> <span class="token number">10.2</span><span class="token punctuation">.</span><span class="token number">1</span>
+  cython<span class="token punctuation">:</span>
+    commands<span class="token punctuation">:</span> cython
+    linker<span class="token punctuation">:</span> cython
+    name<span class="token punctuation">:</span> cython
+    version<span class="token punctuation">:</span> <span class="token number">3.0</span><span class="token punctuation">.</span><span class="token number">8</span>
+Machine Information<span class="token punctuation">:</span>
+  build<span class="token punctuation">:</span>
+    cpu<span class="token punctuation">:</span> x86_64
+    endian<span class="token punctuation">:</span> little
+    family<span class="token punctuation">:</span> x86_64
+    system<span class="token punctuation">:</span> linux
+  host<span class="token punctuation">:</span>
+    cpu<span class="token punctuation">:</span> x86_64
+    endian<span class="token punctuation">:</span> little
+    family<span class="token punctuation">:</span> x86_64
+    system<span class="token punctuation">:</span> linux
+Python Information<span class="token punctuation">:</span>
+  path<span class="token punctuation">:</span> <span class="token operator">/</span>opt<span class="token operator">/</span>python<span class="token operator">/</span>cp39<span class="token operator">-</span>cp39<span class="token operator">/</span>bin<span class="token operator">/</span>python
+  version<span class="token punctuation">:</span> <span class="token string">'3.9'</span>
+SIMD Extensions<span class="token punctuation">:</span>
+  baseline<span class="token punctuation">:</span>
+  <span class="token operator">-</span> SSE
+  <span class="token operator">-</span> SSE2
+  <span class="token operator">-</span> SSE3
+  found<span class="token punctuation">:</span>
+  <span class="token operator">-</span> SSSE3
+  <span class="token operator">-</span> SSE41
+  <span class="token operator">-</span> POPCNT
+  <span class="token operator">-</span> SSE42
+  <span class="token operator">-</span> AVX
+  <span class="token operator">-</span> AVX2
+  <span class="token operator">not</span> found<span class="token punctuation">:</span>
+  <span class="token operator">-</span> F16C
+  <span class="token operator">-</span> FMA3
+  <span class="token operator">-</span> AVX512F
+  <span class="token operator">-</span> AVX512CD
+  <span class="token operator">-</span> AVX512_KNL
+  <span class="token operator">-</span> AVX512_KNM
+  <span class="token operator">-</span> AVX512_SKX
+  <span class="token operator">-</span> AVX512_CLX
+  <span class="token operator">-</span> AVX512_CNL
+  <span class="token operator">-</span> AVX512_ICL
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>如果要做性能调优，或者修改底层参数，可能需要修改类似的环境变量：</p>
+<pre class="line-numbers language-bash"><code class="language-bash"><span class="token function">export</span> OPENBLAS_NUM_THREADS<span class="token operator">=</span>1
+<span class="token function">export</span> GOTO_NUM_THREADS<span class="token operator">=</span>1
+<span class="token function">export</span> OMP_NUM_THREADS<span class="token operator">=</span>1
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>本章主要介绍了，numpy相关的知识和方法，以及numpy的底层原理和可能的调优方法。</p>
+<p>下一章将介绍Cython相关的知识。</p>
+
+</article>
+    
+    
+
+</div>
+<div class="trm-post-next-prev row">
+    <div class="col-lg-12">
+        <!-- title -->
+        <h5 class="trm-title-with-divider">
+            其他文章
+            <span data-number="02"></span>
+        </h5>
+    </div>
+    
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/05/28/MPI%E5%92%8Csocket%E5%8C%BA%E5%88%AB%E4%B8%8E%E8%81%94%E7%B3%BB/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" #.">
+                    未分类
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/05/28/MPI%E5%92%8Csocket%E5%8C%BA%E5%88%AB%E4%B8%8E%E8%81%94%E7%B3%BB/" class="trm-anima-link">
+                    MPI和socket区别与联系
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/05/28</li>
+                <li>19:30</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+</div>
+
+    
+
+
+
+                    <div class="trm-divider footer-divider"></div>
+
+                    <!-- footer -->
+                    <footer class="trm-scroll-animation">
+
+    
+
+    
+
+    
+        <div class="trm-footer-item">
+            <span>
+                由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v7.0.0
+            </span>
+            <span class="footer-separator" data-separator=" | "></span>
+            <span> 
+                主题 - 
+                <a rel="noopener" href='https://github.com/MaLuns/hexo-theme-async' target='_blank'>Async</a>
+                v2.1.8
+            </span>
+        </div>
+      
+
+     
+
+     
+</footer>
+ 
+                    <!-- footer end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- body end -->
+
+            
+
+            
+<div class="trm-fixed-container">
+    
+    
+        <div class="trm-fixed-btn" data-title="阅读模式" onclick="asyncFun.switchReadMode()">
+            <i class="iconfont fas fa-book-reader"></i>
+        </div>
+    
+    
+    <div id="trm-back-top" class="trm-fixed-btn" data-title="回到顶部">
+        <i class="iconfont fas fa-arrow-up"></i>
+    </div>
+</div>
+        </div>
+      </div>
+      <!-- scroll container end -->
+  </div>
+  <!-- app wrapper end -->
+
+  
+  <!-- Plugin -->
+
+
+
+
+    
+    
+<script src="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+
+    
+
+    
+
+    
+
+    <!-- 数学公式 -->
+    
+
+    <!-- 评论插件 -->
+    
+        
+
+        
+    
+
+
+
+<!-- CDN -->
+
+
+    
+
+    
+
+    
+
+
+
+
+    <!-- Service Worker -->
+    
+    <!-- baidu push -->
+    
+
+
+<script id="async-script" src="/js/main.js?v=2.1.8"></script>
+
+</body>
+
+</html>
