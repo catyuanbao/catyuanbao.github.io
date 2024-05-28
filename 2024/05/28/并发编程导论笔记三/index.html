@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="x5-fullscreen" content="true">
+<meta name="full-screen" content="yes">
+<meta name="theme-color" content="#317EFB" />
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
+<meta name="description" content="背景本文主要记录《An Introduction to Parallel Programming 》第二版 一书 第三章 Distributed memory programming with MPI。 这部分主要是学习使用MPI编程接口，做简单的多进程并行计算应用程序开发。继续上次没有进行完的内容，主要是MPI的接口和其他实际算法问题。 Data distributions本节的实例是最为简单的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="并发编程导论笔记三">
+<meta property="og:url" content="http://example.com/2024/05/28/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E5%AF%BC%E8%AE%BA%E7%AC%94%E8%AE%B0%E4%B8%89/index.html">
+<meta property="og:site_name" content="Cat YuanBao">
+<meta property="og:description" content="背景本文主要记录《An Introduction to Parallel Programming 》第二版 一书 第三章 Distributed memory programming with MPI。 这部分主要是学习使用MPI编程接口，做简单的多进程并行计算应用程序开发。继续上次没有进行完的内容，主要是MPI的接口和其他实际算法问题。 Data distributions本节的实例是最为简单的">
+<meta property="og:locale">
+<meta property="article:published_time" content="2024-05-28T09:37:37.000Z">
+<meta property="article:modified_time" content="2024-05-28T09:38:05.383Z">
+<meta property="article:author" content="橘猫元宝">
+<meta property="article:tag" content="cat">
+<meta name="twitter:card" content="summary">
+
+    <meta name="keywords" content="cat">
+
+
+<title >并发编程导论笔记三</title>
+
+<!-- Favicon -->
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='16x16' ></link>
+
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='32x32' ></link>
+
+
+
+
+<!-- Plugin -->
+
+
+
+
+    
+<link rel="stylesheet" href="/css/plugins/bootstrap.row.css">
+
+    
+<link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.css">
+
+    
+    
+
+
+
+
+<!-- Icon -->
+
+    
+<link rel="stylesheet" href="/css/plugins/font-awesome.min.css">
+
+
+
+
+<!-- Variable -->
+<script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-05-28 17:38:05"};</script>
+
+<!-- Theme mode css -->
+<link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
+<script>
+    let defaultMode = ASYNC_CONFIG.theme.default !=='auto' ?  ASYNC_CONFIG.theme.default : (window.matchMedia("(prefers-color-scheme: light)").matches ? 'style-light' : 'style-dark')
+    let catchMode = localStorage.getItem('theme-mode') || defaultMode;
+    let type = catchMode === 'style-dark' ? 'add' : 'remove';
+    document.documentElement.classList[type]('dark')
+</script>
+
+<!-- CDN -->
+
+
+    
+    
+
+
+
+<!-- Site Analytics -->
+ 
+<meta name="generator" content="Hexo 7.0.0"><link rel="stylesheet" href="/css/prism.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+<body>
+
+  <!-- app wrapper -->
+  <div class="trm-app-frame">
+
+    <!-- page preloader -->
+    <div class="trm-preloader">
+    <div class="trm-holder">
+        <div class="preloader">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+    <!-- page preloader end -->
+
+    <!-- change mode preloader -->
+    <div class="trm-mode-swich-animation-frame">
+    <div class="trm-mode-swich-animation">
+        <i class="i-sun"><i class="iconfont far fa-sun"></i></i>
+        <div class="trm-horizon"></div>
+        <i class="i-moon"><i class="iconfont far fa-moon"></i></i>
+    </div>
+</div>
+    <!-- change mode preloader end -->
+
+      <!-- scroll container -->
+      <div id="trm-dynamic-content" class="trm-swup-animation">
+        <div id="trm-scroll-container" class="trm-scroll-container" style="opacity: 0">
+            <!-- top bar -->
+            <header class="trm-top-bar">
+	<div class="container">
+		<div class="trm-left-side">
+			<!-- logo -->
+<a href="/" class="trm-logo-frame trm-anima-link">
+    
+        <img alt="logo" src="/img/favicon.svg">
+    
+    
+        <div class="trm-logo-text">
+            元宝<span>橘猫</span>
+        </div>
+    
+</a>
+<!-- logo end -->
+		</div>
+		<div class="trm-right-side">
+			<!-- menu -->
+<div class="trm-menu">
+    <nav>
+        <ul>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/" target="">
+                    首页
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/archives/" target="">
+                    归档
+                </a>
+                
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+<!-- menu end -->
+			
+    <!-- mode switcher place -->
+    <div class="trm-mode-switcher-place">
+        <div class="trm-mode-switcher">
+            <i class="iconfont far fa-sun"></i>
+            <input class="tgl tgl-light" id="trm-swich" type="checkbox">
+            <label class="trm-swich" for="trm-swich"></label>
+            <i class="iconfont far fa-moon"></i>
+        </div>
+    </div>
+    <!-- mode switcher place end -->
+
+			
+		</div>
+		<div class="trm-menu-btn">
+			<span></span>
+		</div>
+	</div>
+</header>
+            <!-- top bar end -->
+
+            <!-- body -->
+            
+<div class="trm-content-start">
+    <!-- banner -->
+    <div class="trm-banner">
+    
+    <!-- banner cover -->
+    <img style="object-position:top;object-fit:cover;" alt="banner" class="trm-banner-cover" src="/img/banner.png">
+    <!-- banner cover end -->
+    
+
+    <!-- banner content -->
+    <div class="trm-banner-content trm-overlay">
+        <div class="container">
+            <div class="row">
+                
+                <div class="col-lg-4"></div>
+                
+                <div class="col-lg-8">
+
+                    <!-- banner title -->
+                    <div class="trm-banner-text ">
+                        <div class="trm-label trm-mb-20">
+                            NEWS LETTER
+                        </div>
+                        <h1 class="trm-mb-30 trm-hsmb-font">
+                            并发编程导论笔记三
+                        </h1>
+
+                        
+                            <ul class="trm-breadcrumbs trm-label">
+                                <li>
+                                    <a href="/" class="trm-anima-link">Home</a>
+                                </li>
+                                <li>
+                                    <span>
+                                        2024
+                                    </span>
+                                </li>
+                            </ul>
+                        
+                    </div>
+                    <!-- banner title end -->
+
+                    <!-- scroll hint -->
+                    <span id="scroll-triger" class="trm-scroll-hint-frame">
+                        <div class="trm-scroll-hint"></div>
+                        <span class="trm-label">Scroll down</span>
+                    </span>
+                    <!-- scroll hint end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- banner content end -->
+</div>
+    <!-- banner end -->
+    <div class="container">
+        <div class="row">
+            
+                <div class="trm-page-sidebar col-lg-4 hidden-sm">
+                    <!-- main card -->
+                    <div class="trm-main-card-frame trm-sidebar">
+    <div class="trm-main-card"> 
+        <!-- card header -->
+<div class="trm-mc-header">
+    <div class="trm-avatar-frame trm-mb-20">
+        <img alt="Avatar" class="trm-avatar" src="/img/cat.jpg">
+    </div>
+    <h5 class="trm-name trm-mb-15">
+        橘猫元宝
+    </h5>
+    
+</div>
+<!-- card header end -->
+        <!-- sidebar social -->
+
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<div class="trm-social">
+    
+        <a href="https://github.com" title="Github" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-github"></i>
+        </a>
+    
+</div>
+
+<!-- sidebar social end -->
+        <!-- info -->
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<ul class="trm-table trm-mb-20">
+    
+        <li>
+            <div class="trm-label">
+                Residence:
+            </div>
+            <div class="trm-label trm-label-light">
+                Mars
+            </div>
+        </li>
+    
+</ul>
+<!-- info end -->
+
+        
+    </div>
+</div>
+                    <!-- main card end -->
+                </div>
+            
+            <div class="trm-page-content col-lg-8">
+                <div id="trm-content" class="trm-content">
+                    <div class="trm-post-info row hidden-sm">
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-calendar-alt trm-icon"></i><br>
+            05/28
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-clock trm-icon"></i><br>
+            17:37
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div id="post-author" class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-user trm-icon"></i><br>
+            橘猫元宝
+        </div>
+    </div>
+</div>
+<div class="trm-card ">
+    <article id="article-container" class="trm-publication">
+    <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>本文主要记录《An Introduction to Parallel Programming 》第二版 一书 第三章 Distributed memory programming with MPI。</p>
+<p>这部分主要是学习使用MPI编程接口，做简单的多进程并行计算应用程序开发。继续上次没有进行完的内容，主要是MPI的接口和其他实际算法问题。</p>
+<h3 id="Data-distributions"><a href="#Data-distributions" class="headerlink" title="Data distributions"></a>Data distributions</h3><p>本节的实例是最为简单的向量加法，对向量中的每个元素，按照位置，依次相加，前提是向量的位数一致，不然无法相加。</p>
+<p>然后考虑如何使用MPI接口并行化计算向量加法。</p>
+<p>简单代码如下：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdlib.h></span></span>
+
+<span class="token keyword">void</span> <span class="token function">Read_n</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token operator">*</span> n_p<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">void</span> <span class="token function">Allocate_vectors</span><span class="token punctuation">(</span><span class="token keyword">double</span><span class="token operator">*</span><span class="token operator">*</span> x_pp<span class="token punctuation">,</span> <span class="token keyword">double</span><span class="token operator">*</span><span class="token operator">*</span> y_pp<span class="token punctuation">,</span> <span class="token keyword">double</span><span class="token operator">*</span><span class="token operator">*</span> z_pp<span class="token punctuation">,</span> <span class="token keyword">int</span> n<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">void</span> <span class="token function">Read_vector</span><span class="token punctuation">(</span><span class="token keyword">double</span> a<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token keyword">int</span> n<span class="token punctuation">,</span> <span class="token keyword">char</span> vec_name<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">void</span> <span class="token function">Print_vector</span><span class="token punctuation">(</span><span class="token keyword">double</span> b<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token keyword">int</span> n<span class="token punctuation">,</span> <span class="token keyword">char</span> title<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">void</span> <span class="token function">Vector_sum</span><span class="token punctuation">(</span><span class="token keyword">double</span> x<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token keyword">double</span> y<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token keyword">double</span> z<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token keyword">int</span> n<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment" spellcheck="true">/*---------------------------------------------------------------------*/</span>
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+   <span class="token keyword">int</span> n<span class="token punctuation">;</span>
+   <span class="token keyword">double</span> <span class="token operator">*</span>x<span class="token punctuation">,</span> <span class="token operator">*</span>y<span class="token punctuation">,</span> <span class="token operator">*</span>z<span class="token punctuation">;</span>
+
+   <span class="token function">Read_n</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>n<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token function">Allocate_vectors</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>x<span class="token punctuation">,</span> <span class="token operator">&amp;</span>y<span class="token punctuation">,</span> <span class="token operator">&amp;</span>z<span class="token punctuation">,</span> n<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   <span class="token function">Read_vector</span><span class="token punctuation">(</span>x<span class="token punctuation">,</span> n<span class="token punctuation">,</span> <span class="token string">"x"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token function">Read_vector</span><span class="token punctuation">(</span>y<span class="token punctuation">,</span> n<span class="token punctuation">,</span> <span class="token string">"y"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   <span class="token function">Vector_sum</span><span class="token punctuation">(</span>x<span class="token punctuation">,</span> y<span class="token punctuation">,</span> z<span class="token punctuation">,</span> n<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   <span class="token function">Print_vector</span><span class="token punctuation">(</span>z<span class="token punctuation">,</span> n<span class="token punctuation">,</span> <span class="token string">"The sum is"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   <span class="token function">free</span><span class="token punctuation">(</span>x<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token function">free</span><span class="token punctuation">(</span>y<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token function">free</span><span class="token punctuation">(</span>z<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>  <span class="token comment" spellcheck="true">/* main */</span>
+
+<span class="token comment" spellcheck="true">/*---------------------------------------------------------------------
+ * Function:  Read_n
+ * Purpose:   Get the order of the vectors from stdin
+ * Out arg:   n_p:  the order of the vectors
+ *
+ * Errors:    If n &lt;= 0, the program terminates
+ */</span>
+<span class="token keyword">void</span> <span class="token function">Read_n</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token operator">*</span> n_p <span class="token comment" spellcheck="true">/* out */</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+   <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"What's the order of the vectors?\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token function">scanf</span><span class="token punctuation">(</span><span class="token string">"%d"</span><span class="token punctuation">,</span> n_p<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">*</span>n_p <span class="token operator">&lt;=</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token function">fprintf</span><span class="token punctuation">(</span><span class="token constant">stderr</span><span class="token punctuation">,</span> <span class="token string">"Order should be positive\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">exit</span><span class="token punctuation">(</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>  <span class="token comment" spellcheck="true">/* Read_n */</span>
+
+<span class="token comment" spellcheck="true">/*---------------------------------------------------------------------
+ * Function:  Allocate_vectors
+ * Purpose:   Allocate storage for the vectors
+ * In arg:    n:  the order of the vectors
+ * Out args:  x_pp, y_pp, z_pp:  pointers to storage for the vectors
+ *
+ * Errors:    If one of the mallocs fails, the program terminates
+ */</span>
+<span class="token keyword">void</span> <span class="token function">Allocate_vectors</span><span class="token punctuation">(</span>
+      <span class="token keyword">double</span><span class="token operator">*</span><span class="token operator">*</span>  x_pp  <span class="token comment" spellcheck="true">/* out */</span><span class="token punctuation">,</span>
+      <span class="token keyword">double</span><span class="token operator">*</span><span class="token operator">*</span>  y_pp  <span class="token comment" spellcheck="true">/* out */</span><span class="token punctuation">,</span>
+      <span class="token keyword">double</span><span class="token operator">*</span><span class="token operator">*</span>  z_pp  <span class="token comment" spellcheck="true">/* out */</span><span class="token punctuation">,</span>
+      <span class="token keyword">int</span>       n     <span class="token comment" spellcheck="true">/* in  */</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+   <span class="token operator">*</span>x_pp <span class="token operator">=</span> <span class="token function">malloc</span><span class="token punctuation">(</span>n<span class="token operator">*</span><span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">double</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token operator">*</span>y_pp <span class="token operator">=</span> <span class="token function">malloc</span><span class="token punctuation">(</span>n<span class="token operator">*</span><span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">double</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token operator">*</span>z_pp <span class="token operator">=</span> <span class="token function">malloc</span><span class="token punctuation">(</span>n<span class="token operator">*</span><span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">double</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">*</span>x_pp <span class="token operator">==</span> <span class="token constant">NULL</span> <span class="token operator">||</span> <span class="token operator">*</span>y_pp <span class="token operator">==</span> <span class="token constant">NULL</span> <span class="token operator">||</span> <span class="token operator">*</span>z_pp <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token function">fprintf</span><span class="token punctuation">(</span><span class="token constant">stderr</span><span class="token punctuation">,</span> <span class="token string">"Can't allocate vectors\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">exit</span><span class="token punctuation">(</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>  <span class="token comment" spellcheck="true">/* Allocate_vectors */</span>
+
+<span class="token comment" spellcheck="true">/*---------------------------------------------------------------------
+ * Function:  Read_vector
+ * Purpose:   Read a vector from stdin
+ * In args:   n:  order of the vector
+ *            vec_name:  name of vector (e.g., x)
+ * Out arg:   a:  the vector to be read in
+ */</span>
+<span class="token keyword">void</span> <span class="token function">Read_vector</span><span class="token punctuation">(</span>
+      <span class="token keyword">double</span>  a<span class="token punctuation">[</span><span class="token punctuation">]</span>         <span class="token comment" spellcheck="true">/* out */</span><span class="token punctuation">,</span>
+      <span class="token keyword">int</span>     n           <span class="token comment" spellcheck="true">/* in  */</span><span class="token punctuation">,</span>
+      <span class="token keyword">char</span>    vec_name<span class="token punctuation">[</span><span class="token punctuation">]</span>  <span class="token comment" spellcheck="true">/* in  */</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+   <span class="token keyword">int</span> i<span class="token punctuation">;</span>
+   <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Enter the vector %s\n"</span><span class="token punctuation">,</span> vec_name<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token keyword">for</span> <span class="token punctuation">(</span>i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> n<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span>
+      <span class="token function">scanf</span><span class="token punctuation">(</span><span class="token string">"%lf"</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>a<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>  <span class="token comment" spellcheck="true">/* Read_vector */</span>
+
+<span class="token comment" spellcheck="true">/*---------------------------------------------------------------------
+ * Function:  Print_vector
+ * Purpose:   Print the contents of a vector
+ * In args:   b:  the vector to be printed
+ *            n:  the order of the vector
+ *            title:  title for print out
+ */</span>
+<span class="token keyword">void</span> <span class="token function">Print_vector</span><span class="token punctuation">(</span>
+      <span class="token keyword">double</span>  b<span class="token punctuation">[</span><span class="token punctuation">]</span>     <span class="token comment" spellcheck="true">/* in */</span><span class="token punctuation">,</span>
+      <span class="token keyword">int</span>     n       <span class="token comment" spellcheck="true">/* in */</span><span class="token punctuation">,</span>
+      <span class="token keyword">char</span>    title<span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token comment" spellcheck="true">/* in */</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+   <span class="token keyword">int</span> i<span class="token punctuation">;</span>
+   <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"%s\n"</span><span class="token punctuation">,</span> title<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token keyword">for</span> <span class="token punctuation">(</span>i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> n<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span>
+      <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"%f "</span><span class="token punctuation">,</span> b<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>  <span class="token comment" spellcheck="true">/* Print_vector */</span>
+
+<span class="token comment" spellcheck="true">/*---------------------------------------------------------------------
+ * Function:  Vector_sum
+ * Purpose:   Add two vectors
+ * In args:   x:  the first vector to be added
+ *            y:  the second vector to be added
+ *            n:  the order of the vectors
+ * Out arg:   z:  the sum vector
+ */</span>
+<span class="token keyword">void</span> <span class="token function">Vector_sum</span><span class="token punctuation">(</span>
+      <span class="token keyword">double</span>  x<span class="token punctuation">[</span><span class="token punctuation">]</span>  <span class="token comment" spellcheck="true">/* in  */</span><span class="token punctuation">,</span>
+      <span class="token keyword">double</span>  y<span class="token punctuation">[</span><span class="token punctuation">]</span>  <span class="token comment" spellcheck="true">/* in  */</span><span class="token punctuation">,</span>
+      <span class="token keyword">double</span>  z<span class="token punctuation">[</span><span class="token punctuation">]</span>  <span class="token comment" spellcheck="true">/* out */</span><span class="token punctuation">,</span>
+      <span class="token keyword">int</span>     n    <span class="token comment" spellcheck="true">/* in  */</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+   <span class="token keyword">int</span> i<span class="token punctuation">;</span>
+
+   <span class="token keyword">for</span> <span class="token punctuation">(</span>i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> n<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span>
+      z<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> x<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">+</span> y<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>  <span class="token comment" spellcheck="true">/* Vector_sum */</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里介绍了如何并行化这个算法，这算是最简单的并行化算法了。</p>
+<p>最容易想到的做法，先考虑可以被除尽理想情况，比如两个一维向量，有12个元素，我们有4个进程，每个进程去做3个计算</p>
+<p>第1个进程计算0,1,2</p>
+<p>第2个进程技术3,4,5</p>
+<p>第3个进程计算6,7,8</p>
+<p>第4个进程计算9,10,11</p>
+<p>这些计算步骤也是相互独立的，没有关联，不需要考虑同步的问题。</p>
+<p>这个方法被称为block partition。</p>
+<p>代码实现如下：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdlib.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;mpi.h></span></span>
+
+<span class="token keyword">void</span> <span class="token function">Check_for_error</span><span class="token punctuation">(</span><span class="token keyword">int</span> local_ok<span class="token punctuation">,</span> <span class="token keyword">char</span> fname<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token keyword">char</span> message<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+      MPI_Comm comm<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">void</span> <span class="token function">Read_n</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token operator">*</span> n_p<span class="token punctuation">,</span> <span class="token keyword">int</span><span class="token operator">*</span> local_n_p<span class="token punctuation">,</span> <span class="token keyword">int</span> my_rank<span class="token punctuation">,</span> <span class="token keyword">int</span> comm_sz<span class="token punctuation">,</span>
+      MPI_Comm comm<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">void</span> <span class="token function">Allocate_vectors</span><span class="token punctuation">(</span><span class="token keyword">double</span><span class="token operator">*</span><span class="token operator">*</span> local_x_pp<span class="token punctuation">,</span> <span class="token keyword">double</span><span class="token operator">*</span><span class="token operator">*</span> local_y_pp<span class="token punctuation">,</span>
+      <span class="token keyword">double</span><span class="token operator">*</span><span class="token operator">*</span> local_z_pp<span class="token punctuation">,</span> <span class="token keyword">int</span> local_n<span class="token punctuation">,</span> MPI_Comm comm<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">void</span> <span class="token function">Read_vector</span><span class="token punctuation">(</span><span class="token keyword">double</span> local_a<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token keyword">int</span> local_n<span class="token punctuation">,</span> <span class="token keyword">int</span> n<span class="token punctuation">,</span> <span class="token keyword">char</span> vec_name<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+      <span class="token keyword">int</span> my_rank<span class="token punctuation">,</span> MPI_Comm comm<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">void</span> <span class="token function">Print_vector</span><span class="token punctuation">(</span><span class="token keyword">double</span> local_b<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token keyword">int</span> local_n<span class="token punctuation">,</span> <span class="token keyword">int</span> n<span class="token punctuation">,</span> <span class="token keyword">char</span> title<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+      <span class="token keyword">int</span> my_rank<span class="token punctuation">,</span> MPI_Comm comm<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">void</span> <span class="token function">Parallel_vector_sum</span><span class="token punctuation">(</span><span class="token keyword">double</span> local_x<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token keyword">double</span> local_y<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+      <span class="token keyword">double</span> local_z<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token keyword">int</span> local_n<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+
+<span class="token comment" spellcheck="true">/*-------------------------------------------------------------------*/</span>
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+   <span class="token keyword">int</span> n<span class="token punctuation">,</span> local_n<span class="token punctuation">;</span>
+   <span class="token keyword">int</span> comm_sz<span class="token punctuation">,</span> my_rank<span class="token punctuation">;</span>
+   <span class="token keyword">double</span> <span class="token operator">*</span>local_x<span class="token punctuation">,</span> <span class="token operator">*</span>local_y<span class="token punctuation">,</span> <span class="token operator">*</span>local_z<span class="token punctuation">;</span>
+   MPI_Comm comm<span class="token punctuation">;</span>
+
+   <span class="token function">MPI_Init</span><span class="token punctuation">(</span><span class="token constant">NULL</span><span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+   comm <span class="token operator">=</span> MPI_COMM_WORLD<span class="token punctuation">;</span>
+   <span class="token function">MPI_Comm_size</span><span class="token punctuation">(</span>comm<span class="token punctuation">,</span> <span class="token operator">&amp;</span>comm_sz<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token function">MPI_Comm_rank</span><span class="token punctuation">(</span>comm<span class="token punctuation">,</span> <span class="token operator">&amp;</span>my_rank<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   <span class="token function">Read_n</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>n<span class="token punctuation">,</span> <span class="token operator">&amp;</span>local_n<span class="token punctuation">,</span> my_rank<span class="token punctuation">,</span> comm_sz<span class="token punctuation">,</span> comm<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token macro property">#  <span class="token directive keyword">ifdef</span> DEBUG</span>
+   <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Proc %d > n = %d, local_n = %d\n"</span><span class="token punctuation">,</span> my_rank<span class="token punctuation">,</span> n<span class="token punctuation">,</span> local_n<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token macro property">#  <span class="token directive keyword">endif</span></span>
+   <span class="token function">Allocate_vectors</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>local_x<span class="token punctuation">,</span> <span class="token operator">&amp;</span>local_y<span class="token punctuation">,</span> <span class="token operator">&amp;</span>local_z<span class="token punctuation">,</span> local_n<span class="token punctuation">,</span> comm<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   <span class="token function">Read_vector</span><span class="token punctuation">(</span>local_x<span class="token punctuation">,</span> local_n<span class="token punctuation">,</span> n<span class="token punctuation">,</span> <span class="token string">"x"</span><span class="token punctuation">,</span> my_rank<span class="token punctuation">,</span> comm<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token function">Print_vector</span><span class="token punctuation">(</span>local_x<span class="token punctuation">,</span> local_n<span class="token punctuation">,</span> n<span class="token punctuation">,</span> <span class="token string">"x is"</span><span class="token punctuation">,</span> my_rank<span class="token punctuation">,</span> comm<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token function">Read_vector</span><span class="token punctuation">(</span>local_y<span class="token punctuation">,</span> local_n<span class="token punctuation">,</span> n<span class="token punctuation">,</span> <span class="token string">"y"</span><span class="token punctuation">,</span> my_rank<span class="token punctuation">,</span> comm<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token function">Print_vector</span><span class="token punctuation">(</span>local_y<span class="token punctuation">,</span> local_n<span class="token punctuation">,</span> n<span class="token punctuation">,</span> <span class="token string">"y is"</span><span class="token punctuation">,</span> my_rank<span class="token punctuation">,</span> comm<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   <span class="token function">Parallel_vector_sum</span><span class="token punctuation">(</span>local_x<span class="token punctuation">,</span> local_y<span class="token punctuation">,</span> local_z<span class="token punctuation">,</span> local_n<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token function">Print_vector</span><span class="token punctuation">(</span>local_z<span class="token punctuation">,</span> local_n<span class="token punctuation">,</span> n<span class="token punctuation">,</span> <span class="token string">"The sum is"</span><span class="token punctuation">,</span> my_rank<span class="token punctuation">,</span> comm<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   <span class="token function">free</span><span class="token punctuation">(</span>local_x<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token function">free</span><span class="token punctuation">(</span>local_y<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token function">free</span><span class="token punctuation">(</span>local_z<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   <span class="token function">MPI_Finalize</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>  <span class="token comment" spellcheck="true">/* main */</span>
+
+<span class="token comment" spellcheck="true">/*-------------------------------------------------------------------
+ * Function:  Check_for_error
+ * Purpose:   Check whether any process has found an error.  If so,
+ *            print message and terminate all processes.  Otherwise,
+ *            continue execution.
+ * In args:   local_ok:  1 if calling process has found an error, 0
+ *               otherwise
+ *            fname:     name of function calling Check_for_error
+ *            message:   message to print if there's an error
+ *            comm:      communicator containing processes calling
+ *                       Check_for_error:  should be MPI_COMM_WORLD.
+ *
+ * Note:
+ *    The communicator containing the processes calling Check_for_error
+ *    should be MPI_COMM_WORLD.
+ */</span>
+<span class="token keyword">void</span> <span class="token function">Check_for_error</span><span class="token punctuation">(</span>
+      <span class="token keyword">int</span>       local_ok   <span class="token comment" spellcheck="true">/* in */</span><span class="token punctuation">,</span>
+      <span class="token keyword">char</span>      fname<span class="token punctuation">[</span><span class="token punctuation">]</span>    <span class="token comment" spellcheck="true">/* in */</span><span class="token punctuation">,</span>
+      <span class="token keyword">char</span>      message<span class="token punctuation">[</span><span class="token punctuation">]</span>  <span class="token comment" spellcheck="true">/* in */</span><span class="token punctuation">,</span>
+      MPI_Comm  comm       <span class="token comment" spellcheck="true">/* in */</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+   <span class="token keyword">int</span> ok<span class="token punctuation">;</span>
+
+   <span class="token function">MPI_Allreduce</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>local_ok<span class="token punctuation">,</span> <span class="token operator">&amp;</span>ok<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> MPI_INT<span class="token punctuation">,</span> MPI_MIN<span class="token punctuation">,</span> comm<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token keyword">if</span> <span class="token punctuation">(</span>ok <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">int</span> my_rank<span class="token punctuation">;</span>
+      <span class="token function">MPI_Comm_rank</span><span class="token punctuation">(</span>comm<span class="token punctuation">,</span> <span class="token operator">&amp;</span>my_rank<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>my_rank <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+         <span class="token function">fprintf</span><span class="token punctuation">(</span><span class="token constant">stderr</span><span class="token punctuation">,</span> <span class="token string">"Proc %d > In %s, %s\n"</span><span class="token punctuation">,</span> my_rank<span class="token punctuation">,</span> fname<span class="token punctuation">,</span>
+               message<span class="token punctuation">)</span><span class="token punctuation">;</span>
+         <span class="token function">fflush</span><span class="token punctuation">(</span><span class="token constant">stderr</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+      <span class="token function">MPI_Finalize</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">exit</span><span class="token punctuation">(</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>  <span class="token comment" spellcheck="true">/* Check_for_error */</span>
+
+
+<span class="token comment" spellcheck="true">/*-------------------------------------------------------------------
+ * Function:  Read_n
+ * Purpose:   Get the order of the vectors from stdin on proc 0 and
+ *            broadcast to other processes.
+ * In args:   my_rank:    process rank in communicator
+ *            comm_sz:    number of processes in communicator
+ *            comm:       communicator containing all the processes
+ *                        calling Read_n
+ * Out args:  n_p:        global value of n
+ *            local_n_p:  local value of n = n/comm_sz
+ *
+ * Errors:    n should be positive and evenly divisible by comm_sz
+ */</span>
+<span class="token keyword">void</span> <span class="token function">Read_n</span><span class="token punctuation">(</span>
+      <span class="token keyword">int</span><span class="token operator">*</span>      n_p        <span class="token comment" spellcheck="true">/* out */</span><span class="token punctuation">,</span>
+      <span class="token keyword">int</span><span class="token operator">*</span>      local_n_p  <span class="token comment" spellcheck="true">/* out */</span><span class="token punctuation">,</span>
+      <span class="token keyword">int</span>       my_rank    <span class="token comment" spellcheck="true">/* in  */</span><span class="token punctuation">,</span>
+      <span class="token keyword">int</span>       comm_sz    <span class="token comment" spellcheck="true">/* in  */</span><span class="token punctuation">,</span>
+      MPI_Comm  comm       <span class="token comment" spellcheck="true">/* in  */</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+   <span class="token keyword">int</span> local_ok <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+   <span class="token keyword">char</span> <span class="token operator">*</span>fname <span class="token operator">=</span> <span class="token string">"Read_n"</span><span class="token punctuation">;</span>
+
+   <span class="token keyword">if</span> <span class="token punctuation">(</span>my_rank <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"What's the order of the vectors?\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">scanf</span><span class="token punctuation">(</span><span class="token string">"%d"</span><span class="token punctuation">,</span> n_p<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token punctuation">}</span>
+   <span class="token function">MPI_Bcast</span><span class="token punctuation">(</span>n_p<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> MPI_INT<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> comm<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">*</span>n_p <span class="token operator">&lt;=</span> <span class="token number">0</span> <span class="token operator">||</span> <span class="token operator">*</span>n_p <span class="token operator">%</span> comm_sz <span class="token operator">!=</span> <span class="token number">0</span><span class="token punctuation">)</span> local_ok <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+   <span class="token function">Check_for_error</span><span class="token punctuation">(</span>local_ok<span class="token punctuation">,</span> fname<span class="token punctuation">,</span>
+         <span class="token string">"n should be > 0 and evenly divisible by comm_sz"</span><span class="token punctuation">,</span> comm<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token operator">*</span>local_n_p <span class="token operator">=</span> <span class="token operator">*</span>n_p<span class="token operator">/</span>comm_sz<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>  <span class="token comment" spellcheck="true">/* Read_n */</span>
+
+
+<span class="token comment" spellcheck="true">/*-------------------------------------------------------------------
+ * Function:  Allocate_vectors
+ * Purpose:   Allocate storage for x, y, and z
+ * In args:   local_n:  the size of the local vectors
+ *            comm:     the communicator containing the calling processes
+ * Out args:  local_x_pp, local_y_pp, local_z_pp:  pointers to memory
+ *               blocks to be allocated for local vectors
+ *
+ * Errors:    One or more of the calls to malloc fails
+ */</span>
+<span class="token keyword">void</span> <span class="token function">Allocate_vectors</span><span class="token punctuation">(</span>
+      <span class="token keyword">double</span><span class="token operator">*</span><span class="token operator">*</span>   local_x_pp  <span class="token comment" spellcheck="true">/* out */</span><span class="token punctuation">,</span>
+      <span class="token keyword">double</span><span class="token operator">*</span><span class="token operator">*</span>   local_y_pp  <span class="token comment" spellcheck="true">/* out */</span><span class="token punctuation">,</span>
+      <span class="token keyword">double</span><span class="token operator">*</span><span class="token operator">*</span>   local_z_pp  <span class="token comment" spellcheck="true">/* out */</span><span class="token punctuation">,</span>
+      <span class="token keyword">int</span>        local_n     <span class="token comment" spellcheck="true">/* in  */</span><span class="token punctuation">,</span>
+      MPI_Comm   comm        <span class="token comment" spellcheck="true">/* in  */</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+   <span class="token keyword">int</span> local_ok <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+   <span class="token keyword">char</span><span class="token operator">*</span> fname <span class="token operator">=</span> <span class="token string">"Allocate_vectors"</span><span class="token punctuation">;</span>
+
+   <span class="token operator">*</span>local_x_pp <span class="token operator">=</span> <span class="token function">malloc</span><span class="token punctuation">(</span>local_n<span class="token operator">*</span><span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">double</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token operator">*</span>local_y_pp <span class="token operator">=</span> <span class="token function">malloc</span><span class="token punctuation">(</span>local_n<span class="token operator">*</span><span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">double</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token operator">*</span>local_z_pp <span class="token operator">=</span> <span class="token function">malloc</span><span class="token punctuation">(</span>local_n<span class="token operator">*</span><span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">double</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">*</span>local_x_pp <span class="token operator">==</span> <span class="token constant">NULL</span> <span class="token operator">||</span> <span class="token operator">*</span>local_y_pp <span class="token operator">==</span> <span class="token constant">NULL</span> <span class="token operator">||</span>
+       <span class="token operator">*</span>local_z_pp <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> local_ok <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+   <span class="token function">Check_for_error</span><span class="token punctuation">(</span>local_ok<span class="token punctuation">,</span> fname<span class="token punctuation">,</span> <span class="token string">"Can't allocate local vector(s)"</span><span class="token punctuation">,</span>
+         comm<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>  <span class="token comment" spellcheck="true">/* Allocate_vectors */</span>
+
+
+<span class="token comment" spellcheck="true">/*-------------------------------------------------------------------
+ * Function:   Read_vector
+ * Purpose:    Read a vector from stdin on process 0 and distribute
+ *             among the processes using a block distribution.
+ * In args:    local_n:  size of local vectors
+ *             n:        size of global vector
+ *             vec_name: name of vector being read (e.g., "x")
+ *             my_rank:  calling process' rank in comm
+ *             comm:     communicator containing calling processes
+ * Out arg:    local_a:  local vector read
+ *
+ * Errors:     if the malloc on process 0 for temporary storage
+ *             fails the program terminates
+ *
+ * Note:
+ *    This function assumes a block distribution and the order
+ *   of the vector evenly divisible by comm_sz.
+ */</span>
+<span class="token keyword">void</span> <span class="token function">Read_vector</span><span class="token punctuation">(</span>
+      <span class="token keyword">double</span>    local_a<span class="token punctuation">[</span><span class="token punctuation">]</span>   <span class="token comment" spellcheck="true">/* out */</span><span class="token punctuation">,</span>
+      <span class="token keyword">int</span>       local_n     <span class="token comment" spellcheck="true">/* in  */</span><span class="token punctuation">,</span>
+      <span class="token keyword">int</span>       n           <span class="token comment" spellcheck="true">/* in  */</span><span class="token punctuation">,</span>
+      <span class="token keyword">char</span>      vec_name<span class="token punctuation">[</span><span class="token punctuation">]</span>  <span class="token comment" spellcheck="true">/* in  */</span><span class="token punctuation">,</span>
+      <span class="token keyword">int</span>       my_rank     <span class="token comment" spellcheck="true">/* in  */</span><span class="token punctuation">,</span>
+      MPI_Comm  comm        <span class="token comment" spellcheck="true">/* in  */</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+
+   <span class="token keyword">double</span><span class="token operator">*</span> a <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+   <span class="token keyword">int</span> i<span class="token punctuation">;</span>
+   <span class="token keyword">int</span> local_ok <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+   <span class="token keyword">char</span><span class="token operator">*</span> fname <span class="token operator">=</span> <span class="token string">"Read_vector"</span><span class="token punctuation">;</span>
+
+   <span class="token keyword">if</span> <span class="token punctuation">(</span>my_rank <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      a <span class="token operator">=</span> <span class="token function">malloc</span><span class="token punctuation">(</span>n<span class="token operator">*</span><span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">double</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>a <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> local_ok <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+      <span class="token function">Check_for_error</span><span class="token punctuation">(</span>local_ok<span class="token punctuation">,</span> fname<span class="token punctuation">,</span> <span class="token string">"Can't allocate temporary vector"</span><span class="token punctuation">,</span>
+            comm<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Enter the vector %s\n"</span><span class="token punctuation">,</span> vec_name<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">for</span> <span class="token punctuation">(</span>i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> n<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span>
+         <span class="token function">scanf</span><span class="token punctuation">(</span><span class="token string">"%lf"</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>a<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">MPI_Scatter</span><span class="token punctuation">(</span>a<span class="token punctuation">,</span> local_n<span class="token punctuation">,</span> MPI_DOUBLE<span class="token punctuation">,</span> local_a<span class="token punctuation">,</span> local_n<span class="token punctuation">,</span> MPI_DOUBLE<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span>
+         comm<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">free</span><span class="token punctuation">(</span>a<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+      <span class="token function">Check_for_error</span><span class="token punctuation">(</span>local_ok<span class="token punctuation">,</span> fname<span class="token punctuation">,</span> <span class="token string">"Can't allocate temporary vector"</span><span class="token punctuation">,</span>
+            comm<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">MPI_Scatter</span><span class="token punctuation">(</span>a<span class="token punctuation">,</span> local_n<span class="token punctuation">,</span> MPI_DOUBLE<span class="token punctuation">,</span> local_a<span class="token punctuation">,</span> local_n<span class="token punctuation">,</span> MPI_DOUBLE<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span>
+         comm<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>  <span class="token comment" spellcheck="true">/* Read_vector */</span>
+
+
+<span class="token comment" spellcheck="true">/*-------------------------------------------------------------------
+ * Function:  Print_vector
+ * Purpose:   Print a vector that has a block distribution to stdout
+ * In args:   local_b:  local storage for vector to be printed
+ *            local_n:  order of local vectors
+ *            n:        order of global vector (local_n*comm_sz)
+ *            title:    title to precede print out
+ *            comm:     communicator containing processes calling
+ *                      Print_vector
+ *
+ * Error:     if process 0 can't allocate temporary storage for
+ *            the full vector, the program terminates.
+ *
+ * Note:
+ *    Assumes order of vector is evenly divisible by the number of
+ *    processes
+ */</span>
+<span class="token keyword">void</span> <span class="token function">Print_vector</span><span class="token punctuation">(</span>
+      <span class="token keyword">double</span>    local_b<span class="token punctuation">[</span><span class="token punctuation">]</span>  <span class="token comment" spellcheck="true">/* in */</span><span class="token punctuation">,</span>
+      <span class="token keyword">int</span>       local_n    <span class="token comment" spellcheck="true">/* in */</span><span class="token punctuation">,</span>
+      <span class="token keyword">int</span>       n          <span class="token comment" spellcheck="true">/* in */</span><span class="token punctuation">,</span>
+      <span class="token keyword">char</span>      title<span class="token punctuation">[</span><span class="token punctuation">]</span>    <span class="token comment" spellcheck="true">/* in */</span><span class="token punctuation">,</span>
+      <span class="token keyword">int</span>       my_rank    <span class="token comment" spellcheck="true">/* in */</span><span class="token punctuation">,</span>
+      MPI_Comm  comm       <span class="token comment" spellcheck="true">/* in */</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+
+   <span class="token keyword">double</span><span class="token operator">*</span> b <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+   <span class="token keyword">int</span> i<span class="token punctuation">;</span>
+   <span class="token keyword">int</span> local_ok <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+   <span class="token keyword">char</span><span class="token operator">*</span> fname <span class="token operator">=</span> <span class="token string">"Print_vector"</span><span class="token punctuation">;</span>
+
+   <span class="token keyword">if</span> <span class="token punctuation">(</span>my_rank <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      b <span class="token operator">=</span> <span class="token function">malloc</span><span class="token punctuation">(</span>n<span class="token operator">*</span><span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">double</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>b <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> local_ok <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+      <span class="token function">Check_for_error</span><span class="token punctuation">(</span>local_ok<span class="token punctuation">,</span> fname<span class="token punctuation">,</span> <span class="token string">"Can't allocate temporary vector"</span><span class="token punctuation">,</span>
+            comm<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">MPI_Gather</span><span class="token punctuation">(</span>local_b<span class="token punctuation">,</span> local_n<span class="token punctuation">,</span> MPI_DOUBLE<span class="token punctuation">,</span> b<span class="token punctuation">,</span> local_n<span class="token punctuation">,</span> MPI_DOUBLE<span class="token punctuation">,</span>
+            <span class="token number">0</span><span class="token punctuation">,</span> comm<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"%s\n"</span><span class="token punctuation">,</span> title<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">for</span> <span class="token punctuation">(</span>i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> n<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span>
+         <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"%f "</span><span class="token punctuation">,</span> b<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">free</span><span class="token punctuation">(</span>b<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+      <span class="token function">Check_for_error</span><span class="token punctuation">(</span>local_ok<span class="token punctuation">,</span> fname<span class="token punctuation">,</span> <span class="token string">"Can't allocate temporary vector"</span><span class="token punctuation">,</span>
+            comm<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">MPI_Gather</span><span class="token punctuation">(</span>local_b<span class="token punctuation">,</span> local_n<span class="token punctuation">,</span> MPI_DOUBLE<span class="token punctuation">,</span> b<span class="token punctuation">,</span> local_n<span class="token punctuation">,</span> MPI_DOUBLE<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span>
+         comm<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>  <span class="token comment" spellcheck="true">/* Print_vector */</span>
+
+
+<span class="token comment" spellcheck="true">/*-------------------------------------------------------------------
+ * Function:  Parallel_vector_sum
+ * Purpose:   Add a vector that's been distributed among the processes
+ * In args:   local_x:  local storage of one of the vectors being added
+ *            local_y:  local storage for the second vector being added
+ *            local_n:  the number of components in local_x, local_y,
+ *                      and local_z
+ * Out arg:   local_z:  local storage for the sum of the two vectors
+ */</span>
+<span class="token keyword">void</span> <span class="token function">Parallel_vector_sum</span><span class="token punctuation">(</span>
+      <span class="token keyword">double</span>  local_x<span class="token punctuation">[</span><span class="token punctuation">]</span>  <span class="token comment" spellcheck="true">/* in  */</span><span class="token punctuation">,</span>
+      <span class="token keyword">double</span>  local_y<span class="token punctuation">[</span><span class="token punctuation">]</span>  <span class="token comment" spellcheck="true">/* in  */</span><span class="token punctuation">,</span>
+      <span class="token keyword">double</span>  local_z<span class="token punctuation">[</span><span class="token punctuation">]</span>  <span class="token comment" spellcheck="true">/* out */</span><span class="token punctuation">,</span>
+      <span class="token keyword">int</span>     local_n    <span class="token comment" spellcheck="true">/* in  */</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+   <span class="token keyword">int</span> local_i<span class="token punctuation">;</span>
+
+   <span class="token keyword">for</span> <span class="token punctuation">(</span>local_i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> local_i <span class="token operator">&lt;</span> local_n<span class="token punctuation">;</span> local_i<span class="token operator">++</span><span class="token punctuation">)</span>
+      local_z<span class="token punctuation">[</span>local_i<span class="token punctuation">]</span> <span class="token operator">=</span> local_x<span class="token punctuation">[</span>local_i<span class="token punctuation">]</span> <span class="token operator">+</span> local_y<span class="token punctuation">[</span>local_i<span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>  <span class="token comment" spellcheck="true">/* Parallel_vector_sum */</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ mpiexec -n 4 ./p_add
+What<span class="token string">'s the order of the vectors?
+12
+Enter the vector x
+1 2 3 4 5 6 7 8 9 10 11 12
+x is
+1.000000 2.000000 3.000000 4.000000 5.000000 6.000000 7.000000 8.000000 9.000000 10.000000 11.000000 12.000000 
+Enter the vector y
+1 2 3 4 5 6 7 8 9 10 11 12
+y is
+1.000000 2.000000 3.000000 4.000000 5.000000 6.000000 7.000000 8.000000 9.000000 10.000000 11.000000 12.000000 
+The sum is
+2.000000 4.000000 6.000000 8.000000 10.000000 12.000000 14.000000 16.000000 18.000000 20.000000 22.000000 24.000000 
+
+$ mpiexec -n 5 ./p_add
+What'</span>s the order of the vectors?
+2
+Proc 0 <span class="token operator">></span> In Read_n, n should be <span class="token operator">></span> 0 and evenly divisible by comm_sz
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里如果不能整除是无法运行程序计算的。</p>
+<p>这里用到了新的API: MPI_Gather, MPI_Scatter</p>
+<h4 id="MPI-Gather"><a href="#MPI-Gather" class="headerlink" title="MPI_Gather"></a>MPI_Gather</h4><p><code>MPI_Gather</code> 是 MPI 中的一种集合通信操作，它允许多个进程将它们的数据收集到一个进程中。</p>
+<p>具体来说，<code>MPI_Gather</code> 允许一组进程将它们的数据发送到一个进程中，并且这个进程会将接收到的数据按照指定的顺序排列起来。</p>
+<p>一个简单实例演示如何使用：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;mpi.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdlib.h></span></span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token keyword">int</span> argc<span class="token punctuation">,</span> <span class="token keyword">char</span><span class="token operator">*</span> argv<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">MPI_Init</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>argc<span class="token punctuation">,</span> <span class="token operator">&amp;</span>argv<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">int</span> rank<span class="token punctuation">,</span> size<span class="token punctuation">;</span>
+    <span class="token function">MPI_Comm_rank</span><span class="token punctuation">(</span>MPI_COMM_WORLD<span class="token punctuation">,</span> <span class="token operator">&amp;</span>rank<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">MPI_Comm_size</span><span class="token punctuation">(</span>MPI_COMM_WORLD<span class="token punctuation">,</span> <span class="token operator">&amp;</span>size<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">int</span> <span class="token operator">*</span>sendbuf <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">int</span> <span class="token operator">*</span><span class="token punctuation">)</span><span class="token function">malloc</span><span class="token punctuation">(</span><span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">)</span> <span class="token operator">*</span> size<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// 每个进程的发送缓冲区</span>
+    <span class="token keyword">int</span> <span class="token operator">*</span>recvbuf <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// 根进程的接收缓冲区</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>rank <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        recvbuf <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">int</span> <span class="token operator">*</span><span class="token punctuation">)</span><span class="token function">malloc</span><span class="token punctuation">(</span><span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">)</span> <span class="token operator">*</span> size <span class="token operator">*</span> size<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// 根进程的接收缓冲区</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 每个进程生成自己的发送数据</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> size<span class="token punctuation">;</span> <span class="token operator">++</span>i<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        sendbuf<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">(</span>rank <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token number">10</span> <span class="token operator">+</span> i<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 使用 MPI_Gather 将每个进程的数据收集到根进程中</span>
+    <span class="token function">MPI_Gather</span><span class="token punctuation">(</span>sendbuf<span class="token punctuation">,</span> size<span class="token punctuation">,</span> MPI_INT<span class="token punctuation">,</span> recvbuf<span class="token punctuation">,</span> size<span class="token punctuation">,</span> MPI_INT<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> MPI_COMM_WORLD<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>rank <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Root process received:\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> size <span class="token operator">*</span> size<span class="token punctuation">;</span> <span class="token operator">++</span>i<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"%d "</span><span class="token punctuation">,</span> recvbuf<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">free</span><span class="token punctuation">(</span>recvbuf<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// 释放根进程的接收缓冲区</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">free</span><span class="token punctuation">(</span>sendbuf<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// 释放每个进程的发送缓冲区</span>
+
+    <span class="token function">MPI_Finalize</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ mpiexec -n 4 ./gather
+Root process received:
+10 11 12 13 20 21 22 23 30 31 32 33 40 41 42 43 
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<h4 id="MPI-Scatter"><a href="#MPI-Scatter" class="headerlink" title="MPI_Scatter"></a>MPI_Scatter</h4><p><code>MPI_Scatter</code> 是 MPI 中的一种集合通信操作，与 <code>MPI_Gather</code> 相反，它用于将数据从一个进程分发到多个进程。</p>
+<p>具体来说，<code>MPI_Scatter</code> 从一个进程（通常是根进程）发送数据块到其他进程中的每个进程，每个进程接收一个数据块。</p>
+<p>简单实例：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;mpi.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdlib.h></span></span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token keyword">int</span> argc<span class="token punctuation">,</span> <span class="token keyword">char</span><span class="token operator">*</span> argv<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">MPI_Init</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>argc<span class="token punctuation">,</span> <span class="token operator">&amp;</span>argv<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">int</span> rank<span class="token punctuation">,</span> size<span class="token punctuation">;</span>
+    <span class="token function">MPI_Comm_rank</span><span class="token punctuation">(</span>MPI_COMM_WORLD<span class="token punctuation">,</span> <span class="token operator">&amp;</span>rank<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">MPI_Comm_size</span><span class="token punctuation">(</span>MPI_COMM_WORLD<span class="token punctuation">,</span> <span class="token operator">&amp;</span>size<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">int</span> <span class="token operator">*</span>sendbuf <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> recvbuf<span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>rank <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        sendbuf <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">int</span> <span class="token operator">*</span><span class="token punctuation">)</span><span class="token function">malloc</span><span class="token punctuation">(</span>size <span class="token operator">*</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> size<span class="token punctuation">;</span> <span class="token operator">++</span>i<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            sendbuf<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> i <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// 初始化根进程的发送缓冲区</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 使用 MPI_Scatter 将数据分发给所有进程</span>
+    <span class="token function">MPI_Scatter</span><span class="token punctuation">(</span>sendbuf<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> MPI_INT<span class="token punctuation">,</span> <span class="token operator">&amp;</span>recvbuf<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> MPI_INT<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> MPI_COMM_WORLD<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Rank %d received %d\n"</span><span class="token punctuation">,</span> rank<span class="token punctuation">,</span> recvbuf<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>rank <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">free</span><span class="token punctuation">(</span>sendbuf<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// 释放根进程的发送缓冲区</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">MPI_Finalize</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行实例：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ mpiexec -n 4 ./scatter
+Rank 0 received 1
+Rank 2 received 3
+Rank 3 received 4
+Rank 1 received 2
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="MPI-Barrier"><a href="#MPI-Barrier" class="headerlink" title="MPI_Barrier"></a>MPI_Barrier</h4><p><code>MPI_Barrier</code> 是 MPI 中的一种同步操作，它用于使调用该函数的所有进程在某一点上同步。</p>
+<p>具体来说，当一个进程调用 <code>MPI_Barrier</code> 时，它将阻塞，直到同一通信子（comm）中的所有进程都调用了这个函数。只有当所有进程都到达了这个屏障点后，所有进程才会继续执行接下来的代码。</p>
+<p>这个方法主要用于MPI多进程的同步，确认不同进程的先后顺序。</p>
+<p>简单实例：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;mpi.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token keyword">int</span> argc<span class="token punctuation">,</span> <span class="token keyword">char</span><span class="token operator">*</span> argv<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">MPI_Init</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>argc<span class="token punctuation">,</span> <span class="token operator">&amp;</span>argv<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">int</span> rank<span class="token punctuation">,</span> size<span class="token punctuation">;</span>
+    <span class="token function">MPI_Comm_rank</span><span class="token punctuation">(</span>MPI_COMM_WORLD<span class="token punctuation">,</span> <span class="token operator">&amp;</span>rank<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">MPI_Comm_size</span><span class="token punctuation">(</span>MPI_COMM_WORLD<span class="token punctuation">,</span> <span class="token operator">&amp;</span>size<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Process %d reached the barrier\n"</span><span class="token punctuation">,</span> rank<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// 使用 MPI_Barrier 同步所有进程</span>
+    <span class="token function">MPI_Barrier</span><span class="token punctuation">(</span>MPI_COMM_WORLD<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Process %d passed the barrier\n"</span><span class="token punctuation">,</span> rank<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">MPI_Finalize</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ mpiexec -n 10 ./barrier
+Process 0 reached the barrier
+Process 8 reached the barrier
+Process 9 reached the barrier
+Process 1 reached the barrier
+Process 2 reached the barrier
+Process 3 reached the barrier
+Process 4 reached the barrier
+Process 6 reached the barrier
+Process 5 reached the barrier
+Process 7 reached the barrier
+Process 0 passed the barrier
+Process 8 passed the barrier
+Process 2 passed the barrier
+Process 9 passed the barrier
+Process 4 passed the barrier
+Process 3 passed the barrier
+Process 6 passed the barrier
+Process 7 passed the barrier
+Process 1 passed the barrier
+Process 5 passed the barrier
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>这部分主要介绍了MPI中的消息同步，以及进程同步的相关接口，下一部分主要讨论矩阵的乘法以及安全相关的内容。</p>
+
+</article>
+    
+    
+
+</div>
+<div class="trm-post-next-prev row">
+    <div class="col-lg-12">
+        <!-- title -->
+        <h5 class="trm-title-with-divider">
+            其他文章
+            <span data-number="02"></span>
+        </h5>
+    </div>
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/05/28/LeetCode-682-%E6%A3%92%E7%90%83%E6%AF%94%E8%B5%9B/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" #.">
+                    未分类
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/05/28/LeetCode-682-%E6%A3%92%E7%90%83%E6%AF%94%E8%B5%9B/" class="trm-anima-link">
+                    LeetCode-682-棒球比赛
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/05/28</li>
+                <li>17:39</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/05/27/LeetCode-747-%E8%87%B3%E5%B0%91%E6%98%AF%E5%85%B6%E4%BB%96%E6%95%B0%E5%AD%97%E4%B8%A4%E5%80%8D%E7%9A%84%E6%9C%80%E5%A4%A7%E6%95%B0/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" #.">
+                    未分类
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/05/27/LeetCode-747-%E8%87%B3%E5%B0%91%E6%98%AF%E5%85%B6%E4%BB%96%E6%95%B0%E5%AD%97%E4%B8%A4%E5%80%8D%E7%9A%84%E6%9C%80%E5%A4%A7%E6%95%B0/" class="trm-anima-link">
+                    LeetCode-747-至少是其他数字两倍的最大数
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/05/27</li>
+                <li>08:33</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+</div>
+
+    
+
+
+
+                    <div class="trm-divider footer-divider"></div>
+
+                    <!-- footer -->
+                    <footer class="trm-scroll-animation">
+
+    
+
+    
+
+    
+        <div class="trm-footer-item">
+            <span>
+                由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v7.0.0
+            </span>
+            <span class="footer-separator" data-separator=" | "></span>
+            <span> 
+                主题 - 
+                <a rel="noopener" href='https://github.com/MaLuns/hexo-theme-async' target='_blank'>Async</a>
+                v2.1.8
+            </span>
+        </div>
+      
+
+     
+
+     
+</footer>
+ 
+                    <!-- footer end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- body end -->
+
+            
+
+            
+<div class="trm-fixed-container">
+    
+    
+        <div class="trm-fixed-btn" data-title="阅读模式" onclick="asyncFun.switchReadMode()">
+            <i class="iconfont fas fa-book-reader"></i>
+        </div>
+    
+    
+    <div id="trm-back-top" class="trm-fixed-btn" data-title="回到顶部">
+        <i class="iconfont fas fa-arrow-up"></i>
+    </div>
+</div>
+        </div>
+      </div>
+      <!-- scroll container end -->
+  </div>
+  <!-- app wrapper end -->
+
+  
+  <!-- Plugin -->
+
+
+
+
+    
+    
+<script src="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+
+    
+
+    
+
+    
+
+    <!-- 数学公式 -->
+    
+
+    <!-- 评论插件 -->
+    
+        
+
+        
+    
+
+
+
+<!-- CDN -->
+
+
+    
+
+    
+
+    
+
+
+
+
+    <!-- Service Worker -->
+    
+    <!-- baidu push -->
+    
+
+
+<script id="async-script" src="/js/main.js?v=2.1.8"></script>
+
+</body>
+
+</html>
