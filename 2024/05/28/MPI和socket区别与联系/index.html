@@ -7,15 +7,15 @@
 <meta name="full-screen" content="yes">
 <meta name="theme-color" content="#317EFB" />
 <meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
-<meta name="description" content="背景本文主要记录解决LeetCode 682 棒球比赛题目过程，比较简单，使用一个栈就可以了。 实现Leetcode题解代码： Python版本： class Solution:     def calPoints(self, operations):         score_list &#x3D; []         for ops in operations:             if ops">
+<meta name="description" content="背景本文主要记录MPI和socket的区别，一开始接触MPI时候，感觉这个Send和Recv方法和socket编程中的很像，不知道它底层的实现是否使用的socket。 socket是一种进程直接通信的方式，MPI也有类似的功能。本文主要记录下这两者之间的异同。 对比MPI和socketMPI（Message Passing Interface）和Socket是两种常见的并行编程和网络通信的技术，它">
 <meta property="og:type" content="article">
-<meta property="og:title" content="LeetCode-682-棒球比赛">
-<meta property="og:url" content="http://example.com/2024/05/28/LeetCode-682-%E6%A3%92%E7%90%83%E6%AF%94%E8%B5%9B/index.html">
+<meta property="og:title" content="MPI和socket区别与联系">
+<meta property="og:url" content="http://example.com/2024/05/28/MPI%E5%92%8Csocket%E5%8C%BA%E5%88%AB%E4%B8%8E%E8%81%94%E7%B3%BB/index.html">
 <meta property="og:site_name" content="Cat YuanBao">
-<meta property="og:description" content="背景本文主要记录解决LeetCode 682 棒球比赛题目过程，比较简单，使用一个栈就可以了。 实现Leetcode题解代码： Python版本： class Solution:     def calPoints(self, operations):         score_list &#x3D; []         for ops in operations:             if ops">
+<meta property="og:description" content="背景本文主要记录MPI和socket的区别，一开始接触MPI时候，感觉这个Send和Recv方法和socket编程中的很像，不知道它底层的实现是否使用的socket。 socket是一种进程直接通信的方式，MPI也有类似的功能。本文主要记录下这两者之间的异同。 对比MPI和socketMPI（Message Passing Interface）和Socket是两种常见的并行编程和网络通信的技术，它">
 <meta property="og:locale">
-<meta property="article:published_time" content="2024-05-28T09:39:12.000Z">
-<meta property="article:modified_time" content="2024-05-28T09:40:14.311Z">
+<meta property="article:published_time" content="2024-05-28T11:30:34.000Z">
+<meta property="article:modified_time" content="2024-05-28T11:34:54.267Z">
 <meta property="article:author" content="橘猫元宝">
 <meta property="article:tag" content="cat">
 <meta name="twitter:card" content="summary">
@@ -23,7 +23,7 @@
     <meta name="keywords" content="cat">
 
 
-<title >LeetCode-682-棒球比赛</title>
+<title >MPI和socket区别与联系</title>
 
 <!-- Favicon -->
 
@@ -62,7 +62,7 @@
 
 <!-- Variable -->
 <script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
-<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-05-28 17:40:14"};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-05-28 19:34:54"};</script>
 
 <!-- Theme mode css -->
 <link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
@@ -211,7 +211,7 @@
                             NEWS LETTER
                         </div>
                         <h1 class="trm-mb-30 trm-hsmb-font">
-                            LeetCode-682-棒球比赛
+                            MPI和socket区别与联系
                         </h1>
 
                         
@@ -307,7 +307,7 @@
     <div class="col-sm-4">
         <div class="trm-card trm-label trm-label-light text-center">
             <i class="iconfont far fa-clock trm-icon"></i><br>
-            17:39
+            19:30
         </div>
     </div>
     <div class="col-sm-4">
@@ -319,42 +319,69 @@
 </div>
 <div class="trm-card ">
     <article id="article-container" class="trm-publication">
-    <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>本文主要记录解决LeetCode 682 棒球比赛题目过程，比较简单，使用一个栈就可以了。</p>
-<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><p>Leetcode题解代码：</p>
-<p>Python版本：</p>
-<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">class</span> <span class="token class-name">Solution</span><span class="token punctuation">:</span>
-    <span class="token keyword">def</span> <span class="token function">calPoints</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> operations<span class="token punctuation">)</span><span class="token punctuation">:</span>
-        score_list <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
-        <span class="token keyword">for</span> ops <span class="token keyword">in</span> operations<span class="token punctuation">:</span>
-            <span class="token keyword">if</span> ops <span class="token operator">==</span> <span class="token string">'C'</span><span class="token punctuation">:</span>
-                score_list<span class="token punctuation">.</span>pop<span class="token punctuation">(</span><span class="token punctuation">)</span>
-            <span class="token keyword">elif</span> ops <span class="token operator">==</span> <span class="token string">'D'</span><span class="token punctuation">:</span>
-                poped <span class="token operator">=</span> score_list<span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span>
-                score_list<span class="token punctuation">.</span>append<span class="token punctuation">(</span>poped <span class="token operator">*</span> <span class="token number">2</span><span class="token punctuation">)</span>
-            <span class="token keyword">elif</span> ops <span class="token operator">==</span> <span class="token string">'+'</span><span class="token punctuation">:</span>
-                num_a <span class="token operator">=</span> score_list<span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span>
-                num_b <span class="token operator">=</span> score_list<span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">2</span><span class="token punctuation">]</span>
-                score_list<span class="token punctuation">.</span>append<span class="token punctuation">(</span>num_a <span class="token operator">+</span> num_b<span class="token punctuation">)</span>
-            <span class="token keyword">else</span><span class="token punctuation">:</span>
-                score_list<span class="token punctuation">.</span>append<span class="token punctuation">(</span>int<span class="token punctuation">(</span>ops<span class="token punctuation">)</span><span class="token punctuation">)</span>
-        <span class="token keyword">return</span> sum<span class="token punctuation">(</span>score_list<span class="token punctuation">)</span>
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p>还可以使用match-case语句 Python 3.10以后的版本才支持的：</p>
-<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">class</span> <span class="token class-name">Solution</span><span class="token punctuation">:</span>
-    <span class="token keyword">def</span> <span class="token function">calPoints</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> operations<span class="token punctuation">)</span><span class="token punctuation">:</span>
-        score_list <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
-        <span class="token keyword">for</span> ops <span class="token keyword">in</span> operations<span class="token punctuation">:</span>
-            match ops<span class="token punctuation">:</span>
-                case <span class="token string">'C'</span><span class="token punctuation">:</span>
-                    score_list<span class="token punctuation">.</span>pop<span class="token punctuation">(</span><span class="token punctuation">)</span>
-                case <span class="token string">'D'</span><span class="token punctuation">:</span>
-                    score_list<span class="token punctuation">.</span>append<span class="token punctuation">(</span>score_list<span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">*</span> <span class="token number">2</span><span class="token punctuation">)</span>
-                case <span class="token string">'+'</span><span class="token punctuation">:</span>
-                    score_list<span class="token punctuation">.</span>append<span class="token punctuation">(</span>score_list<span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">+</span> score_list<span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-                case _<span class="token punctuation">:</span>
-                    score_list<span class="token punctuation">.</span>append<span class="token punctuation">(</span>int<span class="token punctuation">(</span>ops<span class="token punctuation">)</span><span class="token punctuation">)</span>
-        <span class="token keyword">return</span> sum<span class="token punctuation">(</span>score_list<span class="token punctuation">)</span>
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+    <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>本文主要记录MPI和socket的区别，一开始接触MPI时候，感觉这个Send和Recv方法和socket编程中的很像，不知道它底层的实现是否使用的socket。</p>
+<p>socket是一种进程直接通信的方式，MPI也有类似的功能。本文主要记录下这两者之间的异同。</p>
+<h3 id="对比MPI和socket"><a href="#对比MPI和socket" class="headerlink" title="对比MPI和socket"></a>对比MPI和socket</h3><p>MPI（Message Passing Interface）和Socket是两种常见的并行编程和网络通信的技术，它们在设计目的、使用场景和实现方式上都有所不同。</p>
+<h4 id="socket简介"><a href="#socket简介" class="headerlink" title="socket简介"></a>socket简介</h4><p>套接字主要用于在两个进程之间建立点对点通信路径。一旦在两个进程之间建立了连接（使用<br>socket、bind、listen、accept和connect），这两个进程都有文件描述符（fds），它们可以使用这些描述符读取和写入套接字。</p>
+<p>在在最简单的级别上，套接字上的读取(read)类似于MPI_Recv，而在上的写入(write)套接字类似于MPI_Send。</p>
+<p>让我们先来看看如何使用套接字发送数据。在正常情况下socket写调用(write)可以返回一个正值，表示该字节数<br>已写入，或为负值，表示有问题（且未写入字节）。</p>
+<p>这个读取(read)的行为类似：返回的值表示读取的字节数，负数表示有问题。</p>
+<p>socket读写的过程：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">void</span> <span class="token function">Sender</span><span class="token punctuation">(</span><span class="token keyword">int</span> fd<span class="token punctuation">,</span> <span class="token keyword">char</span> <span class="token operator">*</span>buf<span class="token punctuation">,</span> <span class="token keyword">int</span> count<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> n<span class="token punctuation">;</span>
+    <span class="token keyword">while</span> <span class="token punctuation">(</span>count <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        n <span class="token operator">=</span> <span class="token function">write</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> buf<span class="token punctuation">,</span> count<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>n <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span> special handling <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+        <span class="token punctuation">}</span>
+        count <span class="token operator">-</span><span class="token operator">=</span> n<span class="token punctuation">;</span>
+        buf <span class="token operator">+</span><span class="token operator">=</span> n<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">void</span> <span class="token function">Receiver</span><span class="token punctuation">(</span><span class="token keyword">int</span> fd<span class="token punctuation">,</span> <span class="token keyword">char</span> <span class="token operator">*</span>buf<span class="token punctuation">,</span> <span class="token keyword">int</span> count<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> n<span class="token punctuation">;</span>
+    <span class="token keyword">while</span> <span class="token punctuation">(</span>count <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        n <span class="token operator">=</span> <span class="token function">read</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> buf<span class="token punctuation">,</span> count<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>n <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span> special handling <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+        <span class="token punctuation">}</span>
+        count <span class="token operator">-</span><span class="token operator">=</span> n<span class="token punctuation">;</span>
+        buf <span class="token operator">+</span><span class="token operator">=</span> n<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>socket的读写模式，可以设置为非阻塞的。在此模式下，write和read有点像MPI_Isend和MPI_Irecv，但有不同的方式<br>处理MPI_Wait。</p>
+<h4 id="设计目的"><a href="#设计目的" class="headerlink" title="设计目的"></a>设计目的</h4><p>MPI是为高性能计算而设计的，主要用途和特点如下：</p>
+<ul>
+<li>专为并行计算和分布式计算设计。</li>
+<li>主要用于在高性能计算（HPC）环境中实现进程间通信。</li>
+<li>提供了丰富的功能，包括点对点通信、集合通信（如广播、散播、收集）、同步、聚合、并行I&#x2F;O等。</li>
+</ul>
+<p>socket主要用于网络通信：</p>
+<ul>
+<li>通用的网络通信接口，设计用于不同计算机和设备之间的通信。</li>
+<li>支持各种网络协议（如TCP、UDP）。</li>
+<li>用于构建网络应用程序，如客户端-服务器模型、P2P应用等。</li>
+</ul>
+<h4 id="性能和优化"><a href="#性能和优化" class="headerlink" title="性能和优化"></a>性能和优化</h4><p>MPI：</p>
+<ul>
+<li>针对并行计算进行了高度优化，提供低延迟、高带宽的通信。</li>
+<li>支持共享内存、多核处理器、集群等不同硬件架构的优化。</li>
+</ul>
+<p>socket:</p>
+<ul>
+<li>通常用于更广泛的网络环境，性能取决于底层网络协议和操作系统的实现。</li>
+<li>适用于广域网（WAN）和局域网（LAN）通信。</li>
+</ul>
+<h4 id="联系"><a href="#联系" class="headerlink" title="联系"></a>联系</h4><ul>
+<li><strong>通信机制</strong>：二者都用于进程间的通信，虽然使用场景不同，但基本概念相似，如发送数据、接收数据、同步等。</li>
+<li><strong>数据传输</strong>：二者都涉及数据从一个进程传输到另一个进程，虽然MPI通常用于并行计算中的紧密耦合进程，而Sockets用于网络中的松散耦合进程。</li>
+<li><strong>标准化接口</strong>：MPI和Sockets都提供了标准化的编程接口，允许程序员在不同平台和操作系统上编写可移植的代码。</li>
+<li><strong>异步通信</strong>：二者都支持异步通信操作，MPI中的非阻塞发送&#x2F;接收与Socket中的非阻塞I&#x2F;O类似。</li>
+</ul>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>MPI和socket主要是用途上的不同，前者更关注高性能计算（HPC），后者主要解决的网络通信问题。API有类似的地方，</p>
+<p>而且MPI的底层实现使用了socket技术，用于多节点之间的计算，主要可以通过SSH方式进行，通过免密登陆的模式进行多节点并行计算，MPI使用的是动态端口，可以通过<code>export OMPI_MCA_oob_tcp_dynamic_ports=&quot;40000-41000&quot;</code>配置。</p>
 
 </article>
     
@@ -370,9 +397,10 @@
         </h5>
     </div>
     
+    
         <div class="col-lg-6">
     <div class="trm-blog-card trm-scroll-animation">
-        <a href="/2024/05/28/MPI%E5%92%8Csocket%E5%8C%BA%E5%88%AB%E4%B8%8E%E8%81%94%E7%B3%BB/" class="trm-cover-frame trm-anima-link">
+        <a href="/2024/05/28/LeetCode-682-%E6%A3%92%E7%90%83%E6%AF%94%E8%B5%9B/" class="trm-cover-frame trm-anima-link">
             
             
                 <img alt="cover" class="no-fancybox" src="/img/block.jpg">
@@ -386,46 +414,14 @@
                 </a>
             </div>
             <h5>
-                <a href="/2024/05/28/MPI%E5%92%8Csocket%E5%8C%BA%E5%88%AB%E4%B8%8E%E8%81%94%E7%B3%BB/" class="trm-anima-link">
-                    MPI和socket区别与联系
+                <a href="/2024/05/28/LeetCode-682-%E6%A3%92%E7%90%83%E6%AF%94%E8%B5%9B/" class="trm-anima-link">
+                    LeetCode-682-棒球比赛
                 </a>
             </h5>
             <div class="trm-divider trm-mb-20 trm-mt-20"></div>
             <ul class="trm-card-data trm-label">
                 <li>24/05/28</li>
-                <li>19:30</li>
-                
-                
-            </ul>
-        </div>
-    </div>
-</div>
-    
-    
-        <div class="col-lg-6">
-    <div class="trm-blog-card trm-scroll-animation">
-        <a href="/2024/05/28/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E5%AF%BC%E8%AE%BA%E7%AC%94%E8%AE%B0%E4%B8%89/" class="trm-cover-frame trm-anima-link">
-            
-            
-                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
-            
-        </a>
-        
-        <div class="trm-card-descr">
-            <div class="trm-label trm-category trm-mb-20">
-                <a href=" #.">
-                    未分类
-                </a>
-            </div>
-            <h5>
-                <a href="/2024/05/28/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E5%AF%BC%E8%AE%BA%E7%AC%94%E8%AE%B0%E4%B8%89/" class="trm-anima-link">
-                    并发编程导论笔记三
-                </a>
-            </h5>
-            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
-            <ul class="trm-card-data trm-label">
-                <li>24/05/28</li>
-                <li>17:37</li>
+                <li>17:39</li>
                 
                 
             </ul>
