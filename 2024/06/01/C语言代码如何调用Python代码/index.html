@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="x5-fullscreen" content="true">
+<meta name="full-screen" content="yes">
+<meta name="theme-color" content="#317EFB" />
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
+<meta name="description" content="背景本文主要记录C语言如何调用Python代码，Python有很多方便的库，但是C语言可能没有，使用C语言调用Python代码可以让C语言变得更强。 在C语言中调用Python代码主要使用Python C API。 基本原理在C语言中调用Python代码的原理是通过嵌入Python解释器来实现的。实际上，C程序启动并嵌入了一个Python解释器实例，这使得可以在C程序中执行Python代码。 这样">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C语言代码如何调用Python代码">
+<meta property="og:url" content="http://example.com/2024/06/01/C%E8%AF%AD%E8%A8%80%E4%BB%A3%E7%A0%81%E5%A6%82%E4%BD%95%E8%B0%83%E7%94%A8Python%E4%BB%A3%E7%A0%81/index.html">
+<meta property="og:site_name" content="Cat YuanBao">
+<meta property="og:description" content="背景本文主要记录C语言如何调用Python代码，Python有很多方便的库，但是C语言可能没有，使用C语言调用Python代码可以让C语言变得更强。 在C语言中调用Python代码主要使用Python C API。 基本原理在C语言中调用Python代码的原理是通过嵌入Python解释器来实现的。实际上，C程序启动并嵌入了一个Python解释器实例，这使得可以在C程序中执行Python代码。 这样">
+<meta property="og:locale">
+<meta property="article:published_time" content="2024-05-31T17:29:59.000Z">
+<meta property="article:modified_time" content="2024-05-31T17:30:20.774Z">
+<meta property="article:author" content="橘猫元宝">
+<meta property="article:tag" content="cat">
+<meta name="twitter:card" content="summary">
+
+    <meta name="keywords" content="cat">
+
+
+<title >C语言代码如何调用Python代码</title>
+
+<!-- Favicon -->
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='16x16' ></link>
+
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='32x32' ></link>
+
+
+
+
+<!-- Plugin -->
+
+
+
+
+    
+<link rel="stylesheet" href="/css/plugins/bootstrap.row.css">
+
+    
+<link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.css">
+
+    
+    
+
+
+
+
+<!-- Icon -->
+
+    
+<link rel="stylesheet" href="/css/plugins/font-awesome.min.css">
+
+
+
+
+<!-- Variable -->
+<script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-06-01 01:30:20"};</script>
+
+<!-- Theme mode css -->
+<link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
+<script>
+    let defaultMode = ASYNC_CONFIG.theme.default !=='auto' ?  ASYNC_CONFIG.theme.default : (window.matchMedia("(prefers-color-scheme: light)").matches ? 'style-light' : 'style-dark')
+    let catchMode = localStorage.getItem('theme-mode') || defaultMode;
+    let type = catchMode === 'style-dark' ? 'add' : 'remove';
+    document.documentElement.classList[type]('dark')
+</script>
+
+<!-- CDN -->
+
+
+    
+    
+
+
+
+<!-- Site Analytics -->
+ 
+<meta name="generator" content="Hexo 7.0.0"><link rel="stylesheet" href="/css/prism.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+<body>
+
+  <!-- app wrapper -->
+  <div class="trm-app-frame">
+
+    <!-- page preloader -->
+    <div class="trm-preloader">
+    <div class="trm-holder">
+        <div class="preloader">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+    <!-- page preloader end -->
+
+    <!-- change mode preloader -->
+    <div class="trm-mode-swich-animation-frame">
+    <div class="trm-mode-swich-animation">
+        <i class="i-sun"><i class="iconfont far fa-sun"></i></i>
+        <div class="trm-horizon"></div>
+        <i class="i-moon"><i class="iconfont far fa-moon"></i></i>
+    </div>
+</div>
+    <!-- change mode preloader end -->
+
+      <!-- scroll container -->
+      <div id="trm-dynamic-content" class="trm-swup-animation">
+        <div id="trm-scroll-container" class="trm-scroll-container" style="opacity: 0">
+            <!-- top bar -->
+            <header class="trm-top-bar">
+	<div class="container">
+		<div class="trm-left-side">
+			<!-- logo -->
+<a href="/" class="trm-logo-frame trm-anima-link">
+    
+        <img alt="logo" src="/img/favicon.svg">
+    
+    
+        <div class="trm-logo-text">
+            元宝<span>橘猫</span>
+        </div>
+    
+</a>
+<!-- logo end -->
+		</div>
+		<div class="trm-right-side">
+			<!-- menu -->
+<div class="trm-menu">
+    <nav>
+        <ul>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/" target="">
+                    首页
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/archives/" target="">
+                    归档
+                </a>
+                
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+<!-- menu end -->
+			
+    <!-- mode switcher place -->
+    <div class="trm-mode-switcher-place">
+        <div class="trm-mode-switcher">
+            <i class="iconfont far fa-sun"></i>
+            <input class="tgl tgl-light" id="trm-swich" type="checkbox">
+            <label class="trm-swich" for="trm-swich"></label>
+            <i class="iconfont far fa-moon"></i>
+        </div>
+    </div>
+    <!-- mode switcher place end -->
+
+			
+		</div>
+		<div class="trm-menu-btn">
+			<span></span>
+		</div>
+	</div>
+</header>
+            <!-- top bar end -->
+
+            <!-- body -->
+            
+<div class="trm-content-start">
+    <!-- banner -->
+    <div class="trm-banner">
+    
+    <!-- banner cover -->
+    <img style="object-position:top;object-fit:cover;" alt="banner" class="trm-banner-cover" src="/img/banner.png">
+    <!-- banner cover end -->
+    
+
+    <!-- banner content -->
+    <div class="trm-banner-content trm-overlay">
+        <div class="container">
+            <div class="row">
+                
+                <div class="col-lg-4"></div>
+                
+                <div class="col-lg-8">
+
+                    <!-- banner title -->
+                    <div class="trm-banner-text ">
+                        <div class="trm-label trm-mb-20">
+                            NEWS LETTER
+                        </div>
+                        <h1 class="trm-mb-30 trm-hsmb-font">
+                            C语言代码如何调用Python代码
+                        </h1>
+
+                        
+                            <ul class="trm-breadcrumbs trm-label">
+                                <li>
+                                    <a href="/" class="trm-anima-link">Home</a>
+                                </li>
+                                <li>
+                                    <span>
+                                        2024
+                                    </span>
+                                </li>
+                            </ul>
+                        
+                    </div>
+                    <!-- banner title end -->
+
+                    <!-- scroll hint -->
+                    <span id="scroll-triger" class="trm-scroll-hint-frame">
+                        <div class="trm-scroll-hint"></div>
+                        <span class="trm-label">Scroll down</span>
+                    </span>
+                    <!-- scroll hint end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- banner content end -->
+</div>
+    <!-- banner end -->
+    <div class="container">
+        <div class="row">
+            
+                <div class="trm-page-sidebar col-lg-4 hidden-sm">
+                    <!-- main card -->
+                    <div class="trm-main-card-frame trm-sidebar">
+    <div class="trm-main-card"> 
+        <!-- card header -->
+<div class="trm-mc-header">
+    <div class="trm-avatar-frame trm-mb-20">
+        <img alt="Avatar" class="trm-avatar" src="/img/cat.jpg">
+    </div>
+    <h5 class="trm-name trm-mb-15">
+        橘猫元宝
+    </h5>
+    
+</div>
+<!-- card header end -->
+        <!-- sidebar social -->
+
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<div class="trm-social">
+    
+        <a href="https://github.com" title="Github" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-github"></i>
+        </a>
+    
+</div>
+
+<!-- sidebar social end -->
+        <!-- info -->
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<ul class="trm-table trm-mb-20">
+    
+        <li>
+            <div class="trm-label">
+                Residence:
+            </div>
+            <div class="trm-label trm-label-light">
+                Mars
+            </div>
+        </li>
+    
+</ul>
+<!-- info end -->
+
+        
+    </div>
+</div>
+                    <!-- main card end -->
+                </div>
+            
+            <div class="trm-page-content col-lg-8">
+                <div id="trm-content" class="trm-content">
+                    <div class="trm-post-info row hidden-sm">
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-calendar-alt trm-icon"></i><br>
+            06/01
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-clock trm-icon"></i><br>
+            01:29
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div id="post-author" class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-user trm-icon"></i><br>
+            橘猫元宝
+        </div>
+    </div>
+</div>
+<div class="trm-card ">
+    <article id="article-container" class="trm-publication">
+    <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>本文主要记录C语言如何调用Python代码，Python有很多方便的库，但是C语言可能没有，使用C语言调用Python代码可以让C语言变得更强。</p>
+<p>在C语言中调用Python代码主要使用Python C API。</p>
+<h3 id="基本原理"><a href="#基本原理" class="headerlink" title="基本原理"></a>基本原理</h3><p>在C语言中调用Python代码的原理是通过嵌入Python解释器来实现的。实际上，C程序启动并嵌入了一个Python解释器实例，这使得可以在C程序中执行Python代码。</p>
+<p>这样做的好处就是可以直接使用Python代码，坏处是增加了使用的资源。</p>
+<h3 id="hello-world"><a href="#hello-world" class="headerlink" title="hello world"></a>hello world</h3><pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;Python.h></span></span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">Py_Initialize</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">PyRun_SimpleString</span><span class="token punctuation">(</span><span class="token string">"print(\"hello world\")"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">Py_Finalize</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>编译运行，这里需要链接python的库，我使用的Python3.9版本，需要根据版本修改头文件和链接库的版本</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ gcc hello.c -I /usr/include/python3.9 -lpython3.9 -o hello
+$ ./hello
+hello world
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<h4 id="步骤"><a href="#步骤" class="headerlink" title="步骤"></a>步骤</h4><ol>
+<li><strong>初始化Python解释器</strong>：使用<code>Py_Initialize()</code>初始化Python解释器。</li>
+<li><strong>执行Python代码</strong>：使用<code>PyRun_SimpleString()</code>等API执行Python代码。</li>
+<li><strong>获取Python函数</strong>：从Python模块中获取Python函数，并调用它们。</li>
+<li><strong>传递参数和返回值</strong>：在C和Python之间传递参数和返回值。</li>
+<li><strong>关闭Python解释器</strong>：使用<code>Py_Finalize()</code>关闭Python解释器。</li>
+</ol>
+<h3 id="从文件加载Python代码"><a href="#从文件加载Python代码" class="headerlink" title="从文件加载Python代码"></a>从文件加载Python代码</h3><p>只是执行简单Python语句并没有太大作用，还可以从现成的Python脚本文件中，加载并运行代码：</p>
+<p>hello.py如下：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> time
+<span class="token keyword">import</span> requests
+<span class="token keyword">while</span> <span class="token number">1</span><span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"hello world"</span><span class="token punctuation">)</span>
+    time<span class="token punctuation">.</span>sleep<span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>requests<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">'https://www.baidu.com'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>C代码如下：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">define</span> PY_SSIZE_T_CLEAN</span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;Python.h></span></span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">char</span> file_name<span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">"hello.py"</span><span class="token punctuation">;</span>
+
+    FILE<span class="token operator">*</span> fp<span class="token punctuation">;</span>
+
+    <span class="token function">Py_Initialize</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    fp <span class="token operator">=</span> <span class="token function">_Py_fopen</span><span class="token punctuation">(</span>file_name<span class="token punctuation">,</span> <span class="token string">"r"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">PyRun_SimpleFile</span><span class="token punctuation">(</span>fp<span class="token punctuation">,</span> file_name<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">Py_Finalize</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果如下：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ ./hello
+hello world
+<span class="token operator">&lt;</span>Response <span class="token punctuation">[</span>200<span class="token punctuation">]</span><span class="token operator">></span>
+hello world
+^CTraceback <span class="token punctuation">(</span>most recent call last<span class="token punctuation">)</span>:
+  File <span class="token string">"hello.py"</span>, line 6, <span class="token keyword">in</span> <span class="token operator">&lt;</span>module<span class="token operator">></span>
+    print<span class="token punctuation">(</span>requests.get<span class="token punctuation">(</span><span class="token string">'https://www.baidu.com'</span><span class="token punctuation">))</span>
+  File <span class="token string">"/usr/lib/python3.9/site-packages/requests/api.py"</span>, line 76, <span class="token keyword">in</span> get
+    <span class="token keyword">return</span> request<span class="token punctuation">(</span><span class="token string">'get'</span>, url, params<span class="token operator">=</span>params, **kwargs<span class="token punctuation">)</span>
+  File <span class="token string">"/usr/lib/python3.9/site-packages/requests/api.py"</span>, line 61, <span class="token keyword">in</span> request
+    <span class="token keyword">return</span> session.request<span class="token punctuation">(</span>method<span class="token operator">=</span>method, url<span class="token operator">=</span>url, **kwargs<span class="token punctuation">)</span>
+  File <span class="token string">"/usr/lib/python3.9/site-packages/requests/sessions.py"</span>, line 542, <span class="token keyword">in</span> request
+    resp <span class="token operator">=</span> self.send<span class="token punctuation">(</span>prep, **send_kwargs<span class="token punctuation">)</span>
+  File <span class="token string">"/usr/lib/python3.9/site-packages/requests/sessions.py"</span>, line 655, <span class="token keyword">in</span> send
+    r <span class="token operator">=</span> adapter.send<span class="token punctuation">(</span>request, **kwargs<span class="token punctuation">)</span>
+  File <span class="token string">"/usr/lib/python3.9/site-packages/requests/adapters.py"</span>, line 439, <span class="token keyword">in</span> send
+    resp <span class="token operator">=</span> conn.urlopen<span class="token punctuation">(</span>
+  File <span class="token string">"/usr/lib/python3.9/site-packages/urllib3/connectionpool.py"</span>, line 699, <span class="token keyword">in</span> urlopen
+    httplib_response <span class="token operator">=</span> self._make_request<span class="token punctuation">(</span>
+  File <span class="token string">"/usr/lib/python3.9/site-packages/urllib3/connectionpool.py"</span>, line 445, <span class="token keyword">in</span> _make_request
+    six.raise_from<span class="token punctuation">(</span>e, None<span class="token punctuation">)</span>
+  File <span class="token string">"&lt;string>"</span>, line 3, <span class="token keyword">in</span> raise_from
+  File <span class="token string">"/usr/lib/python3.9/site-packages/urllib3/connectionpool.py"</span>, line 440, <span class="token keyword">in</span> _make_request
+    httplib_response <span class="token operator">=</span> conn.getresponse<span class="token punctuation">(</span><span class="token punctuation">)</span>
+  File <span class="token string">"/usr/lib64/python3.9/http/client.py"</span>, line 1377, <span class="token keyword">in</span> getresponse
+    response.begin<span class="token punctuation">(</span><span class="token punctuation">)</span>
+  File <span class="token string">"/usr/lib64/python3.9/http/client.py"</span>, line 320, <span class="token keyword">in</span> begin
+    version, status, reason <span class="token operator">=</span> self._read_status<span class="token punctuation">(</span><span class="token punctuation">)</span>
+  File <span class="token string">"/usr/lib64/python3.9/http/client.py"</span>, line 281, <span class="token keyword">in</span> _read_status
+    line <span class="token operator">=</span> str<span class="token punctuation">(</span>self.fp.readline<span class="token punctuation">(</span>_MAXLINE + 1<span class="token punctuation">)</span>, <span class="token string">"iso-8859-1"</span><span class="token punctuation">)</span>
+  File <span class="token string">"/usr/lib64/python3.9/socket.py"</span>, line 704, <span class="token keyword">in</span> readinto
+    <span class="token keyword">return</span> self._sock.recv_into<span class="token punctuation">(</span>b<span class="token punctuation">)</span>
+  File <span class="token string">"/usr/lib64/python3.9/ssl.py"</span>, line 1275, <span class="token keyword">in</span> recv_into
+    <span class="token keyword">return</span> self.read<span class="token punctuation">(</span>nbytes, buffer<span class="token punctuation">)</span>
+  File <span class="token string">"/usr/lib64/python3.9/ssl.py"</span>, line 1133, <span class="token keyword">in</span> <span class="token function">read</span>
+    <span class="token keyword">return</span> self._sslobj.read<span class="token punctuation">(</span>len, buffer<span class="token punctuation">)</span>
+KeyboardInterrupt
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>不仅可以使用Python标准库，对于第三方库也可以使用。</p>
+<h3 id="一个更复杂的实例"><a href="#一个更复杂的实例" class="headerlink" title="一个更复杂的实例"></a>一个更复杂的实例</h3><p>C语言调用Python的方法实例：</p>
+<p>my_module.py</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">def</span> <span class="token function">my_function</span><span class="token punctuation">(</span>x<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">"Received {x} in Python"</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> x <span class="token operator">+</span> <span class="token number">1</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>complex.c：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;Python.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdlib.h></span></span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 初始化Python解释器</span>
+    <span class="token function">Py_Initialize</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// 简单执行Python代码</span>
+    <span class="token function">PyRun_SimpleString</span><span class="token punctuation">(</span><span class="token string">"print('Hello from Python!')"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">// 需要导入Python模块路径</span>
+    <span class="token comment" spellcheck="true">//PyRun_SimpleString("import sys; sys.path.append('./')");</span>
+
+    <span class="token comment" spellcheck="true">// 导入Python模块</span>
+    PyObject <span class="token operator">*</span>pName<span class="token punctuation">,</span> <span class="token operator">*</span>pModule<span class="token punctuation">,</span> <span class="token operator">*</span>pFunc<span class="token punctuation">;</span>
+    PyObject <span class="token operator">*</span>pArgs<span class="token punctuation">,</span> <span class="token operator">*</span>pValue<span class="token punctuation">;</span>
+
+    pName <span class="token operator">=</span> <span class="token function">PyUnicode_DecodeFSDefault</span><span class="token punctuation">(</span><span class="token string">"my_module"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    pModule <span class="token operator">=</span> <span class="token function">PyImport_Import</span><span class="token punctuation">(</span>pName<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">Py_DECREF</span><span class="token punctuation">(</span>pName<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>pModule <span class="token operator">!=</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        pFunc <span class="token operator">=</span> <span class="token function">PyObject_GetAttrString</span><span class="token punctuation">(</span>pModule<span class="token punctuation">,</span> <span class="token string">"my_function"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">PyCallable_Check</span><span class="token punctuation">(</span>pFunc<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// 创建参数</span>
+            pArgs <span class="token operator">=</span> <span class="token function">PyTuple_New</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            pValue <span class="token operator">=</span> <span class="token function">PyLong_FromLong</span><span class="token punctuation">(</span><span class="token number">42</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>pValue<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token function">Py_DECREF</span><span class="token punctuation">(</span>pArgs<span class="token punctuation">)</span><span class="token punctuation">;</span>  
+                <span class="token function">Py_DECREF</span><span class="token punctuation">(</span>pModule<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token function">fprintf</span><span class="token punctuation">(</span><span class="token constant">stderr</span><span class="token punctuation">,</span> <span class="token string">"Cannot convert argument\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token keyword">return</span> <span class="token number">1</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+            <span class="token function">PyTuple_SetItem</span><span class="token punctuation">(</span>pArgs<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> pValue<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+            <span class="token comment" spellcheck="true">// 调用Python函数</span>
+            pValue <span class="token operator">=</span> <span class="token function">PyObject_CallObject</span><span class="token punctuation">(</span>pFunc<span class="token punctuation">,</span> pArgs<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token function">Py_DECREF</span><span class="token punctuation">(</span>pArgs<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>pValue <span class="token operator">!=</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Result of call: %ld\n"</span><span class="token punctuation">,</span> <span class="token function">PyLong_AsLong</span><span class="token punctuation">(</span>pValue<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token function">Py_DECREF</span><span class="token punctuation">(</span>pValue<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+                <span class="token function">Py_DECREF</span><span class="token punctuation">(</span>pFunc<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token function">Py_DECREF</span><span class="token punctuation">(</span>pModule<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token function">PyErr_Print</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token function">fprintf</span><span class="token punctuation">(</span><span class="token constant">stderr</span><span class="token punctuation">,</span> <span class="token string">"Call failed\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token keyword">return</span> <span class="token number">1</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">PyErr_Occurred</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+                <span class="token function">PyErr_Print</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token function">fprintf</span><span class="token punctuation">(</span><span class="token constant">stderr</span><span class="token punctuation">,</span> <span class="token string">"Cannot find function \"my_function\"\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token function">Py_XDECREF</span><span class="token punctuation">(</span>pFunc<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">Py_DECREF</span><span class="token punctuation">(</span>pModule<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+        <span class="token function">PyErr_Print</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">fprintf</span><span class="token punctuation">(</span><span class="token constant">stderr</span><span class="token punctuation">,</span> <span class="token string">"Failed to load \"my_module\"\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 关闭Python解释器</span>
+    <span class="token function">Py_Finalize</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>需要指定pythonpath或者在代码中添加my_moudle的路径，不然会报错。</p>
+<p>报错如下：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">ModuleNotFoundError: No module named <span class="token string">'my_module'</span>
+Failed to load <span class="token string">"my_module"</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>推荐使用PYTHONPATH</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ <span class="token function">export</span> PYTHONPATH<span class="token operator">=</span>~/C_with_py
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>Py_DECREF和Py_XDECREF解释</p>
+<p><code>Py_DECREF</code> 和 <code>Py_XDECREF</code> 是用于管理Python对象引用计数的宏。</p>
+<p>当你在C代码中使用Python对象时，这些宏可以帮助你正确管理内存，避免内存泄漏。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>C语言调用Python代码流程还是比较简单的，但是主要需要手动管理内存和相关对象的引用，不然可能造成内存泄漏，需要小心。</p>
+
+</article>
+    
+    
+
+</div>
+<div class="trm-post-next-prev row">
+    <div class="col-lg-12">
+        <!-- title -->
+        <h5 class="trm-title-with-divider">
+            其他文章
+            <span data-number="02"></span>
+        </h5>
+    </div>
+    
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/05/31/%E7%9F%A9%E9%98%B5%E7%9B%B8%E5%85%B3%E7%AE%80%E5%8D%95%E7%AE%97%E6%B3%95/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" #.">
+                    未分类
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/05/31/%E7%9F%A9%E9%98%B5%E7%9B%B8%E5%85%B3%E7%AE%80%E5%8D%95%E7%AE%97%E6%B3%95/" class="trm-anima-link">
+                    矩阵相关简单算法
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/05/31</li>
+                <li>22:13</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+</div>
+
+    
+
+
+
+                    <div class="trm-divider footer-divider"></div>
+
+                    <!-- footer -->
+                    <footer class="trm-scroll-animation">
+
+    
+
+    
+
+    
+        <div class="trm-footer-item">
+            <span>
+                由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v7.0.0
+            </span>
+            <span class="footer-separator" data-separator=" | "></span>
+            <span> 
+                主题 - 
+                <a rel="noopener" href='https://github.com/MaLuns/hexo-theme-async' target='_blank'>Async</a>
+                v2.1.8
+            </span>
+        </div>
+      
+
+     
+
+     
+</footer>
+ 
+                    <!-- footer end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- body end -->
+
+            
+
+            
+<div class="trm-fixed-container">
+    
+    
+        <div class="trm-fixed-btn" data-title="阅读模式" onclick="asyncFun.switchReadMode()">
+            <i class="iconfont fas fa-book-reader"></i>
+        </div>
+    
+    
+    <div id="trm-back-top" class="trm-fixed-btn" data-title="回到顶部">
+        <i class="iconfont fas fa-arrow-up"></i>
+    </div>
+</div>
+        </div>
+      </div>
+      <!-- scroll container end -->
+  </div>
+  <!-- app wrapper end -->
+
+  
+  <!-- Plugin -->
+
+
+
+
+    
+    
+<script src="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+
+    
+
+    
+
+    
+
+    <!-- 数学公式 -->
+    
+
+    <!-- 评论插件 -->
+    
+        
+
+        
+    
+
+
+
+<!-- CDN -->
+
+
+    
+
+    
+
+    
+
+
+
+
+    <!-- Service Worker -->
+    
+    <!-- baidu push -->
+    
+
+
+<script id="async-script" src="/js/main.js?v=2.1.8"></script>
+
+</body>
+
+</html>
