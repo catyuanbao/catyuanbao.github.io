@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="x5-fullscreen" content="true">
+<meta name="full-screen" content="yes">
+<meta name="theme-color" content="#317EFB" />
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
+<meta name="description" content="背景本文主要介绍程序如何绑定在一个特定的CPU核心上。 绑定核心的原因将程序和CPU核心绑定（也称为CPU亲和性或进程绑定）可以带来多种好处，尤其是在多核处理器和并行计算环境中。以下是主要的好处和原因：  减少上下文切换：当一个进程或线程总是在同一个CPU核心上运行时，可以减少上下文切换的开销。上下文切换涉及保存和恢复进程状态，这会带来性能开销。 提高缓存命中率：绑定进程到特定的CPU核心可以提高">
+<meta property="og:type" content="article">
+<meta property="og:title" content="程序如何与特定CPU绑定">
+<meta property="og:url" content="http://example.com/2024/05/31/%E7%A8%8B%E5%BA%8F%E5%A6%82%E4%BD%95%E4%B8%8E%E7%89%B9%E5%AE%9ACPU%E7%BB%91%E5%AE%9A/index.html">
+<meta property="og:site_name" content="Cat YuanBao">
+<meta property="og:description" content="背景本文主要介绍程序如何绑定在一个特定的CPU核心上。 绑定核心的原因将程序和CPU核心绑定（也称为CPU亲和性或进程绑定）可以带来多种好处，尤其是在多核处理器和并行计算环境中。以下是主要的好处和原因：  减少上下文切换：当一个进程或线程总是在同一个CPU核心上运行时，可以减少上下文切换的开销。上下文切换涉及保存和恢复进程状态，这会带来性能开销。 提高缓存命中率：绑定进程到特定的CPU核心可以提高">
+<meta property="og:locale">
+<meta property="article:published_time" content="2024-05-31T05:46:32.000Z">
+<meta property="article:modified_time" content="2024-05-31T05:46:50.126Z">
+<meta property="article:author" content="橘猫元宝">
+<meta property="article:tag" content="cat">
+<meta name="twitter:card" content="summary">
+
+    <meta name="keywords" content="cat">
+
+
+<title >程序如何与特定CPU绑定</title>
+
+<!-- Favicon -->
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='16x16' ></link>
+
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='32x32' ></link>
+
+
+
+
+<!-- Plugin -->
+
+
+
+
+    
+<link rel="stylesheet" href="/css/plugins/bootstrap.row.css">
+
+    
+<link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.css">
+
+    
+    
+
+
+
+
+<!-- Icon -->
+
+    
+<link rel="stylesheet" href="/css/plugins/font-awesome.min.css">
+
+
+
+
+<!-- Variable -->
+<script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-05-31 13:46:50"};</script>
+
+<!-- Theme mode css -->
+<link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
+<script>
+    let defaultMode = ASYNC_CONFIG.theme.default !=='auto' ?  ASYNC_CONFIG.theme.default : (window.matchMedia("(prefers-color-scheme: light)").matches ? 'style-light' : 'style-dark')
+    let catchMode = localStorage.getItem('theme-mode') || defaultMode;
+    let type = catchMode === 'style-dark' ? 'add' : 'remove';
+    document.documentElement.classList[type]('dark')
+</script>
+
+<!-- CDN -->
+
+
+    
+    
+
+
+
+<!-- Site Analytics -->
+ 
+<meta name="generator" content="Hexo 7.0.0"><link rel="stylesheet" href="/css/prism.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+<body>
+
+  <!-- app wrapper -->
+  <div class="trm-app-frame">
+
+    <!-- page preloader -->
+    <div class="trm-preloader">
+    <div class="trm-holder">
+        <div class="preloader">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+    <!-- page preloader end -->
+
+    <!-- change mode preloader -->
+    <div class="trm-mode-swich-animation-frame">
+    <div class="trm-mode-swich-animation">
+        <i class="i-sun"><i class="iconfont far fa-sun"></i></i>
+        <div class="trm-horizon"></div>
+        <i class="i-moon"><i class="iconfont far fa-moon"></i></i>
+    </div>
+</div>
+    <!-- change mode preloader end -->
+
+      <!-- scroll container -->
+      <div id="trm-dynamic-content" class="trm-swup-animation">
+        <div id="trm-scroll-container" class="trm-scroll-container" style="opacity: 0">
+            <!-- top bar -->
+            <header class="trm-top-bar">
+	<div class="container">
+		<div class="trm-left-side">
+			<!-- logo -->
+<a href="/" class="trm-logo-frame trm-anima-link">
+    
+        <img alt="logo" src="/img/favicon.svg">
+    
+    
+        <div class="trm-logo-text">
+            元宝<span>橘猫</span>
+        </div>
+    
+</a>
+<!-- logo end -->
+		</div>
+		<div class="trm-right-side">
+			<!-- menu -->
+<div class="trm-menu">
+    <nav>
+        <ul>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/" target="">
+                    首页
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/archives/" target="">
+                    归档
+                </a>
+                
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+<!-- menu end -->
+			
+    <!-- mode switcher place -->
+    <div class="trm-mode-switcher-place">
+        <div class="trm-mode-switcher">
+            <i class="iconfont far fa-sun"></i>
+            <input class="tgl tgl-light" id="trm-swich" type="checkbox">
+            <label class="trm-swich" for="trm-swich"></label>
+            <i class="iconfont far fa-moon"></i>
+        </div>
+    </div>
+    <!-- mode switcher place end -->
+
+			
+		</div>
+		<div class="trm-menu-btn">
+			<span></span>
+		</div>
+	</div>
+</header>
+            <!-- top bar end -->
+
+            <!-- body -->
+            
+<div class="trm-content-start">
+    <!-- banner -->
+    <div class="trm-banner">
+    
+    <!-- banner cover -->
+    <img style="object-position:top;object-fit:cover;" alt="banner" class="trm-banner-cover" src="/img/banner.png">
+    <!-- banner cover end -->
+    
+
+    <!-- banner content -->
+    <div class="trm-banner-content trm-overlay">
+        <div class="container">
+            <div class="row">
+                
+                <div class="col-lg-4"></div>
+                
+                <div class="col-lg-8">
+
+                    <!-- banner title -->
+                    <div class="trm-banner-text ">
+                        <div class="trm-label trm-mb-20">
+                            NEWS LETTER
+                        </div>
+                        <h1 class="trm-mb-30 trm-hsmb-font">
+                            程序如何与特定CPU绑定
+                        </h1>
+
+                        
+                            <ul class="trm-breadcrumbs trm-label">
+                                <li>
+                                    <a href="/" class="trm-anima-link">Home</a>
+                                </li>
+                                <li>
+                                    <span>
+                                        2024
+                                    </span>
+                                </li>
+                            </ul>
+                        
+                    </div>
+                    <!-- banner title end -->
+
+                    <!-- scroll hint -->
+                    <span id="scroll-triger" class="trm-scroll-hint-frame">
+                        <div class="trm-scroll-hint"></div>
+                        <span class="trm-label">Scroll down</span>
+                    </span>
+                    <!-- scroll hint end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- banner content end -->
+</div>
+    <!-- banner end -->
+    <div class="container">
+        <div class="row">
+            
+                <div class="trm-page-sidebar col-lg-4 hidden-sm">
+                    <!-- main card -->
+                    <div class="trm-main-card-frame trm-sidebar">
+    <div class="trm-main-card"> 
+        <!-- card header -->
+<div class="trm-mc-header">
+    <div class="trm-avatar-frame trm-mb-20">
+        <img alt="Avatar" class="trm-avatar" src="/img/cat.jpg">
+    </div>
+    <h5 class="trm-name trm-mb-15">
+        橘猫元宝
+    </h5>
+    
+</div>
+<!-- card header end -->
+        <!-- sidebar social -->
+
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<div class="trm-social">
+    
+        <a href="https://github.com" title="Github" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-github"></i>
+        </a>
+    
+</div>
+
+<!-- sidebar social end -->
+        <!-- info -->
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<ul class="trm-table trm-mb-20">
+    
+        <li>
+            <div class="trm-label">
+                Residence:
+            </div>
+            <div class="trm-label trm-label-light">
+                Mars
+            </div>
+        </li>
+    
+</ul>
+<!-- info end -->
+
+        
+    </div>
+</div>
+                    <!-- main card end -->
+                </div>
+            
+            <div class="trm-page-content col-lg-8">
+                <div id="trm-content" class="trm-content">
+                    <div class="trm-post-info row hidden-sm">
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-calendar-alt trm-icon"></i><br>
+            05/31
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-clock trm-icon"></i><br>
+            13:46
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div id="post-author" class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-user trm-icon"></i><br>
+            橘猫元宝
+        </div>
+    </div>
+</div>
+<div class="trm-card ">
+    <article id="article-container" class="trm-publication">
+    <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>本文主要介绍程序如何绑定在一个特定的CPU核心上。</p>
+<h3 id="绑定核心的原因"><a href="#绑定核心的原因" class="headerlink" title="绑定核心的原因"></a>绑定核心的原因</h3><p>将程序和CPU核心绑定（也称为CPU亲和性或进程绑定）可以带来多种好处，尤其是在多核处理器和并行计算环境中。以下是主要的好处和原因：</p>
+<ol>
+<li><strong>减少上下文切换</strong>：当一个进程或线程总是在同一个CPU核心上运行时，可以减少上下文切换的开销。上下文切换涉及保存和恢复进程状态，这会带来性能开销。</li>
+<li><strong>提高缓存命中率</strong>：绑定进程到特定的CPU核心可以提高CPU缓存的命中率。每个CPU核心都有自己的本地缓存（如L1和L2缓存），进程在同一核心上运行时，能够更有效地利用这些缓存，从而减少内存访问延迟。</li>
+<li><strong>降低内存访问延迟</strong>：在NUMA（非统一内存访问）系统中，内存访问延迟取决于内存和CPU核心之间的物理距离。将进程绑定到特定的CPU核心可以确保进程优先访问与其绑定核心关联的本地内存，从而减少内存访问延迟。</li>
+<li><strong>提高性能稳定性</strong>：在实时系统或需要高性能计算的应用中，CPU核心绑定可以确保进程在特定的核心上持续运行，避免因进程迁移带来的性能波动和不确定性。</li>
+<li><strong>优化多线程应用</strong>：在多线程应用中，将特定的线程绑定到特定的核心可以减少线程之间的竞争，提高整体应用的并行执行效率。</li>
+</ol>
+<h3 id="如何实现绑定核心"><a href="#如何实现绑定核心" class="headerlink" title="如何实现绑定核心"></a>如何实现绑定核心</h3><p>主要通过<code>sched_setaffinity</code>进行绑定：</p>
+<pre class="line-numbers language-c"><code class="language-c">NAME
+       sched_setaffinity<span class="token punctuation">,</span> sched_getaffinity <span class="token operator">-</span> set and get a thread's CPU affinity mask
+
+SYNOPSIS
+       <span class="token macro property">#<span class="token directive keyword">define</span> _GNU_SOURCE             </span><span class="token comment" spellcheck="true">/* See feature_test_macros(7) */</span>
+       <span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;sched.h></span></span>
+
+       <span class="token keyword">int</span> <span class="token function">sched_setaffinity</span><span class="token punctuation">(</span>pid_t pid<span class="token punctuation">,</span> size_t cpusetsize<span class="token punctuation">,</span>
+                             <span class="token keyword">const</span> cpu_set_t <span class="token operator">*</span>mask<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+       <span class="token keyword">int</span> <span class="token function">sched_getaffinity</span><span class="token punctuation">(</span>pid_t pid<span class="token punctuation">,</span> size_t cpusetsize<span class="token punctuation">,</span>
+                             cpu_set_t <span class="token operator">*</span>mask<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>C语言实现：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">define</span> _GNU_SOURCE</span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;sched.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdlib.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;unistd.h></span></span>
+
+<span class="token keyword">void</span> <span class="token function">bind_to_cpu</span><span class="token punctuation">(</span><span class="token keyword">int</span> cpu_id<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    cpu_set_t cpu_set<span class="token punctuation">;</span>
+    <span class="token function">CPU_ZERO</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>cpu_set<span class="token punctuation">)</span><span class="token punctuation">;</span>       <span class="token comment" spellcheck="true">// 初始化 CPU 集合</span>
+    <span class="token function">CPU_SET</span><span class="token punctuation">(</span>cpu_id<span class="token punctuation">,</span> <span class="token operator">&amp;</span>cpu_set<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// 将指定的 CPU 核添加到集合中</span>
+
+    <span class="token comment" spellcheck="true">// 设置 CPU 亲和性</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">sched_setaffinity</span><span class="token punctuation">(</span><span class="token function">getpid</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>cpu_set_t<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>cpu_set<span class="token punctuation">)</span> <span class="token operator">!=</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">perror</span><span class="token punctuation">(</span><span class="token string">"sched_setaffinity"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">exit</span><span class="token punctuation">(</span>EXIT_FAILURE<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> cpu_id <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// 绑定到 CPU 核 0</span>
+
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Binding to CPU %d\n"</span><span class="token punctuation">,</span> cpu_id<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">bind_to_cpu</span><span class="token punctuation">(</span>cpu_id<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// 简单验证是否绑定成功</span>
+    <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">volatile</span> <span class="token keyword">long</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> <span class="token number">1000000000</span><span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Running on CPU %d\n"</span><span class="token punctuation">,</span> cpu_id<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">sleep</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>Python语言使用ctypes实现：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> ctypes
+<span class="token keyword">import</span> time
+<span class="token keyword">import</span> os
+
+<span class="token comment" spellcheck="true"># 加载 C 标准库</span>
+libc <span class="token operator">=</span> ctypes<span class="token punctuation">.</span>CDLL<span class="token punctuation">(</span><span class="token string">"libc.so.6"</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 定义 CPU 集合类型</span>
+<span class="token keyword">class</span> <span class="token class-name">cpu_set_t</span><span class="token punctuation">(</span>ctypes<span class="token punctuation">.</span>Structure<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    _fields_ <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">(</span><span class="token string">"bits"</span><span class="token punctuation">,</span> ctypes<span class="token punctuation">.</span>c_ulong <span class="token operator">*</span> <span class="token punctuation">(</span><span class="token number">1024</span> <span class="token operator">//</span> <span class="token punctuation">(</span><span class="token number">8</span> <span class="token operator">*</span> ctypes<span class="token punctuation">.</span>sizeof<span class="token punctuation">(</span>ctypes<span class="token punctuation">.</span>c_ulong<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+
+<span class="token keyword">def</span> <span class="token function">CPU_ZERO</span><span class="token punctuation">(</span>set<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span>len<span class="token punctuation">(</span>set<span class="token punctuation">.</span>bits<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        set<span class="token punctuation">.</span>bits<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">0</span>
+
+<span class="token keyword">def</span> <span class="token function">CPU_SET</span><span class="token punctuation">(</span>cpu<span class="token punctuation">,</span> set<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    set<span class="token punctuation">.</span>bits<span class="token punctuation">[</span>cpu <span class="token operator">//</span> <span class="token punctuation">(</span><span class="token number">8</span> <span class="token operator">*</span> ctypes<span class="token punctuation">.</span>sizeof<span class="token punctuation">(</span>ctypes<span class="token punctuation">.</span>c_ulong<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">]</span> <span class="token operator">|</span><span class="token operator">=</span> <span class="token punctuation">(</span><span class="token number">1</span> <span class="token operator">&lt;&lt;</span> <span class="token punctuation">(</span>cpu <span class="token operator">%</span> <span class="token punctuation">(</span><span class="token number">8</span> <span class="token operator">*</span> ctypes<span class="token punctuation">.</span>sizeof<span class="token punctuation">(</span>ctypes<span class="token punctuation">.</span>c_ulong<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token keyword">def</span> <span class="token function">bind_to_cpu</span><span class="token punctuation">(</span>cpu_id<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    mask <span class="token operator">=</span> cpu_set_t<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    CPU_ZERO<span class="token punctuation">(</span>mask<span class="token punctuation">)</span>
+    CPU_SET<span class="token punctuation">(</span>cpu_id<span class="token punctuation">,</span> mask<span class="token punctuation">)</span>
+
+    pid <span class="token operator">=</span> os<span class="token punctuation">.</span>getpid<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    result <span class="token operator">=</span> libc<span class="token punctuation">.</span>sched_setaffinity<span class="token punctuation">(</span>pid<span class="token punctuation">,</span> ctypes<span class="token punctuation">.</span>sizeof<span class="token punctuation">(</span>mask<span class="token punctuation">)</span><span class="token punctuation">,</span> ctypes<span class="token punctuation">.</span>byref<span class="token punctuation">(</span>mask<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">if</span> result <span class="token operator">!=</span> <span class="token number">0</span><span class="token punctuation">:</span>
+        <span class="token keyword">raise</span> OSError<span class="token punctuation">(</span>ctypes<span class="token punctuation">.</span>get_errno<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">"sched_setaffinity failed"</span><span class="token punctuation">)</span>
+
+<span class="token keyword">if</span> __name__ <span class="token operator">==</span> <span class="token string">"__main__"</span><span class="token punctuation">:</span>
+    cpu_id <span class="token operator">=</span> <span class="token number">0</span>  <span class="token comment" spellcheck="true"># 将进程绑定到 CPU 核 0</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">"Binding to CPU {cpu_id}"</span><span class="token punctuation">)</span>
+    bind_to_cpu<span class="token punctuation">(</span>cpu_id<span class="token punctuation">)</span>
+
+    <span class="token keyword">while</span> <span class="token boolean">True</span><span class="token punctuation">:</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">"Running on CPU {cpu_id}"</span><span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true"># 模拟一些工作</span>
+        <span class="token keyword">for</span> _ <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">10000000</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            <span class="token keyword">pass</span>
+        time<span class="token punctuation">.</span>sleep<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>ctypes是无法直接使用C语言的宏定义的，如果要使用只能通过编译为动态链接库的方式实现。</p>
+
+</article>
+    
+    
+
+</div>
+<div class="trm-post-next-prev row">
+    <div class="col-lg-12">
+        <!-- title -->
+        <h5 class="trm-title-with-divider">
+            其他文章
+            <span data-number="02"></span>
+        </h5>
+    </div>
+    
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/05/31/%E7%AE%80%E5%8D%95%E9%80%92%E5%BD%92%E9%97%AE%E9%A2%98%E7%BB%83%E4%B9%A0/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" #.">
+                    未分类
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/05/31/%E7%AE%80%E5%8D%95%E9%80%92%E5%BD%92%E9%97%AE%E9%A2%98%E7%BB%83%E4%B9%A0/" class="trm-anima-link">
+                    简单递归问题练习
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/05/31</li>
+                <li>13:22</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+</div>
+
+    
+
+
+
+                    <div class="trm-divider footer-divider"></div>
+
+                    <!-- footer -->
+                    <footer class="trm-scroll-animation">
+
+    
+
+    
+
+    
+        <div class="trm-footer-item">
+            <span>
+                由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v7.0.0
+            </span>
+            <span class="footer-separator" data-separator=" | "></span>
+            <span> 
+                主题 - 
+                <a rel="noopener" href='https://github.com/MaLuns/hexo-theme-async' target='_blank'>Async</a>
+                v2.1.8
+            </span>
+        </div>
+      
+
+     
+
+     
+</footer>
+ 
+                    <!-- footer end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- body end -->
+
+            
+
+            
+<div class="trm-fixed-container">
+    
+    
+        <div class="trm-fixed-btn" data-title="阅读模式" onclick="asyncFun.switchReadMode()">
+            <i class="iconfont fas fa-book-reader"></i>
+        </div>
+    
+    
+    <div id="trm-back-top" class="trm-fixed-btn" data-title="回到顶部">
+        <i class="iconfont fas fa-arrow-up"></i>
+    </div>
+</div>
+        </div>
+      </div>
+      <!-- scroll container end -->
+  </div>
+  <!-- app wrapper end -->
+
+  
+  <!-- Plugin -->
+
+
+
+
+    
+    
+<script src="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+
+    
+
+    
+
+    
+
+    <!-- 数学公式 -->
+    
+
+    <!-- 评论插件 -->
+    
+        
+
+        
+    
+
+
+
+<!-- CDN -->
+
+
+    
+
+    
+
+    
+
+
+
+
+    <!-- Service Worker -->
+    
+    <!-- baidu push -->
+    
+
+
+<script id="async-script" src="/js/main.js?v=2.1.8"></script>
+
+</body>
+
+</html>

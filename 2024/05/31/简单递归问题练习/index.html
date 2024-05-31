@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="x5-fullscreen" content="true">
+<meta name="full-screen" content="yes">
+<meta name="theme-color" content="#317EFB" />
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
+<meta name="description" content="背景本文主要记录一些经典的简单递归问题，作为递归问题的练习，加深理解。 递归深度测试各类编程语言的递归最大深度。C语言居然可以从main方法调用main方法。 C语言： int count &#x3D; 0;  main() {     printf(&quot;call main %d times\n&quot;, count);     count++;     main(); }  这里测试结果如下，每次可能都不一样，不">
+<meta property="og:type" content="article">
+<meta property="og:title" content="简单递归问题练习">
+<meta property="og:url" content="http://example.com/2024/05/31/%E7%AE%80%E5%8D%95%E9%80%92%E5%BD%92%E9%97%AE%E9%A2%98%E7%BB%83%E4%B9%A0/index.html">
+<meta property="og:site_name" content="Cat YuanBao">
+<meta property="og:description" content="背景本文主要记录一些经典的简单递归问题，作为递归问题的练习，加深理解。 递归深度测试各类编程语言的递归最大深度。C语言居然可以从main方法调用main方法。 C语言： int count &#x3D; 0;  main() {     printf(&quot;call main %d times\n&quot;, count);     count++;     main(); }  这里测试结果如下，每次可能都不一样，不">
+<meta property="og:locale">
+<meta property="article:published_time" content="2024-05-31T05:22:34.000Z">
+<meta property="article:modified_time" content="2024-05-31T05:22:54.762Z">
+<meta property="article:author" content="橘猫元宝">
+<meta property="article:tag" content="cat">
+<meta name="twitter:card" content="summary">
+
+    <meta name="keywords" content="cat">
+
+
+<title >简单递归问题练习</title>
+
+<!-- Favicon -->
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='16x16' ></link>
+
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='32x32' ></link>
+
+
+
+
+<!-- Plugin -->
+
+
+
+
+    
+<link rel="stylesheet" href="/css/plugins/bootstrap.row.css">
+
+    
+<link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.css">
+
+    
+    
+
+
+
+
+<!-- Icon -->
+
+    
+<link rel="stylesheet" href="/css/plugins/font-awesome.min.css">
+
+
+
+
+<!-- Variable -->
+<script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-05-31 13:22:54"};</script>
+
+<!-- Theme mode css -->
+<link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
+<script>
+    let defaultMode = ASYNC_CONFIG.theme.default !=='auto' ?  ASYNC_CONFIG.theme.default : (window.matchMedia("(prefers-color-scheme: light)").matches ? 'style-light' : 'style-dark')
+    let catchMode = localStorage.getItem('theme-mode') || defaultMode;
+    let type = catchMode === 'style-dark' ? 'add' : 'remove';
+    document.documentElement.classList[type]('dark')
+</script>
+
+<!-- CDN -->
+
+
+    
+    
+
+
+
+<!-- Site Analytics -->
+ 
+<meta name="generator" content="Hexo 7.0.0"><link rel="stylesheet" href="/css/prism.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+<body>
+
+  <!-- app wrapper -->
+  <div class="trm-app-frame">
+
+    <!-- page preloader -->
+    <div class="trm-preloader">
+    <div class="trm-holder">
+        <div class="preloader">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+    <!-- page preloader end -->
+
+    <!-- change mode preloader -->
+    <div class="trm-mode-swich-animation-frame">
+    <div class="trm-mode-swich-animation">
+        <i class="i-sun"><i class="iconfont far fa-sun"></i></i>
+        <div class="trm-horizon"></div>
+        <i class="i-moon"><i class="iconfont far fa-moon"></i></i>
+    </div>
+</div>
+    <!-- change mode preloader end -->
+
+      <!-- scroll container -->
+      <div id="trm-dynamic-content" class="trm-swup-animation">
+        <div id="trm-scroll-container" class="trm-scroll-container" style="opacity: 0">
+            <!-- top bar -->
+            <header class="trm-top-bar">
+	<div class="container">
+		<div class="trm-left-side">
+			<!-- logo -->
+<a href="/" class="trm-logo-frame trm-anima-link">
+    
+        <img alt="logo" src="/img/favicon.svg">
+    
+    
+        <div class="trm-logo-text">
+            元宝<span>橘猫</span>
+        </div>
+    
+</a>
+<!-- logo end -->
+		</div>
+		<div class="trm-right-side">
+			<!-- menu -->
+<div class="trm-menu">
+    <nav>
+        <ul>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/" target="">
+                    首页
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/archives/" target="">
+                    归档
+                </a>
+                
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+<!-- menu end -->
+			
+    <!-- mode switcher place -->
+    <div class="trm-mode-switcher-place">
+        <div class="trm-mode-switcher">
+            <i class="iconfont far fa-sun"></i>
+            <input class="tgl tgl-light" id="trm-swich" type="checkbox">
+            <label class="trm-swich" for="trm-swich"></label>
+            <i class="iconfont far fa-moon"></i>
+        </div>
+    </div>
+    <!-- mode switcher place end -->
+
+			
+		</div>
+		<div class="trm-menu-btn">
+			<span></span>
+		</div>
+	</div>
+</header>
+            <!-- top bar end -->
+
+            <!-- body -->
+            
+<div class="trm-content-start">
+    <!-- banner -->
+    <div class="trm-banner">
+    
+    <!-- banner cover -->
+    <img style="object-position:top;object-fit:cover;" alt="banner" class="trm-banner-cover" src="/img/banner.png">
+    <!-- banner cover end -->
+    
+
+    <!-- banner content -->
+    <div class="trm-banner-content trm-overlay">
+        <div class="container">
+            <div class="row">
+                
+                <div class="col-lg-4"></div>
+                
+                <div class="col-lg-8">
+
+                    <!-- banner title -->
+                    <div class="trm-banner-text ">
+                        <div class="trm-label trm-mb-20">
+                            NEWS LETTER
+                        </div>
+                        <h1 class="trm-mb-30 trm-hsmb-font">
+                            简单递归问题练习
+                        </h1>
+
+                        
+                            <ul class="trm-breadcrumbs trm-label">
+                                <li>
+                                    <a href="/" class="trm-anima-link">Home</a>
+                                </li>
+                                <li>
+                                    <span>
+                                        2024
+                                    </span>
+                                </li>
+                            </ul>
+                        
+                    </div>
+                    <!-- banner title end -->
+
+                    <!-- scroll hint -->
+                    <span id="scroll-triger" class="trm-scroll-hint-frame">
+                        <div class="trm-scroll-hint"></div>
+                        <span class="trm-label">Scroll down</span>
+                    </span>
+                    <!-- scroll hint end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- banner content end -->
+</div>
+    <!-- banner end -->
+    <div class="container">
+        <div class="row">
+            
+                <div class="trm-page-sidebar col-lg-4 hidden-sm">
+                    <!-- main card -->
+                    <div class="trm-main-card-frame trm-sidebar">
+    <div class="trm-main-card"> 
+        <!-- card header -->
+<div class="trm-mc-header">
+    <div class="trm-avatar-frame trm-mb-20">
+        <img alt="Avatar" class="trm-avatar" src="/img/cat.jpg">
+    </div>
+    <h5 class="trm-name trm-mb-15">
+        橘猫元宝
+    </h5>
+    
+</div>
+<!-- card header end -->
+        <!-- sidebar social -->
+
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<div class="trm-social">
+    
+        <a href="https://github.com" title="Github" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-github"></i>
+        </a>
+    
+</div>
+
+<!-- sidebar social end -->
+        <!-- info -->
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<ul class="trm-table trm-mb-20">
+    
+        <li>
+            <div class="trm-label">
+                Residence:
+            </div>
+            <div class="trm-label trm-label-light">
+                Mars
+            </div>
+        </li>
+    
+</ul>
+<!-- info end -->
+
+        
+    </div>
+</div>
+                    <!-- main card end -->
+                </div>
+            
+            <div class="trm-page-content col-lg-8">
+                <div id="trm-content" class="trm-content">
+                    <div class="trm-post-info row hidden-sm">
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-calendar-alt trm-icon"></i><br>
+            05/31
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-clock trm-icon"></i><br>
+            13:22
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div id="post-author" class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-user trm-icon"></i><br>
+            橘猫元宝
+        </div>
+    </div>
+</div>
+<div class="trm-card ">
+    <article id="article-container" class="trm-publication">
+    <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>本文主要记录一些经典的简单递归问题，作为递归问题的练习，加深理解。</p>
+<h3 id="递归深度"><a href="#递归深度" class="headerlink" title="递归深度"></a>递归深度</h3><p>测试各类编程语言的递归最大深度。C语言居然可以从main方法调用main方法。</p>
+<p>C语言：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">int</span> count <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+
+<span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"call main %d times\n"</span><span class="token punctuation">,</span> count<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    count<span class="token operator">++</span><span class="token punctuation">;</span>
+    <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里测试结果如下，每次可能都不一样，不知道为什么。</p>
+<pre class="line-numbers language-bash"><code class="language-bash">call main 523843 <span class="token function">times</span>
+<span class="token punctuation">[</span>1<span class="token punctuation">]</span>    6269 segmentation fault <span class="token punctuation">(</span>core dumped<span class="token punctuation">)</span>  ./a.out
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>C++语言：</p>
+<pre class="line-numbers language-c++"><code class="language-c++">#include <iostream>
+
+using namespace std;
+
+int count = 0;
+
+int main() {
+    cout << "hello" << count << endl;
+    count++;
+    main();
+    return 0;
+}
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">hello523634
+<span class="token punctuation">[</span>1<span class="token punctuation">]</span>    6291 segmentation fault <span class="token punctuation">(</span>core dumped<span class="token punctuation">)</span>  ./cpp
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>Python语言：</p>
+<pre class="line-numbers language-python"><code class="language-python">COUNT <span class="token operator">=</span> <span class="token number">0</span>
+<span class="token keyword">def</span> <span class="token function">hello</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">global</span> COUNT
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"hello"</span><span class="token punctuation">,</span> COUNT<span class="token punctuation">)</span>
+    COUNT <span class="token operator">+=</span> <span class="token number">1</span>
+    hello<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+hello<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-python"><code class="language-python">hello <span class="token number">995</span>
+Traceback <span class="token punctuation">(</span>most recent call last<span class="token punctuation">)</span><span class="token punctuation">:</span>
+  File <span class="token string">"/root/递归/call_main/call_main.py"</span><span class="token punctuation">,</span> line <span class="token number">8</span><span class="token punctuation">,</span> <span class="token keyword">in</span> <span class="token operator">&lt;</span>module<span class="token operator">></span>
+    hello<span class="token punctuation">(</span><span class="token punctuation">)</span>
+  File <span class="token string">"/root/递归/call_main/call_main.py"</span><span class="token punctuation">,</span> line <span class="token number">6</span><span class="token punctuation">,</span> <span class="token keyword">in</span> hello
+    hello<span class="token punctuation">(</span><span class="token punctuation">)</span>
+  File <span class="token string">"/root/递归/call_main/call_main.py"</span><span class="token punctuation">,</span> line <span class="token number">6</span><span class="token punctuation">,</span> <span class="token keyword">in</span> hello
+    hello<span class="token punctuation">(</span><span class="token punctuation">)</span>
+  File <span class="token string">"/root/递归/call_main/call_main.py"</span><span class="token punctuation">,</span> line <span class="token number">6</span><span class="token punctuation">,</span> <span class="token keyword">in</span> hello
+    hello<span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">[</span>Previous line repeated <span class="token number">992</span> more times<span class="token punctuation">]</span>
+  File <span class="token string">"/root/递归/call_main/call_main.py"</span><span class="token punctuation">,</span> line <span class="token number">4</span><span class="token punctuation">,</span> <span class="token keyword">in</span> hello
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"hello"</span><span class="token punctuation">,</span> COUNT<span class="token punctuation">)</span>
+RecursionError<span class="token punctuation">:</span> maximum recursion depth exceeded <span class="token keyword">while</span> calling a Python object
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>Python语言默认最大只有1000.</p>
+<p>C语言没有内置的最大递归深度限制，这取决于具体的系统和编译器设置。递归深度主要是由堆栈大小决定的。</p>
+<p>使用<code>ulimit</code>设置更大的堆栈大小，就能增加递归深度。</p>
+<p>Python语言可以通过<code>setrecursionlimit</code>方法重新设置递归深度：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> sys
+
+<span class="token comment" spellcheck="true"># 查看当前递归最大深度</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">"当前递归最大深度: {sys.getrecursionlimit()}"</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 设置新的递归最大深度</span>
+sys<span class="token punctuation">.</span>setrecursionlimit<span class="token punctuation">(</span><span class="token number">2000</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">"新的递归最大深度: {sys.getrecursionlimit()}"</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 定义一个递归函数</span>
+<span class="token keyword">def</span> <span class="token function">recursive_function</span><span class="token punctuation">(</span>n<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">if</span> n <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span> <span class="token number">0</span>
+    <span class="token keyword">else</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span> <span class="token number">1</span> <span class="token operator">+</span> recursive_function<span class="token punctuation">(</span>n <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">)</span>
+
+<span class="token keyword">try</span><span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>recursive_function<span class="token punctuation">(</span><span class="token number">1500</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">except</span> RecursionError <span class="token keyword">as</span> e<span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">"递归错误: {e}"</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-bash"><code class="language-bash">$ python3 setrecursionlimit.py
+当前递归最大深度: 1000
+新的递归最大深度: 2000
+1500
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="递归阶乘问题"><a href="#递归阶乘问题" class="headerlink" title="递归阶乘问题"></a>递归阶乘问题</h3><p>C++使用递归求解阶乘问题：</p>
+<pre class="line-numbers language-c++"><code class="language-c++">#include <iostream>
+
+using namespace std;
+
+int factorial(int);
+
+int main() {
+    cout << "Please enter a non-negative int: ";
+    int n;
+    cin >> n;
+
+    cout << "Factorial if " << n << " is " << factorial(n) << " \n";
+
+    return 0;
+}
+
+int factorial(int n) {
+    return n == 0 ? 1 : n * factorial(n - 1);
+}
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里输入整数过大会造成溢出。</p>
+<h3 id="递归计算斐波那契数列问题"><a href="#递归计算斐波那契数列问题" class="headerlink" title="递归计算斐波那契数列问题"></a>递归计算斐波那契数列问题</h3><p>使用递归解决这个问题效率比较低，最好加上缓存。</p>
+<pre class="line-numbers language-c++"><code class="language-c++">int fib(int index) {
+    if (index == 0) {
+        return 0;
+    } else if (index == 1) {
+        return 1;
+    } else {
+        return fib(index - 1) + fib(index - 2);
+    }
+}
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="递归解决回文判断"><a href="#递归解决回文判断" class="headerlink" title="递归解决回文判断"></a>递归解决回文判断</h3><pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">def</span> <span class="token function">is_palindrome</span><span class="token punctuation">(</span>s<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    length <span class="token operator">=</span> len<span class="token punctuation">(</span>s<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> length <span class="token operator">&lt;=</span> <span class="token number">1</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span> <span class="token boolean">True</span>
+    <span class="token keyword">elif</span> s<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">!=</span> s<span class="token punctuation">[</span>length <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span> <span class="token boolean">False</span>
+    <span class="token keyword">else</span><span class="token punctuation">:</span>
+          <span class="token comment" spellcheck="true"># 去掉头尾字符继续比较</span>
+        <span class="token keyword">return</span> is_palindrome<span class="token punctuation">(</span>s<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">:</span> length <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>is_palindrome<span class="token punctuation">(</span><span class="token string">"aba"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>is_palindrome<span class="token punctuation">(</span><span class="token string">"abac"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这个方法，性能比较差，可以使用一个辅助函数优化性能，类似双指针，这样做的好处是不会产生更多的新字符串的副本：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">def</span> <span class="token function">helper_palindrome</span><span class="token punctuation">(</span>s<span class="token punctuation">:</span> str<span class="token punctuation">,</span> low<span class="token punctuation">:</span> int<span class="token punctuation">,</span> high<span class="token punctuation">:</span> int<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">if</span> high <span class="token operator">&lt;=</span> low<span class="token punctuation">:</span>
+        <span class="token keyword">return</span> <span class="token boolean">True</span>
+    <span class="token keyword">elif</span> s<span class="token punctuation">[</span>low<span class="token punctuation">]</span> <span class="token operator">!=</span> s<span class="token punctuation">[</span>high<span class="token punctuation">]</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span> <span class="token boolean">False</span>
+    <span class="token keyword">else</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span> helper_palindrome<span class="token punctuation">(</span>s<span class="token punctuation">,</span> low <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">,</span> high <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">)</span>
+
+
+
+<span class="token keyword">def</span> <span class="token function">is_palindrome</span><span class="token punctuation">(</span>s<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> helper_palindrome<span class="token punctuation">(</span>s<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> len<span class="token punctuation">(</span>s<span class="token punctuation">)</span> <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>is_palindrome<span class="token punctuation">(</span><span class="token string">"aba"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>is_palindrome<span class="token punctuation">(</span><span class="token string">"abac"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="递归返回数组中的最大元素值"><a href="#递归返回数组中的最大元素值" class="headerlink" title="递归返回数组中的最大元素值"></a>递归返回数组中的最大元素值</h3><pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">from</span> typing <span class="token keyword">import</span> List
+
+<span class="token keyword">def</span> <span class="token function">max_value</span><span class="token punctuation">(</span>nums<span class="token punctuation">:</span> List<span class="token punctuation">[</span>int<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">></span> int<span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">"""递归获取最大值"""</span>
+    length <span class="token operator">=</span> len<span class="token punctuation">(</span>nums<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> length <span class="token operator">==</span> <span class="token number">1</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span> nums<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+    <span class="token keyword">else</span><span class="token punctuation">:</span>
+        max_value_other <span class="token operator">=</span> max_value<span class="token punctuation">(</span>nums<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">:</span> length<span class="token punctuation">]</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> nums<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token keyword">if</span> nums<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">></span> max_value_other <span class="token keyword">else</span> max_value_other
+
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>max_value<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">4</span><span class="token punctuation">,</span><span class="token number">5</span><span class="token punctuation">,</span><span class="token number">6</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>max_value<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">10</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">4</span><span class="token punctuation">,</span><span class="token number">5</span><span class="token punctuation">,</span><span class="token number">6</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="递归逆序输出数字"><a href="#递归逆序输出数字" class="headerlink" title="递归逆序输出数字"></a>递归逆序输出数字</h3><p>递归逆序输出每位数字：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">def</span> <span class="token function">reverse_print</span><span class="token punctuation">(</span>n<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true"># 处理负数的情况</span>
+    <span class="token keyword">if</span> n <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">:</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'-'</span><span class="token punctuation">,</span> end<span class="token operator">=</span><span class="token string">''</span><span class="token punctuation">)</span>
+        n <span class="token operator">=</span> <span class="token operator">-</span>n
+
+    <span class="token comment" spellcheck="true"># 基本情况：n 是个位数</span>
+    <span class="token keyword">if</span> n <span class="token operator">&lt;</span> <span class="token number">10</span><span class="token punctuation">:</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span>n<span class="token punctuation">,</span> end<span class="token operator">=</span><span class="token string">''</span><span class="token punctuation">)</span>
+    <span class="token keyword">else</span><span class="token punctuation">:</span>
+        <span class="token comment" spellcheck="true"># 打印最后一位数字</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span>n <span class="token operator">%</span> <span class="token number">10</span><span class="token punctuation">,</span> end<span class="token operator">=</span><span class="token string">''</span><span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true"># 递归调用去掉最后一位的数字</span>
+        reverse_print<span class="token punctuation">(</span>n <span class="token operator">//</span> <span class="token number">10</span><span class="token punctuation">)</span>
+
+
+reverse_print<span class="token punctuation">(</span><span class="token number">12345</span><span class="token punctuation">)</span> 
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+reverse_print<span class="token punctuation">(</span><span class="token operator">-</span><span class="token number">9876</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+reverse_print<span class="token punctuation">(</span><span class="token number">100000</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+reverse_print<span class="token punctuation">(</span><span class="token number">897654321</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="递归逆序打印字符串"><a href="#递归逆序打印字符串" class="headerlink" title="递归逆序打印字符串"></a>递归逆序打印字符串</h3><pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">def</span> <span class="token function">reverse_print_str</span><span class="token punctuation">(</span>s<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">if</span> len<span class="token punctuation">(</span>s<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">1</span><span class="token punctuation">:</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span>s<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> end<span class="token operator">=</span><span class="token string">''</span><span class="token punctuation">)</span>
+    <span class="token keyword">else</span><span class="token punctuation">:</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span>s<span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> end<span class="token operator">=</span><span class="token string">''</span><span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true"># 去掉最后一位递归调用</span>
+        reverse_print_str<span class="token punctuation">(</span>s<span class="token punctuation">[</span><span class="token punctuation">:</span>len<span class="token punctuation">(</span>s<span class="token punctuation">)</span> <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+
+reverse_print_str<span class="token punctuation">(</span><span class="token string">'abcdefg'</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="递归计算整数中所有数字之和"><a href="#递归计算整数中所有数字之和" class="headerlink" title="递归计算整数中所有数字之和"></a>递归计算整数中所有数字之和</h3><pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">def</span> <span class="token function">compute_all_sum</span><span class="token punctuation">(</span>num<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">if</span> num <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">:</span>
+        num <span class="token operator">=</span> <span class="token operator">-</span>num
+
+    <span class="token keyword">if</span> num <span class="token operator">&lt;</span> <span class="token number">10</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span> num
+
+    single_num <span class="token operator">=</span> num <span class="token operator">%</span> <span class="token number">10</span>
+    other_num <span class="token operator">=</span> compute_all_sum<span class="token punctuation">(</span>num <span class="token operator">//</span> <span class="token number">10</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> single_num <span class="token operator">+</span> other_num
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>compute_all_sum<span class="token punctuation">(</span><span class="token number">12345</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>compute_all_sum<span class="token punctuation">(</span><span class="token number">123456</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="递归统计一个字符在指定字符串中出现的次数"><a href="#递归统计一个字符在指定字符串中出现的次数" class="headerlink" title="递归统计一个字符在指定字符串中出现的次数"></a>递归统计一个字符在指定字符串中出现的次数</h3><pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">def</span> <span class="token function">occor_times</span><span class="token punctuation">(</span>s<span class="token punctuation">,</span> c<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">if</span> <span class="token operator">not</span> s<span class="token punctuation">:</span>
+        <span class="token comment" spellcheck="true"># 空字符串</span>
+        <span class="token keyword">return</span> <span class="token number">0</span>
+    <span class="token keyword">elif</span> s<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">==</span> c<span class="token punctuation">:</span>
+          <span class="token comment" spellcheck="true"># 相等，+1 处理后续字符串</span>
+        <span class="token keyword">return</span> <span class="token number">1</span> <span class="token operator">+</span> occor_times<span class="token punctuation">(</span>s<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">:</span><span class="token punctuation">]</span><span class="token punctuation">,</span> c<span class="token punctuation">)</span>
+    <span class="token keyword">else</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span> occor_times<span class="token punctuation">(</span>s<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">:</span><span class="token punctuation">]</span><span class="token punctuation">,</span> c<span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>occor_times<span class="token punctuation">(</span><span class="token string">'Welcome'</span><span class="token punctuation">,</span> <span class="token string">'e'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="打印一个字符串所有排列"><a href="#打印一个字符串所有排列" class="headerlink" title="打印一个字符串所有排列"></a>打印一个字符串所有排列</h3><pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">def</span> <span class="token function">permute</span><span class="token punctuation">(</span>s<span class="token punctuation">,</span> answer<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">if</span> len<span class="token punctuation">(</span>s<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">:</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span>answer<span class="token punctuation">)</span>
+        <span class="token keyword">return</span>
+
+    length <span class="token operator">=</span> len<span class="token punctuation">(</span>s<span class="token punctuation">)</span>
+    <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span>length<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        ch <span class="token operator">=</span> s<span class="token punctuation">[</span>i<span class="token punctuation">]</span>
+        left_substr <span class="token operator">=</span> s<span class="token punctuation">[</span><span class="token punctuation">:</span>i<span class="token punctuation">]</span>
+        right_substr <span class="token operator">=</span> s<span class="token punctuation">[</span>i<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">:</span><span class="token punctuation">]</span>
+        rest <span class="token operator">=</span> left_substr <span class="token operator">+</span> right_substr
+        <span class="token comment" spellcheck="true"># rest是剩余部分，answer是当前已经排列好的部分。</span>
+        permute<span class="token punctuation">(</span>rest<span class="token punctuation">,</span> answer <span class="token operator">+</span> ch<span class="token punctuation">)</span>
+
+string <span class="token operator">=</span> <span class="token string">"abcde"</span>
+permute<span class="token punctuation">(</span>string<span class="token punctuation">,</span> <span class="token string">""</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+</article>
+    
+    
+
+</div>
+<div class="trm-post-next-prev row">
+    <div class="col-lg-12">
+        <!-- title -->
+        <h5 class="trm-title-with-divider">
+            其他文章
+            <span data-number="02"></span>
+        </h5>
+    </div>
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/05/31/%E7%A8%8B%E5%BA%8F%E5%A6%82%E4%BD%95%E4%B8%8E%E7%89%B9%E5%AE%9ACPU%E7%BB%91%E5%AE%9A/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" #.">
+                    未分类
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/05/31/%E7%A8%8B%E5%BA%8F%E5%A6%82%E4%BD%95%E4%B8%8E%E7%89%B9%E5%AE%9ACPU%E7%BB%91%E5%AE%9A/" class="trm-anima-link">
+                    程序如何与特定CPU绑定
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/05/31</li>
+                <li>13:46</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/05/29/LeetCode-2932-%E6%89%BE%E5%87%BA%E5%BC%BA%E6%95%B0%E5%AF%B9%E7%9A%84%E6%9C%80%E5%A4%A7%E5%BC%82%E6%88%96%E5%80%BC1/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" #.">
+                    未分类
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/05/29/LeetCode-2932-%E6%89%BE%E5%87%BA%E5%BC%BA%E6%95%B0%E5%AF%B9%E7%9A%84%E6%9C%80%E5%A4%A7%E5%BC%82%E6%88%96%E5%80%BC1/" class="trm-anima-link">
+                    LeetCode-2932-找出强数对的最大异或值1
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/05/29</li>
+                <li>01:13</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+</div>
+
+    
+
+
+
+                    <div class="trm-divider footer-divider"></div>
+
+                    <!-- footer -->
+                    <footer class="trm-scroll-animation">
+
+    
+
+    
+
+    
+        <div class="trm-footer-item">
+            <span>
+                由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v7.0.0
+            </span>
+            <span class="footer-separator" data-separator=" | "></span>
+            <span> 
+                主题 - 
+                <a rel="noopener" href='https://github.com/MaLuns/hexo-theme-async' target='_blank'>Async</a>
+                v2.1.8
+            </span>
+        </div>
+      
+
+     
+
+     
+</footer>
+ 
+                    <!-- footer end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- body end -->
+
+            
+
+            
+<div class="trm-fixed-container">
+    
+    
+        <div class="trm-fixed-btn" data-title="阅读模式" onclick="asyncFun.switchReadMode()">
+            <i class="iconfont fas fa-book-reader"></i>
+        </div>
+    
+    
+    <div id="trm-back-top" class="trm-fixed-btn" data-title="回到顶部">
+        <i class="iconfont fas fa-arrow-up"></i>
+    </div>
+</div>
+        </div>
+      </div>
+      <!-- scroll container end -->
+  </div>
+  <!-- app wrapper end -->
+
+  
+  <!-- Plugin -->
+
+
+
+
+    
+    
+<script src="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+
+    
+
+    
+
+    
+
+    <!-- 数学公式 -->
+    
+
+    <!-- 评论插件 -->
+    
+        
+
+        
+    
+
+
+
+<!-- CDN -->
+
+
+    
+
+    
+
+    
+
+
+
+
+    <!-- Service Worker -->
+    
+    <!-- baidu push -->
+    
+
+
+<script id="async-script" src="/js/main.js?v=2.1.8"></script>
+
+</body>
+
+</html>
