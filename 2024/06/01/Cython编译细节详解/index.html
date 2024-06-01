@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="x5-fullscreen" content="true">
+<meta name="full-screen" content="yes">
+<meta name="theme-color" content="#317EFB" />
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
+<meta name="description" content="背景本文主要学习Cython编译的细节与原理，以及如何把Cython代码制作成wheel包发布。 需要对C&#x2F;C++编译的基本概念有所了解，比如目标文件，动态文件，makefile等知识。 简介先通过一个简单的实例，对Cython编译有一个基本的了解，之前一直是在Jupyter上运行Cython代码。 这里面有编译的过程，是被隐藏了的。Jupyter只能用来测试一些代码，无法作为实际的工程">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Cython编译细节详解">
+<meta property="og:url" content="http://example.com/2024/06/01/Cython%E7%BC%96%E8%AF%91%E7%BB%86%E8%8A%82%E8%AF%A6%E8%A7%A3/index.html">
+<meta property="og:site_name" content="Cat YuanBao">
+<meta property="og:description" content="背景本文主要学习Cython编译的细节与原理，以及如何把Cython代码制作成wheel包发布。 需要对C&#x2F;C++编译的基本概念有所了解，比如目标文件，动态文件，makefile等知识。 简介先通过一个简单的实例，对Cython编译有一个基本的了解，之前一直是在Jupyter上运行Cython代码。 这里面有编译的过程，是被隐藏了的。Jupyter只能用来测试一些代码，无法作为实际的工程">
+<meta property="og:locale">
+<meta property="og:image" content="http://example.com/img/404.jpg">
+<meta property="article:published_time" content="2024-06-01T11:24:28.000Z">
+<meta property="article:modified_time" content="2024-06-01T11:24:47.930Z">
+<meta property="article:author" content="橘猫元宝">
+<meta property="article:tag" content="cat">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/img/404.jpg">
+
+    <meta name="keywords" content="cat">
+
+
+<title >Cython编译细节详解</title>
+
+<!-- Favicon -->
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='16x16' ></link>
+
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='32x32' ></link>
+
+
+
+
+<!-- Plugin -->
+
+
+
+
+    
+<link rel="stylesheet" href="/css/plugins/bootstrap.row.css">
+
+    
+<link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.css">
+
+    
+    
+
+
+
+
+<!-- Icon -->
+
+    
+<link rel="stylesheet" href="/css/plugins/font-awesome.min.css">
+
+
+
+
+<!-- Variable -->
+<script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-06-01 19:24:47"};</script>
+
+<!-- Theme mode css -->
+<link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
+<script>
+    let defaultMode = ASYNC_CONFIG.theme.default !=='auto' ?  ASYNC_CONFIG.theme.default : (window.matchMedia("(prefers-color-scheme: light)").matches ? 'style-light' : 'style-dark')
+    let catchMode = localStorage.getItem('theme-mode') || defaultMode;
+    let type = catchMode === 'style-dark' ? 'add' : 'remove';
+    document.documentElement.classList[type]('dark')
+</script>
+
+<!-- CDN -->
+
+
+    
+    
+
+
+
+<!-- Site Analytics -->
+ 
+<meta name="generator" content="Hexo 7.0.0"><link rel="stylesheet" href="/css/prism.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+<body>
+
+  <!-- app wrapper -->
+  <div class="trm-app-frame">
+
+    <!-- page preloader -->
+    <div class="trm-preloader">
+    <div class="trm-holder">
+        <div class="preloader">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+    <!-- page preloader end -->
+
+    <!-- change mode preloader -->
+    <div class="trm-mode-swich-animation-frame">
+    <div class="trm-mode-swich-animation">
+        <i class="i-sun"><i class="iconfont far fa-sun"></i></i>
+        <div class="trm-horizon"></div>
+        <i class="i-moon"><i class="iconfont far fa-moon"></i></i>
+    </div>
+</div>
+    <!-- change mode preloader end -->
+
+      <!-- scroll container -->
+      <div id="trm-dynamic-content" class="trm-swup-animation">
+        <div id="trm-scroll-container" class="trm-scroll-container" style="opacity: 0">
+            <!-- top bar -->
+            <header class="trm-top-bar">
+	<div class="container">
+		<div class="trm-left-side">
+			<!-- logo -->
+<a href="/" class="trm-logo-frame trm-anima-link">
+    
+        <img alt="logo" src="/img/favicon.svg">
+    
+    
+        <div class="trm-logo-text">
+            元宝<span>橘猫</span>
+        </div>
+    
+</a>
+<!-- logo end -->
+		</div>
+		<div class="trm-right-side">
+			<!-- menu -->
+<div class="trm-menu">
+    <nav>
+        <ul>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/" target="">
+                    首页
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/archives/" target="">
+                    归档
+                </a>
+                
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+<!-- menu end -->
+			
+    <!-- mode switcher place -->
+    <div class="trm-mode-switcher-place">
+        <div class="trm-mode-switcher">
+            <i class="iconfont far fa-sun"></i>
+            <input class="tgl tgl-light" id="trm-swich" type="checkbox">
+            <label class="trm-swich" for="trm-swich"></label>
+            <i class="iconfont far fa-moon"></i>
+        </div>
+    </div>
+    <!-- mode switcher place end -->
+
+			
+		</div>
+		<div class="trm-menu-btn">
+			<span></span>
+		</div>
+	</div>
+</header>
+            <!-- top bar end -->
+
+            <!-- body -->
+            
+<div class="trm-content-start">
+    <!-- banner -->
+    <div class="trm-banner">
+    
+    <!-- banner cover -->
+    <img style="object-position:top;object-fit:cover;" alt="banner" class="trm-banner-cover" src="/img/banner.png">
+    <!-- banner cover end -->
+    
+
+    <!-- banner content -->
+    <div class="trm-banner-content trm-overlay">
+        <div class="container">
+            <div class="row">
+                
+                <div class="col-lg-4"></div>
+                
+                <div class="col-lg-8">
+
+                    <!-- banner title -->
+                    <div class="trm-banner-text ">
+                        <div class="trm-label trm-mb-20">
+                            NEWS LETTER
+                        </div>
+                        <h1 class="trm-mb-30 trm-hsmb-font">
+                            Cython编译细节详解
+                        </h1>
+
+                        
+                            <ul class="trm-breadcrumbs trm-label">
+                                <li>
+                                    <a href="/" class="trm-anima-link">Home</a>
+                                </li>
+                                <li>
+                                    <span>
+                                        2024
+                                    </span>
+                                </li>
+                            </ul>
+                        
+                    </div>
+                    <!-- banner title end -->
+
+                    <!-- scroll hint -->
+                    <span id="scroll-triger" class="trm-scroll-hint-frame">
+                        <div class="trm-scroll-hint"></div>
+                        <span class="trm-label">Scroll down</span>
+                    </span>
+                    <!-- scroll hint end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- banner content end -->
+</div>
+    <!-- banner end -->
+    <div class="container">
+        <div class="row">
+            
+                <div class="trm-page-sidebar col-lg-4 hidden-sm">
+                    <!-- main card -->
+                    <div class="trm-main-card-frame trm-sidebar">
+    <div class="trm-main-card"> 
+        <!-- card header -->
+<div class="trm-mc-header">
+    <div class="trm-avatar-frame trm-mb-20">
+        <img alt="Avatar" class="trm-avatar" src="/img/cat.jpg">
+    </div>
+    <h5 class="trm-name trm-mb-15">
+        橘猫元宝
+    </h5>
+    
+</div>
+<!-- card header end -->
+        <!-- sidebar social -->
+
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<div class="trm-social">
+    
+        <a href="https://github.com" title="Github" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-github"></i>
+        </a>
+    
+</div>
+
+<!-- sidebar social end -->
+        <!-- info -->
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<ul class="trm-table trm-mb-20">
+    
+        <li>
+            <div class="trm-label">
+                Residence:
+            </div>
+            <div class="trm-label trm-label-light">
+                Mars
+            </div>
+        </li>
+    
+</ul>
+<!-- info end -->
+
+        
+    </div>
+</div>
+                    <!-- main card end -->
+                </div>
+            
+            <div class="trm-page-content col-lg-8">
+                <div id="trm-content" class="trm-content">
+                    <div class="trm-post-info row hidden-sm">
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-calendar-alt trm-icon"></i><br>
+            06/01
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-clock trm-icon"></i><br>
+            19:24
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div id="post-author" class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-user trm-icon"></i><br>
+            橘猫元宝
+        </div>
+    </div>
+</div>
+<div class="trm-card ">
+    <article id="article-container" class="trm-publication">
+    <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>本文主要学习Cython编译的细节与原理，以及如何把Cython代码制作成wheel包发布。</p>
+<p>需要对C&#x2F;C++编译的基本概念有所了解，比如目标文件，动态文件，makefile等知识。</p>
+<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>先通过一个简单的实例，对Cython编译有一个基本的了解，之前一直是在Jupyter上运行Cython代码。</p>
+<p>这里面有编译的过程，是被隐藏了的。Jupyter只能用来测试一些代码，无法作为实际的工程使用，还是需要掌握背后的编译过程。</p>
+<p>通过hello world来实现这个过程，使用Python3.9作为当前的环境。</p>
+<p>hello.pyx文件：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Hello World from cython!"</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>Makefile文件：</p>
+<pre class="line-numbers language-makefile"><code class="language-makefile"><span class="token symbol">all</span><span class="token punctuation">:</span>
+    cython -3 -o helloworld.c helloworld.pyx
+    gcc -g -O2 -fpic -c helloworld.c -o helloworld.o `python-config --cflags`
+    gcc -g -O2 -shared -o helloworld.so helloworld.o `python-config --libs`
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>cython -3 表示使用Python3版本, 从pyx得到c文件，编译c文件为目标文件，最后编译目标文件为so文件。</p>
+<p>make后结果：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ ll
+total 328K
+-rw-r--r--. 1 root root  196 Jun  1 03:02 Makefile
+-rw-r--r--. 1 root root 157K Jun  1 03:49 helloworld.c
+-rw-r--r--. 1 root root  92K Jun  1 03:49 helloworld.o
+-rw-r--r--. 1 root root   34 Jun  1 02:55 helloworld.pyx
+-rwxr-xr-x. 1 root root  66K Jun  1 03:49 helloworld.so
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>调用helloworld加载动态库：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ python3 -c <span class="token string">"import helloworld"</span>
+Hello World from cython<span class="token operator">!</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>通过strace，或者lsof，可以看出这里确实是加载了动态库文件，而不是直接运行的Python print方法。</p>
+<p>这里会有几个过程：</p>
+<ol>
+<li>通过cython命令，将pyx(一种python扩展文件)编译为C源文件；</li>
+<li>在C源文件中加入Python.h头文件内容，挂载Python的运行时相关方法；</li>
+<li>通过gcc编译为目标文件(object file);</li>
+<li>通过链接libpython.so文件，得到最后的so文件。</li>
+<li>Python其他代码可以直接import这个so文件，或者C语言使用so文件，调用其中的方法。</li>
+</ol>
+<p>原理图如下：</p>
+<p><img src="/images/cython_basic.jpg" alt="alt text" loading="lazy" onerror='this.onerror=null;this.src="/img/404.jpg"'></p>
+<h4 id="makefile的详解"><a href="#makefile的详解" class="headerlink" title="makefile的详解"></a>makefile的详解</h4><p>这里有一个Makefile，Makefile是C&#x2F;C++程序构建的一个文件，用于描述如何编译不同的源代码文件，形成可以交付的二级制文件。</p>
+<pre class="line-numbers language-makefile"><code class="language-makefile"><span class="token symbol">all</span><span class="token punctuation">:</span>
+    cython -3 -o helloworld.c helloworld.pyx
+    gcc -g -O2 -fpic -c helloworld.c -o helloworld.o `python-config --cflags`
+    gcc -g -O2 -shared -o helloworld.so helloworld.o `python-config --libs`
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里详细解释一下这个文件做了什么事情。</p>
+<p>第一行 主要是使用cython Python3 版本去编译 helloworld.pyx 文件 生成一个helloworld.c文件；</p>
+<p>第二行 主要是使用gcc编译 helloword.c 得到helloworld.o文件，这里会加入Python相关的头文件</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ python-config --cflags
+-I/usr/include/python3.9 -I/usr/include/python3.9  -Wno-unused-result -Wsign-compare  -O2  -fexceptions -g -grecord-gcc-switches -pipe -Wall -Werror<span class="token operator">=</span>format-security -Wp,-D_FORTIFY_SOURCE<span class="token operator">=</span>2 -Wp,-D_GLIBCXX_ASSERTIONS  -fstack-protector-strong   -m64 -march<span class="token operator">=</span>x86-64-v2 -mtune<span class="token operator">=</span>generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -D_GNU_SOURCE -fPIC -fwrapv  -DDYNAMIC_ANNOTATIONS_ENABLED<span class="token operator">=</span>1 -DNDEBUG  -O2  -fexceptions -g -grecord-gcc-switches -pipe -Wall -Werror<span class="token operator">=</span>format-security -Wp,-D_FORTIFY_SOURCE<span class="token operator">=</span>2 -Wp,-D_GLIBCXX_ASSERTIONS  -fstack-protector-strong   -m64 -march<span class="token operator">=</span>x86-64-v2 -mtune<span class="token operator">=</span>generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -D_GNU_SOURCE -fPIC -fwrapv
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p><code>-fPIC</code>是一个编译器选项，表示生成位置无关代码（Position-Independent Code, PIC）。这是在编译动态库（如<code>.so</code>文件）时通常使用的选项，因为它允许生成的代码可以在内存中的任何位置加载，而无需重定位。</p>
+<p>使用<code>-fPIC</code>编译的代码能够在内存中的任意位置运行，而无需修改，这对于动态链接库非常重要，因为这些库可能会被加载到不同的内存地址。</p>
+<p>第三行 主要使用helloworld.o文件编译得到helloworld.so文件。</p>
+<p><code>-shared</code> 是一个编译器选项，用于告知编译器生成共享库（shared library）。共享库是一种动态库，可以在运行时加载到程序中，而不是在编译时静态链接到程序中。这使得共享库在多个程序之间共享，从而减少内存占用和磁盘空间。</p>
+<p>最后的<code>python-config --libs</code>表示需要链接Python的依赖。</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ python-config --libs
+ -lcrypt -ldl  -lm -lm
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<h4 id="生成类似-cython-a效果的html文件"><a href="#生成类似-cython-a效果的html文件" class="headerlink" title="生成类似 %%cython -a效果的html文件"></a>生成类似 <code>%%cython -a</code>效果的html文件</h4><p>使用cythonize编译即可。</p>
+<pre><code>$ cythonize -a -i helloworld.pyx
+</code></pre>
+<p><code>cythonize</code> 是 Cython 提供的一个工具，用于将 <code>.pyx</code> 文件转换为 C 文件，并构建扩展模块。它可以方便地集成到 <code>setup.py</code> 中，用于编译和构建 Cython 扩展模块。</p>
+<h2 id="如何制作Wheel文件发布二进制包"><a href="#如何制作Wheel文件发布二进制包" class="headerlink" title="如何制作Wheel文件发布二进制包"></a>如何制作Wheel文件发布二进制包</h2><p>使用cythonize</p>
+<p>还是以质数计算为例：</p>
+<h4 id="primes-pyx"><a href="#primes-pyx" class="headerlink" title="primes.pyx"></a><code>primes.pyx</code></h4><pre class="line-numbers language-python"><code class="language-python"><span class="token comment" spellcheck="true"># primes.pyx</span>
+<span class="token keyword">def</span> <span class="token function">primes</span><span class="token punctuation">(</span>int nb_primes<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    cdef int n<span class="token punctuation">,</span> i
+    cdef int p<span class="token punctuation">[</span><span class="token number">1000000</span><span class="token punctuation">]</span>  <span class="token comment" spellcheck="true"># 使用Cython的数组</span>
+
+    <span class="token keyword">if</span> nb_primes <span class="token operator">></span> <span class="token number">1000000</span><span class="token punctuation">:</span>
+        nb_primes <span class="token operator">=</span> <span class="token number">1000000</span>
+
+    n <span class="token operator">=</span> <span class="token number">2</span>
+    len_p <span class="token operator">=</span> <span class="token number">0</span>  <span class="token comment" spellcheck="true"># 当前素数的数量</span>
+    <span class="token keyword">while</span> len_p <span class="token operator">&lt;</span> nb_primes<span class="token punctuation">:</span>
+        <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span>len_p<span class="token punctuation">)</span><span class="token punctuation">:</span>
+            <span class="token keyword">if</span> n <span class="token operator">%</span> p<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">:</span>
+                <span class="token keyword">break</span>
+        <span class="token keyword">else</span><span class="token punctuation">:</span>
+            p<span class="token punctuation">[</span>len_p<span class="token punctuation">]</span> <span class="token operator">=</span> n
+            len_p <span class="token operator">+=</span> <span class="token number">1</span>
+        n <span class="token operator">+=</span> <span class="token number">1</span>
+
+    <span class="token comment" spellcheck="true"># 将结果返回为一个Python列表</span>
+    <span class="token keyword">return</span> <span class="token punctuation">[</span>p<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span>len_p<span class="token punctuation">)</span><span class="token punctuation">]</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="setup-py"><a href="#setup-py" class="headerlink" title="setup.py"></a>setup.py</h4><pre class="line-numbers language-python"><code class="language-python"><span class="token comment" spellcheck="true"># setup.py</span>
+<span class="token keyword">from</span> setuptools <span class="token keyword">import</span> setup<span class="token punctuation">,</span> Extension
+<span class="token keyword">from</span> Cython<span class="token punctuation">.</span>Build <span class="token keyword">import</span> cythonize
+
+extensions <span class="token operator">=</span> <span class="token punctuation">[</span>
+    Extension<span class="token punctuation">(</span>
+        <span class="token string">"primes"</span><span class="token punctuation">,</span>
+        <span class="token punctuation">[</span><span class="token string">"primes.pyx"</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+        extra_compile_args<span class="token operator">=</span><span class="token punctuation">[</span><span class="token string">"-fPIC"</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token punctuation">)</span>
+<span class="token punctuation">]</span>
+
+setup<span class="token punctuation">(</span>
+    name<span class="token operator">=</span><span class="token string">"primes"</span><span class="token punctuation">,</span>
+    version<span class="token operator">=</span><span class="token string">"0.1"</span><span class="token punctuation">,</span>
+    ext_modules<span class="token operator">=</span>cythonize<span class="token punctuation">(</span>extensions<span class="token punctuation">)</span><span class="token punctuation">,</span>
+    zip_safe<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">,</span>
+    author<span class="token operator">=</span><span class="token string">"Your Name"</span><span class="token punctuation">,</span>
+    author_email<span class="token operator">=</span><span class="token string">"your.email@example.com"</span><span class="token punctuation">,</span>
+    description<span class="token operator">=</span><span class="token string">"A simple Cython example for prime numbers."</span><span class="token punctuation">,</span>
+    long_description<span class="token operator">=</span>open<span class="token punctuation">(</span><span class="token string">"README.md"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>read<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    long_description_content_type<span class="token operator">=</span><span class="token string">"text/markdown"</span><span class="token punctuation">,</span>
+    classifiers<span class="token operator">=</span><span class="token punctuation">[</span>
+        <span class="token string">"Programming Language :: Python :: 3"</span><span class="token punctuation">,</span>
+        <span class="token string">"Programming Language :: Python :: Implementation :: CPython"</span><span class="token punctuation">,</span>
+        <span class="token string">"Programming Language :: Cython"</span><span class="token punctuation">,</span>
+        <span class="token string">"License :: OSI Approved :: MIT License"</span><span class="token punctuation">,</span>
+        <span class="token string">"Operating System :: OS Independent"</span><span class="token punctuation">,</span>
+    <span class="token punctuation">]</span><span class="token punctuation">,</span>
+    python_requires<span class="token operator">=</span><span class="token string">'>=3.9'</span><span class="token punctuation">,</span>
+<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>文件目录如下，新建一个README.md空文件</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ ll
+total 12K
+-rw-r--r--. 1 root root   0 Jun  1 19:12 README.md
+-rw-r--r--. 1 root root 488 Jun  1 19:10 primes.pyx
+-rw-r--r--. 1 root root 118 Jun  1 19:09 pyproject.toml
+-rw-r--r--. 1 root root 850 Jun  1 19:09 setup.py
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>编译得到wheel文件：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">python3 setup.py bdist_wheel
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>编译后的文件目录：</p>
+<pre><code>$ ll
+total 256K
+-rw-r--r--. 1 root root    0 Jun  1 19:12 README.md
+drwxr-xr-x. 5 root root   89 Jun  1 19:13 build
+drwxr-xr-x. 2 root root   51 Jun  1 19:13 dist
+-rw-r--r--. 1 root root 244K Jun  1 19:13 primes.c
+drwxr-xr-x. 2 root root  110 Jun  1 19:13 primes.egg-info
+-rw-r--r--. 1 root root  488 Jun  1 19:10 primes.pyx
+-rw-r--r--. 1 root root  118 Jun  1 19:09 pyproject.toml
+-rw-r--r--. 1 root root  850 Jun  1 19:09 setup.py
+</code></pre>
+<p>这里得到了so文件：</p>
+<pre><code>$ ll build/lib.linux-x86_64-3.9
+total 164K
+-rwxr-xr-x. 1 root root 164K Jun  1 19:13 primes.cpython-39-x86_64-linux-gnu.so
+</code></pre>
+<p>wheel文件：</p>
+<pre><code>$ ll dist/primes-0.1-cp39-cp39-linux_x86_64.whl
+-rw-r--r--. 1 root root 72K Jun  1 19:13 dist/primes-0.1-cp39-cp39-linux_x86_64.whl
+</code></pre>
+<p>安装wheel文件：</p>
+<pre><code>$ sudo pip3 install dist/primes-0.1-cp39-cp39-linux_x86_64.whl
+Processing ./dist/primes-0.1-cp39-cp39-linux_x86_64.whl
+Installing collected packages: primes
+Successfully installed primes-0.1
+</code></pre>
+<p>测试是否正确：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ python3
+Python 3.9.18 <span class="token punctuation">(</span>main, Jan 24 2024, 00:00:00<span class="token punctuation">)</span>
+<span class="token punctuation">[</span>GCC 11.4.1 20231218 <span class="token punctuation">(</span>Red Hat 11.4.1-3<span class="token punctuation">)</span><span class="token punctuation">]</span> on linux
+Type <span class="token string">"help"</span>, <span class="token string">"copyright"</span>, <span class="token string">"credits"</span> or <span class="token string">"license"</span> <span class="token keyword">for</span> <span class="token function">more</span> information.
+<span class="token operator">>></span><span class="token operator">></span> <span class="token function">import</span> primes
+<span class="token operator">>></span><span class="token operator">></span> print<span class="token punctuation">(</span>primes.primes<span class="token punctuation">(</span>10<span class="token punctuation">))</span>
+<span class="token punctuation">[</span>2, 3, 5, 7, 11, 13, 17, 19, 23, 29<span class="token punctuation">]</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>得到的primes-0.1-cp39-cp39-linux_x86_64.whl文件就可以作为二进制包对外发布了，这里需要注意的是Python的版本以及系统架构的版本要一致。</p>
+<p>primes-0.1-cp39-cp39-linux_x86_64.whl的命名是 包名-版本号-python版本-abi-平台.whl</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文主要了解了Cython的编译底层原理，以及如何制作whl文件发布。</p>
+<p>参考：</p>
+<ol>
+<li><p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/210961240">https://zhuanlan.zhihu.com/p/210961240</a></p>
+</li>
+<li><p>Learning Cython Programming</p>
+</li>
+</ol>
+
+</article>
+    
+    
+
+</div>
+<div class="trm-post-next-prev row">
+    <div class="col-lg-12">
+        <!-- title -->
+        <h5 class="trm-title-with-divider">
+            其他文章
+            <span data-number="02"></span>
+        </h5>
+    </div>
+    
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/06/01/%E8%AE%A1%E7%AE%97%E8%B4%A8%E6%95%B0Cython-Cpython%E6%80%A7%E8%83%BD%E5%AF%B9%E6%AF%94/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" #.">
+                    未分类
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/06/01/%E8%AE%A1%E7%AE%97%E8%B4%A8%E6%95%B0Cython-Cpython%E6%80%A7%E8%83%BD%E5%AF%B9%E6%AF%94/" class="trm-anima-link">
+                    计算质数Cython-Cpython性能对比
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/06/01</li>
+                <li>18:08</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+</div>
+
+    
+
+
+
+                    <div class="trm-divider footer-divider"></div>
+
+                    <!-- footer -->
+                    <footer class="trm-scroll-animation">
+
+    
+
+    
+
+    
+        <div class="trm-footer-item">
+            <span>
+                由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v7.0.0
+            </span>
+            <span class="footer-separator" data-separator=" | "></span>
+            <span> 
+                主题 - 
+                <a rel="noopener" href='https://github.com/MaLuns/hexo-theme-async' target='_blank'>Async</a>
+                v2.1.8
+            </span>
+        </div>
+      
+
+     
+
+     
+</footer>
+ 
+                    <!-- footer end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- body end -->
+
+            
+
+            
+<div class="trm-fixed-container">
+    
+    
+        <div class="trm-fixed-btn" data-title="阅读模式" onclick="asyncFun.switchReadMode()">
+            <i class="iconfont fas fa-book-reader"></i>
+        </div>
+    
+    
+    <div id="trm-back-top" class="trm-fixed-btn" data-title="回到顶部">
+        <i class="iconfont fas fa-arrow-up"></i>
+    </div>
+</div>
+        </div>
+      </div>
+      <!-- scroll container end -->
+  </div>
+  <!-- app wrapper end -->
+
+  
+  <!-- Plugin -->
+
+
+
+
+    
+    
+<script src="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+
+    
+
+    
+
+    
+
+    <!-- 数学公式 -->
+    
+
+    <!-- 评论插件 -->
+    
+        
+
+        
+    
+
+
+
+<!-- CDN -->
+
+
+    
+
+    
+
+    
+
+
+
+
+    <!-- Service Worker -->
+    
+    <!-- baidu push -->
+    
+
+
+<script id="async-script" src="/js/main.js?v=2.1.8"></script>
+
+</body>
+
+</html>
