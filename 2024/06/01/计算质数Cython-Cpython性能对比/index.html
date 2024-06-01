@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="x5-fullscreen" content="true">
+<meta name="full-screen" content="yes">
+<meta name="theme-color" content="#317EFB" />
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
+<meta name="description" content="背景本文主要通过Cython的官方计算质数的实例，测试Cpython和Cython计算质数的性能对比。 计算方法Cpython代码实现，cython实现，以及使用cpdef 定义的Cython实现 %%cython -a  import time  def primes_cpython(nb_primes):     if nb_primes &gt;&#x3D; 1000000:        nb_prime">
+<meta property="og:type" content="article">
+<meta property="og:title" content="计算质数Cython-Cpython性能对比">
+<meta property="og:url" content="http://example.com/2024/06/01/%E8%AE%A1%E7%AE%97%E8%B4%A8%E6%95%B0Cython-Cpython%E6%80%A7%E8%83%BD%E5%AF%B9%E6%AF%94/index.html">
+<meta property="og:site_name" content="Cat YuanBao">
+<meta property="og:description" content="背景本文主要通过Cython的官方计算质数的实例，测试Cpython和Cython计算质数的性能对比。 计算方法Cpython代码实现，cython实现，以及使用cpdef 定义的Cython实现 %%cython -a  import time  def primes_cpython(nb_primes):     if nb_primes &gt;&#x3D; 1000000:        nb_prime">
+<meta property="og:locale">
+<meta property="article:published_time" content="2024-06-01T10:08:42.000Z">
+<meta property="article:modified_time" content="2024-06-01T10:09:01.968Z">
+<meta property="article:author" content="橘猫元宝">
+<meta property="article:tag" content="cat">
+<meta name="twitter:card" content="summary">
+
+    <meta name="keywords" content="cat">
+
+
+<title >计算质数Cython-Cpython性能对比</title>
+
+<!-- Favicon -->
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='16x16' ></link>
+
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='32x32' ></link>
+
+
+
+
+<!-- Plugin -->
+
+
+
+
+    
+<link rel="stylesheet" href="/css/plugins/bootstrap.row.css">
+
+    
+<link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.css">
+
+    
+    
+
+
+
+
+<!-- Icon -->
+
+    
+<link rel="stylesheet" href="/css/plugins/font-awesome.min.css">
+
+
+
+
+<!-- Variable -->
+<script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-06-01 18:09:01"};</script>
+
+<!-- Theme mode css -->
+<link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
+<script>
+    let defaultMode = ASYNC_CONFIG.theme.default !=='auto' ?  ASYNC_CONFIG.theme.default : (window.matchMedia("(prefers-color-scheme: light)").matches ? 'style-light' : 'style-dark')
+    let catchMode = localStorage.getItem('theme-mode') || defaultMode;
+    let type = catchMode === 'style-dark' ? 'add' : 'remove';
+    document.documentElement.classList[type]('dark')
+</script>
+
+<!-- CDN -->
+
+
+    
+    
+
+
+
+<!-- Site Analytics -->
+ 
+<meta name="generator" content="Hexo 7.0.0"><link rel="stylesheet" href="/css/prism.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+<body>
+
+  <!-- app wrapper -->
+  <div class="trm-app-frame">
+
+    <!-- page preloader -->
+    <div class="trm-preloader">
+    <div class="trm-holder">
+        <div class="preloader">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+    <!-- page preloader end -->
+
+    <!-- change mode preloader -->
+    <div class="trm-mode-swich-animation-frame">
+    <div class="trm-mode-swich-animation">
+        <i class="i-sun"><i class="iconfont far fa-sun"></i></i>
+        <div class="trm-horizon"></div>
+        <i class="i-moon"><i class="iconfont far fa-moon"></i></i>
+    </div>
+</div>
+    <!-- change mode preloader end -->
+
+      <!-- scroll container -->
+      <div id="trm-dynamic-content" class="trm-swup-animation">
+        <div id="trm-scroll-container" class="trm-scroll-container" style="opacity: 0">
+            <!-- top bar -->
+            <header class="trm-top-bar">
+	<div class="container">
+		<div class="trm-left-side">
+			<!-- logo -->
+<a href="/" class="trm-logo-frame trm-anima-link">
+    
+        <img alt="logo" src="/img/favicon.svg">
+    
+    
+        <div class="trm-logo-text">
+            元宝<span>橘猫</span>
+        </div>
+    
+</a>
+<!-- logo end -->
+		</div>
+		<div class="trm-right-side">
+			<!-- menu -->
+<div class="trm-menu">
+    <nav>
+        <ul>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/" target="">
+                    首页
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/archives/" target="">
+                    归档
+                </a>
+                
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+<!-- menu end -->
+			
+    <!-- mode switcher place -->
+    <div class="trm-mode-switcher-place">
+        <div class="trm-mode-switcher">
+            <i class="iconfont far fa-sun"></i>
+            <input class="tgl tgl-light" id="trm-swich" type="checkbox">
+            <label class="trm-swich" for="trm-swich"></label>
+            <i class="iconfont far fa-moon"></i>
+        </div>
+    </div>
+    <!-- mode switcher place end -->
+
+			
+		</div>
+		<div class="trm-menu-btn">
+			<span></span>
+		</div>
+	</div>
+</header>
+            <!-- top bar end -->
+
+            <!-- body -->
+            
+<div class="trm-content-start">
+    <!-- banner -->
+    <div class="trm-banner">
+    
+    <!-- banner cover -->
+    <img style="object-position:top;object-fit:cover;" alt="banner" class="trm-banner-cover" src="/img/banner.png">
+    <!-- banner cover end -->
+    
+
+    <!-- banner content -->
+    <div class="trm-banner-content trm-overlay">
+        <div class="container">
+            <div class="row">
+                
+                <div class="col-lg-4"></div>
+                
+                <div class="col-lg-8">
+
+                    <!-- banner title -->
+                    <div class="trm-banner-text ">
+                        <div class="trm-label trm-mb-20">
+                            NEWS LETTER
+                        </div>
+                        <h1 class="trm-mb-30 trm-hsmb-font">
+                            计算质数Cython-Cpython性能对比
+                        </h1>
+
+                        
+                            <ul class="trm-breadcrumbs trm-label">
+                                <li>
+                                    <a href="/" class="trm-anima-link">Home</a>
+                                </li>
+                                <li>
+                                    <span>
+                                        2024
+                                    </span>
+                                </li>
+                            </ul>
+                        
+                    </div>
+                    <!-- banner title end -->
+
+                    <!-- scroll hint -->
+                    <span id="scroll-triger" class="trm-scroll-hint-frame">
+                        <div class="trm-scroll-hint"></div>
+                        <span class="trm-label">Scroll down</span>
+                    </span>
+                    <!-- scroll hint end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- banner content end -->
+</div>
+    <!-- banner end -->
+    <div class="container">
+        <div class="row">
+            
+                <div class="trm-page-sidebar col-lg-4 hidden-sm">
+                    <!-- main card -->
+                    <div class="trm-main-card-frame trm-sidebar">
+    <div class="trm-main-card"> 
+        <!-- card header -->
+<div class="trm-mc-header">
+    <div class="trm-avatar-frame trm-mb-20">
+        <img alt="Avatar" class="trm-avatar" src="/img/cat.jpg">
+    </div>
+    <h5 class="trm-name trm-mb-15">
+        橘猫元宝
+    </h5>
+    
+</div>
+<!-- card header end -->
+        <!-- sidebar social -->
+
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<div class="trm-social">
+    
+        <a href="https://github.com" title="Github" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-github"></i>
+        </a>
+    
+</div>
+
+<!-- sidebar social end -->
+        <!-- info -->
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<ul class="trm-table trm-mb-20">
+    
+        <li>
+            <div class="trm-label">
+                Residence:
+            </div>
+            <div class="trm-label trm-label-light">
+                Mars
+            </div>
+        </li>
+    
+</ul>
+<!-- info end -->
+
+        
+    </div>
+</div>
+                    <!-- main card end -->
+                </div>
+            
+            <div class="trm-page-content col-lg-8">
+                <div id="trm-content" class="trm-content">
+                    <div class="trm-post-info row hidden-sm">
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-calendar-alt trm-icon"></i><br>
+            06/01
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-clock trm-icon"></i><br>
+            18:08
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div id="post-author" class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-user trm-icon"></i><br>
+            橘猫元宝
+        </div>
+    </div>
+</div>
+<div class="trm-card ">
+    <article id="article-container" class="trm-publication">
+    <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>本文主要通过Cython的官方计算质数的实例，测试Cpython和Cython计算质数的性能对比。</p>
+<h3 id="计算方法"><a href="#计算方法" class="headerlink" title="计算方法"></a>计算方法</h3><p>Cpython代码实现，cython实现，以及使用cpdef 定义的Cython实现</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token operator">%</span><span class="token operator">%</span>cython <span class="token operator">-</span>a
+
+<span class="token keyword">import</span> time
+
+<span class="token keyword">def</span> <span class="token function">primes_cpython</span><span class="token punctuation">(</span>nb_primes<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">if</span> nb_primes <span class="token operator">>=</span> <span class="token number">1000000</span><span class="token punctuation">:</span>
+       nb_primes <span class="token operator">=</span> <span class="token number">1000000</span>
+
+    p <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    n <span class="token operator">=</span> <span class="token number">2</span>
+    <span class="token keyword">while</span> len<span class="token punctuation">(</span>p<span class="token punctuation">)</span> <span class="token operator">&lt;</span> nb_primes<span class="token punctuation">:</span>
+        <span class="token comment" spellcheck="true"># Is n prime?</span>
+        <span class="token keyword">for</span> i <span class="token keyword">in</span> p<span class="token punctuation">:</span>
+            <span class="token keyword">if</span> n <span class="token operator">%</span> i <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">:</span>
+                <span class="token keyword">break</span>
+        <span class="token comment" spellcheck="true"># If no break occurred in the loop</span>
+        <span class="token keyword">else</span><span class="token punctuation">:</span>
+            p<span class="token punctuation">.</span>append<span class="token punctuation">(</span>n<span class="token punctuation">)</span>
+        n <span class="token operator">+=</span> <span class="token number">1</span>
+    <span class="token keyword">return</span> p
+
+<span class="token keyword">def</span> <span class="token function">primes</span><span class="token punctuation">(</span>int nb_primes<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true"># 对使用的变量声明类型</span>
+    cdef int n<span class="token punctuation">,</span> i<span class="token punctuation">,</span> len_p
+    cdef int<span class="token punctuation">[</span><span class="token number">1000000</span><span class="token punctuation">]</span> p
+    
+    <span class="token keyword">if</span> nb_primes <span class="token operator">></span> <span class="token number">1000000</span><span class="token punctuation">:</span>
+        nb_primes <span class="token operator">=</span> <span class="token number">1000000</span>
+
+    len_p <span class="token operator">=</span> <span class="token number">0</span>  <span class="token comment" spellcheck="true"># The current number of elements in p.</span>
+    n <span class="token operator">=</span> <span class="token number">2</span>
+    <span class="token keyword">while</span> len_p <span class="token operator">&lt;</span> nb_primes<span class="token punctuation">:</span>
+        <span class="token comment" spellcheck="true"># Is n prime?</span>
+        <span class="token keyword">for</span> i <span class="token keyword">in</span> p<span class="token punctuation">[</span><span class="token punctuation">:</span>len_p<span class="token punctuation">]</span><span class="token punctuation">:</span>
+            <span class="token keyword">if</span> n <span class="token operator">%</span> i <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">:</span>
+                <span class="token keyword">break</span>
+        <span class="token comment" spellcheck="true"># If no break occurred in the loop, we have a prime.</span>
+        <span class="token keyword">else</span><span class="token punctuation">:</span>
+            p<span class="token punctuation">[</span>len_p<span class="token punctuation">]</span> <span class="token operator">=</span> n
+            len_p <span class="token operator">+=</span> <span class="token number">1</span>
+        n <span class="token operator">+=</span> <span class="token number">1</span>
+    <span class="token comment" spellcheck="true"># Let's copy the result into a Python list:</span>
+    result_as_list <span class="token operator">=</span> <span class="token punctuation">[</span>prime <span class="token keyword">for</span> prime <span class="token keyword">in</span> p<span class="token punctuation">[</span><span class="token punctuation">:</span>len_p<span class="token punctuation">]</span><span class="token punctuation">]</span>
+    <span class="token keyword">return</span> result_as_list
+
+
+
+cpdef list primes_cpdef<span class="token punctuation">(</span>int nb_primes<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">if</span> nb_primes <span class="token operator">>=</span> <span class="token number">1000000</span><span class="token punctuation">:</span>
+        nb_primes <span class="token operator">=</span> <span class="token number">1000000</span>
+
+    cdef int n <span class="token operator">=</span> <span class="token number">2</span>
+    cdef int i
+    cdef int is_prime
+    cdef list p <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+
+    <span class="token keyword">while</span> len<span class="token punctuation">(</span>p<span class="token punctuation">)</span> <span class="token operator">&lt;</span> nb_primes<span class="token punctuation">:</span>
+        is_prime <span class="token operator">=</span> <span class="token number">1</span>
+        <span class="token keyword">for</span> i <span class="token keyword">in</span> p<span class="token punctuation">:</span>
+            <span class="token keyword">if</span> n <span class="token operator">%</span> i <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">:</span>
+                is_prime <span class="token operator">=</span> <span class="token number">0</span>
+                <span class="token keyword">break</span>
+        <span class="token keyword">if</span> is_prime<span class="token punctuation">:</span>
+            p<span class="token punctuation">.</span>append<span class="token punctuation">(</span>n<span class="token punctuation">)</span>
+        n <span class="token operator">+=</span> <span class="token number">1</span>
+
+    <span class="token keyword">return</span> p
+
+max_num <span class="token operator">=</span> <span class="token number">20000</span>
+
+s <span class="token operator">=</span> time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+primes_cpython<span class="token punctuation">(</span>max_num<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span> s<span class="token punctuation">)</span>
+
+s <span class="token operator">=</span> time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+primes<span class="token punctuation">(</span>max_num<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span> s<span class="token punctuation">)</span>
+
+s <span class="token operator">=</span> time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+primes_cpdef<span class="token punctuation">(</span>max_num<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span> s<span class="token punctuation">)</span>
+
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token number">35.58181715011597</span>
+<span class="token number">5.372183799743652</span>
+<span class="token number">9.328117847442627</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>可以看到CPython的最慢，def 定义的Cython版本最快，cpdef定义的版本中等速度。</p>
+<p>这里使用Cython的时候也是有一个编译的过程，运行时top观察会有cc命令在编译。</p>
+<p>运行第一次以后，再次运行：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">%time primes<span class="token punctuation">(</span>20000<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>就不需要再编译了。</p>
+<p>这里第二个版本使用了预先分配的数组，减少了append方法的调用，会显得和其他版本不一样，使用C++的vector可以实现类似效果：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token operator">%</span><span class="token operator">%</span>cython <span class="token operator">-</span>a
+<span class="token comment" spellcheck="true"># distutils: language=c++</span>
+
+<span class="token keyword">from</span> libcpp<span class="token punctuation">.</span>vector cimport vector
+<span class="token keyword">import</span> time
+
+<span class="token keyword">def</span> <span class="token function">primes_vector</span><span class="token punctuation">(</span>unsigned int nb_primes<span class="token punctuation">)</span><span class="token punctuation">:</span>
+
+    cdef int n<span class="token punctuation">,</span> i
+    cdef vector<span class="token punctuation">[</span>int<span class="token punctuation">]</span> p
+    p<span class="token punctuation">.</span>reserve<span class="token punctuation">(</span>nb_primes<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># allocate memory for 'nb_primes' elements.</span>
+    n <span class="token operator">=</span> <span class="token number">2</span>
+
+    <span class="token keyword">while</span> p<span class="token punctuation">.</span>size<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&lt;</span> nb_primes<span class="token punctuation">:</span>  <span class="token comment" spellcheck="true"># size() for vectors is similar to len()</span>
+        <span class="token keyword">for</span> i <span class="token keyword">in</span> p<span class="token punctuation">:</span>
+            <span class="token keyword">if</span> n <span class="token operator">%</span> i <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">:</span>
+                <span class="token keyword">break</span>
+        <span class="token keyword">else</span><span class="token punctuation">:</span>
+            p<span class="token punctuation">.</span>push_back<span class="token punctuation">(</span>n<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># push_back is similar to append()</span>
+        n <span class="token operator">+=</span> <span class="token number">1</span>
+
+    <span class="token comment" spellcheck="true"># If possible, C values and C++ objects are automatically</span>
+    <span class="token comment" spellcheck="true"># converted to Python objects at need.</span>
+    <span class="token keyword">return</span> p  <span class="token comment" spellcheck="true"># so here, the vector will be copied into a Python list.</span>
+
+s <span class="token operator">=</span> time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+primes_vector<span class="token punctuation">(</span><span class="token number">20000</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">-</span>s<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行时间：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">4.017367362976074
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>参考：<a target="_blank" rel="noopener" href="https://cython.readthedocs.io/en/stable/src/tutorial/cython_tutorial.html">https://cython.readthedocs.io/en/stable/src/tutorial/cython_tutorial.html</a></p>
+
+</article>
+    
+    
+
+</div>
+<div class="trm-post-next-prev row">
+    <div class="col-lg-12">
+        <!-- title -->
+        <h5 class="trm-title-with-divider">
+            其他文章
+            <span data-number="02"></span>
+        </h5>
+    </div>
+    
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/06/01/Cython%E5%9F%BA%E6%9C%AC%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" #.">
+                    未分类
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/06/01/Cython%E5%9F%BA%E6%9C%AC%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/" class="trm-anima-link">
+                    Cython基本数据类型
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/06/01</li>
+                <li>17:26</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+</div>
+
+    
+
+
+
+                    <div class="trm-divider footer-divider"></div>
+
+                    <!-- footer -->
+                    <footer class="trm-scroll-animation">
+
+    
+
+    
+
+    
+        <div class="trm-footer-item">
+            <span>
+                由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v7.0.0
+            </span>
+            <span class="footer-separator" data-separator=" | "></span>
+            <span> 
+                主题 - 
+                <a rel="noopener" href='https://github.com/MaLuns/hexo-theme-async' target='_blank'>Async</a>
+                v2.1.8
+            </span>
+        </div>
+      
+
+     
+
+     
+</footer>
+ 
+                    <!-- footer end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- body end -->
+
+            
+
+            
+<div class="trm-fixed-container">
+    
+    
+        <div class="trm-fixed-btn" data-title="阅读模式" onclick="asyncFun.switchReadMode()">
+            <i class="iconfont fas fa-book-reader"></i>
+        </div>
+    
+    
+    <div id="trm-back-top" class="trm-fixed-btn" data-title="回到顶部">
+        <i class="iconfont fas fa-arrow-up"></i>
+    </div>
+</div>
+        </div>
+      </div>
+      <!-- scroll container end -->
+  </div>
+  <!-- app wrapper end -->
+
+  
+  <!-- Plugin -->
+
+
+
+
+    
+    
+<script src="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+
+    
+
+    
+
+    
+
+    <!-- 数学公式 -->
+    
+
+    <!-- 评论插件 -->
+    
+        
+
+        
+    
+
+
+
+<!-- CDN -->
+
+
+    
+
+    
+
+    
+
+
+
+
+    <!-- Service Worker -->
+    
+    <!-- baidu push -->
+    
+
+
+<script id="async-script" src="/js/main.js?v=2.1.8"></script>
+
+</body>
+
+</html>
