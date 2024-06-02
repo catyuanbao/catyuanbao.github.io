@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="x5-fullscreen" content="true">
+<meta name="full-screen" content="yes">
+<meta name="theme-color" content="#317EFB" />
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
+<meta name="description" content="背景本文主要记录解决AOC-2023-day2的问题过程，主要使用Python和Cython分别测试效果。 题目大意第一部分 为了获取信息，一旦袋子里装满了方块，精灵就会把手伸进袋子里，随便抓一把方块，给你看，然后把它们放回袋子里。他每场比赛都会这样做几次。 你玩了几个游戏，并记录每个游戏的信息（你的谜题输入）。每个游戏都列出了其ID号（如游戏11中的11：…），然后是从包中显示的立方体子集的分号">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Cython解决AOC-2023-day2">
+<meta property="og:url" content="http://example.com/2024/06/02/Cython%E8%A7%A3%E5%86%B3AOC-2023-day2/index.html">
+<meta property="og:site_name" content="Cat YuanBao">
+<meta property="og:description" content="背景本文主要记录解决AOC-2023-day2的问题过程，主要使用Python和Cython分别测试效果。 题目大意第一部分 为了获取信息，一旦袋子里装满了方块，精灵就会把手伸进袋子里，随便抓一把方块，给你看，然后把它们放回袋子里。他每场比赛都会这样做几次。 你玩了几个游戏，并记录每个游戏的信息（你的谜题输入）。每个游戏都列出了其ID号（如游戏11中的11：…），然后是从包中显示的立方体子集的分号">
+<meta property="og:locale">
+<meta property="article:published_time" content="2024-06-02T02:03:33.000Z">
+<meta property="article:modified_time" content="2024-06-02T02:03:52.860Z">
+<meta property="article:author" content="橘猫元宝">
+<meta property="article:tag" content="cat">
+<meta name="twitter:card" content="summary">
+
+    <meta name="keywords" content="cat">
+
+
+<title >Cython解决AOC-2023-day2</title>
+
+<!-- Favicon -->
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='16x16' ></link>
+
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='32x32' ></link>
+
+
+
+
+<!-- Plugin -->
+
+
+
+
+    
+<link rel="stylesheet" href="/css/plugins/bootstrap.row.css">
+
+    
+<link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.css">
+
+    
+    
+
+
+
+
+<!-- Icon -->
+
+    
+<link rel="stylesheet" href="/css/plugins/font-awesome.min.css">
+
+
+
+
+<!-- Variable -->
+<script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-06-02 10:03:52"};</script>
+
+<!-- Theme mode css -->
+<link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
+<script>
+    let defaultMode = ASYNC_CONFIG.theme.default !=='auto' ?  ASYNC_CONFIG.theme.default : (window.matchMedia("(prefers-color-scheme: light)").matches ? 'style-light' : 'style-dark')
+    let catchMode = localStorage.getItem('theme-mode') || defaultMode;
+    let type = catchMode === 'style-dark' ? 'add' : 'remove';
+    document.documentElement.classList[type]('dark')
+</script>
+
+<!-- CDN -->
+
+
+    
+    
+
+
+
+<!-- Site Analytics -->
+ 
+<meta name="generator" content="Hexo 7.0.0"><link rel="stylesheet" href="/css/prism.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+<body>
+
+  <!-- app wrapper -->
+  <div class="trm-app-frame">
+
+    <!-- page preloader -->
+    <div class="trm-preloader">
+    <div class="trm-holder">
+        <div class="preloader">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+    <!-- page preloader end -->
+
+    <!-- change mode preloader -->
+    <div class="trm-mode-swich-animation-frame">
+    <div class="trm-mode-swich-animation">
+        <i class="i-sun"><i class="iconfont far fa-sun"></i></i>
+        <div class="trm-horizon"></div>
+        <i class="i-moon"><i class="iconfont far fa-moon"></i></i>
+    </div>
+</div>
+    <!-- change mode preloader end -->
+
+      <!-- scroll container -->
+      <div id="trm-dynamic-content" class="trm-swup-animation">
+        <div id="trm-scroll-container" class="trm-scroll-container" style="opacity: 0">
+            <!-- top bar -->
+            <header class="trm-top-bar">
+	<div class="container">
+		<div class="trm-left-side">
+			<!-- logo -->
+<a href="/" class="trm-logo-frame trm-anima-link">
+    
+        <img alt="logo" src="/img/favicon.svg">
+    
+    
+        <div class="trm-logo-text">
+            元宝<span>橘猫</span>
+        </div>
+    
+</a>
+<!-- logo end -->
+		</div>
+		<div class="trm-right-side">
+			<!-- menu -->
+<div class="trm-menu">
+    <nav>
+        <ul>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/" target="">
+                    首页
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/archives/" target="">
+                    归档
+                </a>
+                
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+<!-- menu end -->
+			
+    <!-- mode switcher place -->
+    <div class="trm-mode-switcher-place">
+        <div class="trm-mode-switcher">
+            <i class="iconfont far fa-sun"></i>
+            <input class="tgl tgl-light" id="trm-swich" type="checkbox">
+            <label class="trm-swich" for="trm-swich"></label>
+            <i class="iconfont far fa-moon"></i>
+        </div>
+    </div>
+    <!-- mode switcher place end -->
+
+			
+		</div>
+		<div class="trm-menu-btn">
+			<span></span>
+		</div>
+	</div>
+</header>
+            <!-- top bar end -->
+
+            <!-- body -->
+            
+<div class="trm-content-start">
+    <!-- banner -->
+    <div class="trm-banner">
+    
+    <!-- banner cover -->
+    <img style="object-position:top;object-fit:cover;" alt="banner" class="trm-banner-cover" src="/img/banner.png">
+    <!-- banner cover end -->
+    
+
+    <!-- banner content -->
+    <div class="trm-banner-content trm-overlay">
+        <div class="container">
+            <div class="row">
+                
+                <div class="col-lg-4"></div>
+                
+                <div class="col-lg-8">
+
+                    <!-- banner title -->
+                    <div class="trm-banner-text ">
+                        <div class="trm-label trm-mb-20">
+                            NEWS LETTER
+                        </div>
+                        <h1 class="trm-mb-30 trm-hsmb-font">
+                            Cython解决AOC-2023-day2
+                        </h1>
+
+                        
+                            <ul class="trm-breadcrumbs trm-label">
+                                <li>
+                                    <a href="/" class="trm-anima-link">Home</a>
+                                </li>
+                                <li>
+                                    <span>
+                                        2024
+                                    </span>
+                                </li>
+                            </ul>
+                        
+                    </div>
+                    <!-- banner title end -->
+
+                    <!-- scroll hint -->
+                    <span id="scroll-triger" class="trm-scroll-hint-frame">
+                        <div class="trm-scroll-hint"></div>
+                        <span class="trm-label">Scroll down</span>
+                    </span>
+                    <!-- scroll hint end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- banner content end -->
+</div>
+    <!-- banner end -->
+    <div class="container">
+        <div class="row">
+            
+                <div class="trm-page-sidebar col-lg-4 hidden-sm">
+                    <!-- main card -->
+                    <div class="trm-main-card-frame trm-sidebar">
+    <div class="trm-main-card"> 
+        <!-- card header -->
+<div class="trm-mc-header">
+    <div class="trm-avatar-frame trm-mb-20">
+        <img alt="Avatar" class="trm-avatar" src="/img/cat.jpg">
+    </div>
+    <h5 class="trm-name trm-mb-15">
+        橘猫元宝
+    </h5>
+    
+</div>
+<!-- card header end -->
+        <!-- sidebar social -->
+
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<div class="trm-social">
+    
+        <a href="https://github.com" title="Github" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-github"></i>
+        </a>
+    
+</div>
+
+<!-- sidebar social end -->
+        <!-- info -->
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<ul class="trm-table trm-mb-20">
+    
+        <li>
+            <div class="trm-label">
+                Residence:
+            </div>
+            <div class="trm-label trm-label-light">
+                Mars
+            </div>
+        </li>
+    
+</ul>
+<!-- info end -->
+
+        
+    </div>
+</div>
+                    <!-- main card end -->
+                </div>
+            
+            <div class="trm-page-content col-lg-8">
+                <div id="trm-content" class="trm-content">
+                    <div class="trm-post-info row hidden-sm">
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-calendar-alt trm-icon"></i><br>
+            06/02
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-clock trm-icon"></i><br>
+            10:03
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div id="post-author" class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-user trm-icon"></i><br>
+            橘猫元宝
+        </div>
+    </div>
+</div>
+<div class="trm-card ">
+    <article id="article-container" class="trm-publication">
+    <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>本文主要记录解决AOC-2023-day2的问题过程，主要使用Python和Cython分别测试效果。</p>
+<h2 id="题目大意"><a href="#题目大意" class="headerlink" title="题目大意"></a>题目大意</h2><h4 id="第一部分"><a href="#第一部分" class="headerlink" title="第一部分"></a>第一部分</h4><p> 为了获取信息，一旦袋子里装满了方块，精灵就会把手伸进袋子里，随便抓一把方块，给你看，然后把它们放回袋子里。他每场比赛都会这样做几次。</p>
+<p>你玩了几个游戏，并记录每个游戏的信息（你的谜题输入）。每个游戏都列出了其ID号（如游戏11中的11：…），然后是从包中显示的立方体子集的分号分隔列表（如3个红色、5个绿色、4个蓝色）。</p>
+<p>例如，一些游戏的记录可能是这样的：</p>
+<p>游戏一：3个蓝色，4个红色；1个红色，2个绿色，6个蓝色；2个绿色</p>
+<p>游戏二：1个蓝色，2个绿色；3个绿色，4个蓝色，1个红色；1个绿色，1个蓝色</p>
+<p>第三场：8个绿色，6个蓝色，20个红色；5个蓝色，4个红色，13个绿色；5个绿色，1个红色</p>
+<p>游戏四：1个绿色，3个红色，6个蓝色；3个绿色，6个红色；3绿色，15蓝色，14红色</p>
+<p>第五场：6红，1蓝，3绿；2个蓝色，1个红色，2个绿色</p>
+<p>在游戏1中，三组立方体从袋子中露出（然后再放回）。第一组是3个蓝色方块和4个红色方块；第二组是1个红色方块、2个绿色方块和6个蓝色方块；第三组只有2个绿色方块。</p>
+<p>精灵首先想知道，如果袋子里只有12个红色方块、13个绿色方块和14个蓝色方块，哪些游戏是可能的？</p>
+<p>在上面的例子中，如果袋子已经装载了该配置，那么游戏1、2和5将是可能的。然而，第三场比赛是不可能的，因为有一次精灵一次给你看了20个红色方块；同样，第四场比赛也不可能，因为精灵同时向你展示了15个蓝色方块。如果你把可能的游戏ID加起来，你会得到8个。</p>
+<p>如果袋子里只装了12个红色方块、13个绿色方块和14个蓝色方块，那么确定哪些游戏是可能的。这些游戏的ID总和是多少？</p>
+<p>这个问题就是有一个约束条件，根据约束条件判断，给定的游戏是否满足要求，不能超过红色12个，绿色13个，蓝色14个。</p>
+<h4 id="第二部分"><a href="#第二部分" class="headerlink" title="第二部分"></a>第二部分</h4><p> 游戏一：3个蓝色，4个红色；1个红色，2个绿色，6个蓝色；2个绿色</p>
+<p>游戏二：1个蓝色，2个绿色；3个绿色，4个蓝色，1个红色；1个绿色，1个蓝色</p>
+<p>第三场：8个绿色，6个蓝色，20个红色；5个蓝色，4个红色，13个绿色；5个绿色，1个红色</p>
+<p>游戏四：1个绿色，3个红色，6个蓝色；3个绿色，6个红色；3绿色，15蓝色，14红色</p>
+<p>第五场：6红，1蓝，3绿；2个蓝色，1个红色，2个绿色</p>
+<p>在游戏1中，游戏可以使用4个红色、2个绿色和6个蓝色方块。如果任何一种颜色少了一个立方体，游戏就不可能了。</p>
+<p>第二场比赛本可以用至少1个红色、3个绿色和4个蓝色方块进行。</p>
+<p>第三场比赛必须至少有20个红色方块、13个绿色方块和6个蓝色方块。</p>
+<p>第四场比赛需要至少14个红色方块、3个绿色方块和15个蓝色方块。</p>
+<p>第五场比赛需要不少于6个红色、3个绿色和2个蓝色方块。</p>
+<p>一组立方体的幂等于红色、绿色和蓝色立方体的数量相乘。游戏1中的最小立方体集的幂是48。在第2-5场比赛中，这一数字分别为12、1560、630和36。把这五个幂加起来就得到2286。</p>
+<p>对于每个游戏，找到必须存在的最小立方体集。这些集合的幂和是多少？</p>
+<p>就是找到每个游戏中每个颜色的最大值，把三个颜色的乘起来，最后所有游戏的结果加和。</p>
+<h3 id="Python版本解决"><a href="#Python版本解决" class="headerlink" title="Python版本解决"></a>Python版本解决</h3><pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> time
+
+all_lines <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+<span class="token keyword">with</span> open<span class="token punctuation">(</span><span class="token string">'in2.txt'</span><span class="token punctuation">)</span> <span class="token keyword">as</span> fd<span class="token punctuation">:</span>
+    <span class="token keyword">for</span> line <span class="token keyword">in</span> fd<span class="token punctuation">:</span>
+        all_lines<span class="token punctuation">.</span>append<span class="token punctuation">(</span>line<span class="token punctuation">.</span>strip<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+
+<span class="token keyword">def</span> <span class="token function">single_match</span><span class="token punctuation">(</span>record<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    total <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token number">12</span><span class="token punctuation">,</span><span class="token number">13</span><span class="token punctuation">,</span><span class="token number">14</span><span class="token punctuation">]</span>
+    num_str<span class="token punctuation">,</span> ball_str <span class="token operator">=</span> record<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">':'</span><span class="token punctuation">)</span>
+    num <span class="token operator">=</span> num_str<span class="token punctuation">[</span><span class="token number">4</span><span class="token punctuation">:</span><span class="token punctuation">]</span>
+    ball <span class="token operator">=</span> ball_str<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">';'</span><span class="token punctuation">)</span>
+    <span class="token keyword">for</span> i <span class="token keyword">in</span> ball<span class="token punctuation">:</span>
+        <span class="token keyword">for</span> j <span class="token keyword">in</span> i<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">','</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            <span class="token keyword">if</span> <span class="token string">'red'</span> <span class="token keyword">in</span> j <span class="token operator">and</span> total<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">&lt;</span> int<span class="token punctuation">(</span>j<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token operator">-</span><span class="token number">4</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+                <span class="token keyword">return</span> <span class="token number">0</span>
+            <span class="token keyword">elif</span> <span class="token string">'green'</span> <span class="token keyword">in</span> j <span class="token operator">and</span> total<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">&lt;</span> int<span class="token punctuation">(</span>j<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token operator">-</span><span class="token number">6</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+                <span class="token keyword">return</span> <span class="token number">0</span>
+            <span class="token keyword">elif</span> <span class="token string">'blue'</span> <span class="token keyword">in</span> j <span class="token operator">and</span> total<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">&lt;</span> int<span class="token punctuation">(</span>j<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token operator">-</span><span class="token number">5</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+                <span class="token keyword">return</span> <span class="token number">0</span>
+    <span class="token keyword">return</span> int<span class="token punctuation">(</span>num<span class="token punctuation">)</span>
+        
+<span class="token keyword">def</span> <span class="token function">compute_all_sum</span><span class="token punctuation">(</span>all_lines<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> sum<span class="token punctuation">(</span><span class="token punctuation">(</span>single_match<span class="token punctuation">(</span>line<span class="token punctuation">)</span> <span class="token keyword">for</span> line <span class="token keyword">in</span> all_lines<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+s <span class="token operator">=</span> time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">1000</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    compute_all_sum<span class="token punctuation">(</span>all_lines<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span> s<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行时间：2.8653945922851562</p>
+<p>第二部分:</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> time
+
+all_lines <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+<span class="token keyword">with</span> open<span class="token punctuation">(</span><span class="token string">'in2.txt'</span><span class="token punctuation">)</span> <span class="token keyword">as</span> fd<span class="token punctuation">:</span>
+    <span class="token keyword">for</span> line <span class="token keyword">in</span> fd<span class="token punctuation">:</span>
+        all_lines<span class="token punctuation">.</span>append<span class="token punctuation">(</span>line<span class="token punctuation">.</span>strip<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+
+<span class="token keyword">def</span> <span class="token function">single_match</span><span class="token punctuation">(</span>record<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    total <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span>
+    num_str<span class="token punctuation">,</span> ball_str <span class="token operator">=</span> record<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">':'</span><span class="token punctuation">)</span>
+    ball <span class="token operator">=</span> ball_str<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">';'</span><span class="token punctuation">)</span>
+    <span class="token keyword">for</span> i <span class="token keyword">in</span> ball<span class="token punctuation">:</span>
+        <span class="token keyword">for</span> j <span class="token keyword">in</span> i<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">','</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            <span class="token keyword">if</span> <span class="token string">'red'</span> <span class="token keyword">in</span> j<span class="token punctuation">:</span>
+                red_num <span class="token operator">=</span> int<span class="token punctuation">(</span>j<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token operator">-</span><span class="token number">4</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+                total<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">=</span> red_num <span class="token keyword">if</span> total<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">&lt;</span> red_num <span class="token keyword">else</span> total<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+            <span class="token keyword">elif</span> <span class="token string">'green'</span> <span class="token keyword">in</span> j<span class="token punctuation">:</span>
+                green_num <span class="token operator">=</span> int<span class="token punctuation">(</span>j<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token operator">-</span><span class="token number">6</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+                total<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">=</span> green_num <span class="token keyword">if</span> total<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">&lt;</span> green_num <span class="token keyword">else</span> total<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span>
+            <span class="token keyword">elif</span> <span class="token string">'blue'</span> <span class="token keyword">in</span> j<span class="token punctuation">:</span>
+                blue_num <span class="token operator">=</span> int<span class="token punctuation">(</span>j<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token operator">-</span><span class="token number">5</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+                total<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">=</span> blue_num <span class="token keyword">if</span> total<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">&lt;</span> blue_num <span class="token keyword">else</span> total<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span>
+
+    <span class="token keyword">return</span> total<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">*</span> total<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">*</span> total<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span>
+        
+<span class="token keyword">def</span> <span class="token function">compute_all_sum</span><span class="token punctuation">(</span>all_lines<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> sum<span class="token punctuation">(</span><span class="token punctuation">(</span>single_match<span class="token punctuation">(</span>line<span class="token punctuation">)</span> <span class="token keyword">for</span> line <span class="token keyword">in</span> all_lines<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+s <span class="token operator">=</span> time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">1000</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    compute_all_sum<span class="token punctuation">(</span>all_lines<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span> s<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行时间：4.387089490890503</p>
+<h3 id="Cython版本解决"><a href="#Cython版本解决" class="headerlink" title="Cython版本解决"></a>Cython版本解决</h3><pre class="line-numbers language-python"><code class="language-python"><span class="token operator">%</span><span class="token operator">%</span>cython 
+
+<span class="token keyword">import</span> time
+
+all_lines <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+<span class="token keyword">with</span> open<span class="token punctuation">(</span><span class="token string">'in2.txt'</span><span class="token punctuation">)</span> <span class="token keyword">as</span> fd<span class="token punctuation">:</span>
+    <span class="token keyword">for</span> line <span class="token keyword">in</span> fd<span class="token punctuation">:</span>
+        all_lines<span class="token punctuation">.</span>append<span class="token punctuation">(</span>line<span class="token punctuation">.</span>strip<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+cdef int a_lees_than_b<span class="token punctuation">(</span>int a<span class="token punctuation">,</span> int b<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> <span class="token number">1</span> <span class="token keyword">if</span> a <span class="token operator">&lt;</span> b <span class="token keyword">else</span> <span class="token number">0</span>
+
+
+cpdef single_match<span class="token punctuation">(</span>record<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    cdef int total<span class="token punctuation">[</span><span class="token number">3</span><span class="token punctuation">]</span>
+    total<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">12</span>
+    total<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">13</span>
+    total<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">14</span>
+    cdef int num
+    
+    num_str<span class="token punctuation">,</span> ball_str <span class="token operator">=</span> record<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">':'</span><span class="token punctuation">)</span>
+    num <span class="token operator">=</span> int<span class="token punctuation">(</span>num_str<span class="token punctuation">[</span><span class="token number">4</span><span class="token punctuation">:</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    ball <span class="token operator">=</span> ball_str<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">';'</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">for</span> i <span class="token keyword">in</span> ball<span class="token punctuation">:</span>
+        <span class="token keyword">for</span> j <span class="token keyword">in</span> i<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">','</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            <span class="token keyword">if</span> <span class="token string">'red'</span> <span class="token keyword">in</span> j <span class="token operator">and</span> a_lees_than_b<span class="token punctuation">(</span>total<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> int<span class="token punctuation">(</span>j<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token operator">-</span><span class="token number">4</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+                <span class="token keyword">return</span> <span class="token number">0</span>
+            <span class="token keyword">elif</span> <span class="token string">'green'</span> <span class="token keyword">in</span> j <span class="token operator">and</span> a_lees_than_b<span class="token punctuation">(</span>total<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> int<span class="token punctuation">(</span>j<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token operator">-</span><span class="token number">6</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+                <span class="token keyword">return</span> <span class="token number">0</span>
+            <span class="token keyword">elif</span> <span class="token string">'blue'</span> <span class="token keyword">in</span> j <span class="token operator">and</span> a_lees_than_b<span class="token punctuation">(</span>total<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">,</span> int<span class="token punctuation">(</span>j<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token operator">-</span><span class="token number">5</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+                <span class="token keyword">return</span> <span class="token number">0</span>
+    <span class="token keyword">return</span> num
+
+<span class="token keyword">def</span> <span class="token function">compute_all_sum</span><span class="token punctuation">(</span>all_lines<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> sum<span class="token punctuation">(</span><span class="token punctuation">(</span>single_match<span class="token punctuation">(</span>line<span class="token punctuation">)</span> <span class="token keyword">for</span> line <span class="token keyword">in</span> all_lines<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+s <span class="token operator">=</span> time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">1000</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    compute_all_sum<span class="token punctuation">(</span>all_lines<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span> s<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行时间：1.8928613662719727</p>
+<p>第二部分：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token operator">%</span><span class="token operator">%</span>cython 
+
+<span class="token keyword">import</span> time
+
+all_lines <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+<span class="token keyword">with</span> open<span class="token punctuation">(</span><span class="token string">'in2.txt'</span><span class="token punctuation">)</span> <span class="token keyword">as</span> fd<span class="token punctuation">:</span>
+    <span class="token keyword">for</span> line <span class="token keyword">in</span> fd<span class="token punctuation">:</span>
+        all_lines<span class="token punctuation">.</span>append<span class="token punctuation">(</span>line<span class="token punctuation">.</span>strip<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+cdef int a_more_than_b<span class="token punctuation">(</span>int a<span class="token punctuation">,</span> int b<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> a <span class="token keyword">if</span> a <span class="token operator">></span> b <span class="token keyword">else</span> b
+
+
+cpdef single_match<span class="token punctuation">(</span>record<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    cdef int total<span class="token punctuation">[</span><span class="token number">3</span><span class="token punctuation">]</span>
+    total<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">0</span>
+    total<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">0</span>
+    total<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">0</span>
+    cdef int num
+    cdef int red_num
+    cdef int green_num
+    cdef int blue_num
+    
+    num_str<span class="token punctuation">,</span> ball_str <span class="token operator">=</span> record<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">':'</span><span class="token punctuation">)</span>
+    ball <span class="token operator">=</span> ball_str<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">';'</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">for</span> i <span class="token keyword">in</span> ball<span class="token punctuation">:</span>
+        <span class="token keyword">for</span> j <span class="token keyword">in</span> i<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">','</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            <span class="token keyword">if</span> <span class="token string">'red'</span> <span class="token keyword">in</span> j<span class="token punctuation">:</span>
+                red_num <span class="token operator">=</span> int<span class="token punctuation">(</span>j<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token operator">-</span><span class="token number">4</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+                total<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">=</span> a_more_than_b<span class="token punctuation">(</span>total<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> red_num<span class="token punctuation">)</span>
+            <span class="token keyword">elif</span> <span class="token string">'green'</span> <span class="token keyword">in</span> j<span class="token punctuation">:</span>
+                green_num <span class="token operator">=</span> int<span class="token punctuation">(</span>j<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token operator">-</span><span class="token number">6</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+                total<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">=</span> a_more_than_b<span class="token punctuation">(</span>total<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> green_num<span class="token punctuation">)</span>
+            <span class="token keyword">elif</span> <span class="token string">'blue'</span> <span class="token keyword">in</span> j<span class="token punctuation">:</span>
+                blue_num <span class="token operator">=</span> int<span class="token punctuation">(</span>j<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token operator">-</span><span class="token number">5</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+                total<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">=</span> a_more_than_b<span class="token punctuation">(</span>total<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">,</span> blue_num<span class="token punctuation">)</span>
+
+    <span class="token keyword">return</span> total<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">*</span> total<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">*</span> total<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span>
+
+<span class="token keyword">def</span> <span class="token function">compute_all_sum</span><span class="token punctuation">(</span>all_lines<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> sum<span class="token punctuation">(</span><span class="token punctuation">(</span>single_match<span class="token punctuation">(</span>line<span class="token punctuation">)</span> <span class="token keyword">for</span> line <span class="token keyword">in</span> all_lines<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+s <span class="token operator">=</span> time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">1000</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    compute_all_sum<span class="token punctuation">(</span>all_lines<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span> s<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行时间：2.1201305389404297</p>
+<p>这里看到Cython的代码会比Python的数量多，主要是类型声明和简单函数使用cdef定义，性能也高一些。</p>
+
+</article>
+    
+    
+
+</div>
+<div class="trm-post-next-prev row">
+    <div class="col-lg-12">
+        <!-- title -->
+        <h5 class="trm-title-with-divider">
+            其他文章
+            <span data-number="02"></span>
+        </h5>
+    </div>
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/06/02/Cython%E5%AF%B9%E5%AE%9E%E4%BE%8B%E5%B1%9E%E6%80%A7%E7%9A%84%E4%BC%98%E5%8C%96/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" #.">
+                    未分类
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/06/02/Cython%E5%AF%B9%E5%AE%9E%E4%BE%8B%E5%B1%9E%E6%80%A7%E7%9A%84%E4%BC%98%E5%8C%96/" class="trm-anima-link">
+                    Cython对实例属性的优化
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/06/02</li>
+                <li>11:00</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/06/02/Cython%E8%A7%A3%E5%86%B3AOC-2023-day1/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" #.">
+                    未分类
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/06/02/Cython%E8%A7%A3%E5%86%B3AOC-2023-day1/" class="trm-anima-link">
+                    Cython解决AOC-2023-day1
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/06/02</li>
+                <li>05:47</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+</div>
+
+    
+
+
+
+                    <div class="trm-divider footer-divider"></div>
+
+                    <!-- footer -->
+                    <footer class="trm-scroll-animation">
+
+    
+
+    
+
+    
+        <div class="trm-footer-item">
+            <span>
+                由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v7.0.0
+            </span>
+            <span class="footer-separator" data-separator=" | "></span>
+            <span> 
+                主题 - 
+                <a rel="noopener" href='https://github.com/MaLuns/hexo-theme-async' target='_blank'>Async</a>
+                v2.1.8
+            </span>
+        </div>
+      
+
+     
+
+     
+</footer>
+ 
+                    <!-- footer end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- body end -->
+
+            
+
+            
+<div class="trm-fixed-container">
+    
+    
+        <div class="trm-fixed-btn" data-title="阅读模式" onclick="asyncFun.switchReadMode()">
+            <i class="iconfont fas fa-book-reader"></i>
+        </div>
+    
+    
+    <div id="trm-back-top" class="trm-fixed-btn" data-title="回到顶部">
+        <i class="iconfont fas fa-arrow-up"></i>
+    </div>
+</div>
+        </div>
+      </div>
+      <!-- scroll container end -->
+  </div>
+  <!-- app wrapper end -->
+
+  
+  <!-- Plugin -->
+
+
+
+
+    
+    
+<script src="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+
+    
+
+    
+
+    
+
+    <!-- 数学公式 -->
+    
+
+    <!-- 评论插件 -->
+    
+        
+
+        
+    
+
+
+
+<!-- CDN -->
+
+
+    
+
+    
+
+    
+
+
+
+
+    <!-- Service Worker -->
+    
+    <!-- baidu push -->
+    
+
+
+<script id="async-script" src="/js/main.js?v=2.1.8"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="x5-fullscreen" content="true">
+<meta name="full-screen" content="yes">
+<meta name="theme-color" content="#317EFB" />
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
+<meta name="description" content="背景本文主要学习Cython中类成员的访问控制以及Cython编译类和Python类的区别。 Python类属性的存储先看一个简单实例： class Person(object):     def __init__(self, name, age):         self.name &#x3D; name         self.age &#x3D; age  tom &#x3D; Person(&#39;tom&#39;, 2) pr">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Cython类成员访问控制">
+<meta property="og:url" content="http://example.com/2024/06/03/Cython%E7%B1%BB%E6%88%90%E5%91%98%E8%AE%BF%E9%97%AE%E6%8E%A7%E5%88%B6/index.html">
+<meta property="og:site_name" content="Cat YuanBao">
+<meta property="og:description" content="背景本文主要学习Cython中类成员的访问控制以及Cython编译类和Python类的区别。 Python类属性的存储先看一个简单实例： class Person(object):     def __init__(self, name, age):         self.name &#x3D; name         self.age &#x3D; age  tom &#x3D; Person(&#39;tom&#39;, 2) pr">
+<meta property="og:locale">
+<meta property="article:published_time" content="2024-06-02T21:52:14.000Z">
+<meta property="article:modified_time" content="2024-06-02T21:52:31.398Z">
+<meta property="article:author" content="橘猫元宝">
+<meta property="article:tag" content="cat">
+<meta name="twitter:card" content="summary">
+
+    <meta name="keywords" content="cat">
+
+
+<title >Cython类成员访问控制</title>
+
+<!-- Favicon -->
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='16x16' ></link>
+
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='32x32' ></link>
+
+
+
+
+<!-- Plugin -->
+
+
+
+
+    
+<link rel="stylesheet" href="/css/plugins/bootstrap.row.css">
+
+    
+<link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.css">
+
+    
+    
+
+
+
+
+<!-- Icon -->
+
+    
+<link rel="stylesheet" href="/css/plugins/font-awesome.min.css">
+
+
+
+
+<!-- Variable -->
+<script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-06-03 05:52:31"};</script>
+
+<!-- Theme mode css -->
+<link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
+<script>
+    let defaultMode = ASYNC_CONFIG.theme.default !=='auto' ?  ASYNC_CONFIG.theme.default : (window.matchMedia("(prefers-color-scheme: light)").matches ? 'style-light' : 'style-dark')
+    let catchMode = localStorage.getItem('theme-mode') || defaultMode;
+    let type = catchMode === 'style-dark' ? 'add' : 'remove';
+    document.documentElement.classList[type]('dark')
+</script>
+
+<!-- CDN -->
+
+
+    
+    
+
+
+
+<!-- Site Analytics -->
+ 
+<meta name="generator" content="Hexo 7.0.0"><link rel="stylesheet" href="/css/prism.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+<body>
+
+  <!-- app wrapper -->
+  <div class="trm-app-frame">
+
+    <!-- page preloader -->
+    <div class="trm-preloader">
+    <div class="trm-holder">
+        <div class="preloader">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+    <!-- page preloader end -->
+
+    <!-- change mode preloader -->
+    <div class="trm-mode-swich-animation-frame">
+    <div class="trm-mode-swich-animation">
+        <i class="i-sun"><i class="iconfont far fa-sun"></i></i>
+        <div class="trm-horizon"></div>
+        <i class="i-moon"><i class="iconfont far fa-moon"></i></i>
+    </div>
+</div>
+    <!-- change mode preloader end -->
+
+      <!-- scroll container -->
+      <div id="trm-dynamic-content" class="trm-swup-animation">
+        <div id="trm-scroll-container" class="trm-scroll-container" style="opacity: 0">
+            <!-- top bar -->
+            <header class="trm-top-bar">
+	<div class="container">
+		<div class="trm-left-side">
+			<!-- logo -->
+<a href="/" class="trm-logo-frame trm-anima-link">
+    
+        <img alt="logo" src="/img/favicon.svg">
+    
+    
+        <div class="trm-logo-text">
+            元宝<span>橘猫</span>
+        </div>
+    
+</a>
+<!-- logo end -->
+		</div>
+		<div class="trm-right-side">
+			<!-- menu -->
+<div class="trm-menu">
+    <nav>
+        <ul>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/" target="">
+                    首页
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/archives/" target="">
+                    归档
+                </a>
+                
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+<!-- menu end -->
+			
+    <!-- mode switcher place -->
+    <div class="trm-mode-switcher-place">
+        <div class="trm-mode-switcher">
+            <i class="iconfont far fa-sun"></i>
+            <input class="tgl tgl-light" id="trm-swich" type="checkbox">
+            <label class="trm-swich" for="trm-swich"></label>
+            <i class="iconfont far fa-moon"></i>
+        </div>
+    </div>
+    <!-- mode switcher place end -->
+
+			
+		</div>
+		<div class="trm-menu-btn">
+			<span></span>
+		</div>
+	</div>
+</header>
+            <!-- top bar end -->
+
+            <!-- body -->
+            
+<div class="trm-content-start">
+    <!-- banner -->
+    <div class="trm-banner">
+    
+    <!-- banner cover -->
+    <img style="object-position:top;object-fit:cover;" alt="banner" class="trm-banner-cover" src="/img/banner.png">
+    <!-- banner cover end -->
+    
+
+    <!-- banner content -->
+    <div class="trm-banner-content trm-overlay">
+        <div class="container">
+            <div class="row">
+                
+                <div class="col-lg-4"></div>
+                
+                <div class="col-lg-8">
+
+                    <!-- banner title -->
+                    <div class="trm-banner-text ">
+                        <div class="trm-label trm-mb-20">
+                            NEWS LETTER
+                        </div>
+                        <h1 class="trm-mb-30 trm-hsmb-font">
+                            Cython类成员访问控制
+                        </h1>
+
+                        
+                            <ul class="trm-breadcrumbs trm-label">
+                                <li>
+                                    <a href="/" class="trm-anima-link">Home</a>
+                                </li>
+                                <li>
+                                    <span>
+                                        2024
+                                    </span>
+                                </li>
+                            </ul>
+                        
+                    </div>
+                    <!-- banner title end -->
+
+                    <!-- scroll hint -->
+                    <span id="scroll-triger" class="trm-scroll-hint-frame">
+                        <div class="trm-scroll-hint"></div>
+                        <span class="trm-label">Scroll down</span>
+                    </span>
+                    <!-- scroll hint end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- banner content end -->
+</div>
+    <!-- banner end -->
+    <div class="container">
+        <div class="row">
+            
+                <div class="trm-page-sidebar col-lg-4 hidden-sm">
+                    <!-- main card -->
+                    <div class="trm-main-card-frame trm-sidebar">
+    <div class="trm-main-card"> 
+        <!-- card header -->
+<div class="trm-mc-header">
+    <div class="trm-avatar-frame trm-mb-20">
+        <img alt="Avatar" class="trm-avatar" src="/img/cat.jpg">
+    </div>
+    <h5 class="trm-name trm-mb-15">
+        橘猫元宝
+    </h5>
+    
+</div>
+<!-- card header end -->
+        <!-- sidebar social -->
+
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<div class="trm-social">
+    
+        <a href="https://github.com" title="Github" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-github"></i>
+        </a>
+    
+</div>
+
+<!-- sidebar social end -->
+        <!-- info -->
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<ul class="trm-table trm-mb-20">
+    
+        <li>
+            <div class="trm-label">
+                Residence:
+            </div>
+            <div class="trm-label trm-label-light">
+                Mars
+            </div>
+        </li>
+    
+</ul>
+<!-- info end -->
+
+        
+    </div>
+</div>
+                    <!-- main card end -->
+                </div>
+            
+            <div class="trm-page-content col-lg-8">
+                <div id="trm-content" class="trm-content">
+                    <div class="trm-post-info row hidden-sm">
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-calendar-alt trm-icon"></i><br>
+            06/03
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-clock trm-icon"></i><br>
+            05:52
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div id="post-author" class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-user trm-icon"></i><br>
+            橘猫元宝
+        </div>
+    </div>
+</div>
+<div class="trm-card ">
+    <article id="article-container" class="trm-publication">
+    <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>本文主要学习Cython中类成员的访问控制以及Cython编译类和Python类的区别。</p>
+<h3 id="Python类属性的存储"><a href="#Python类属性的存储" class="headerlink" title="Python类属性的存储"></a>Python类属性的存储</h3><p>先看一个简单实例：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">class</span> <span class="token class-name">Person</span><span class="token punctuation">(</span>object<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> name<span class="token punctuation">,</span> age<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>name <span class="token operator">=</span> name
+        self<span class="token punctuation">.</span>age <span class="token operator">=</span> age
+
+tom <span class="token operator">=</span> Person<span class="token punctuation">(</span><span class="token string">'tom'</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>tom<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>tom<span class="token punctuation">.</span>__dict__<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>type<span class="token punctuation">(</span>tom<span class="token punctuation">.</span>__dict__<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+tom<span class="token punctuation">.</span>height <span class="token operator">=</span> <span class="token number">10</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>tom<span class="token punctuation">.</span>__dict__<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>Python类实例的属性数据存放一个内部字典中即<code>__dict__</code>，我们了解dict的底层是基于哈系表。</p>
+<p>Python定义的类默认<strong>所有属性是公开，并且可修改的</strong>，甚至Python运行时还允许我们动态添加新的类属性变量。</p>
+<h3 id="Cython类对象属性"><a href="#Cython类对象属性" class="headerlink" title="Cython类对象属性"></a>Cython类对象属性</h3><p>定义一个Cython的类：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token operator">%</span><span class="token operator">%</span>cython <span class="token operator">-</span>a
+
+cdef <span class="token keyword">class</span> <span class="token class-name">CyPerson</span><span class="token punctuation">(</span>object<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    cdef str name
+    cdef int age
+    
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> name<span class="token punctuation">,</span> age<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>name <span class="token operator">=</span> name
+        self<span class="token punctuation">.</span>age <span class="token operator">=</span> age
+
+    <span class="token keyword">def</span> <span class="token function">add_age</span><span class="token punctuation">(</span>self<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>age <span class="token operator">+=</span> <span class="token number">1</span>
+        
+        
+cy <span class="token operator">=</span> CyPerson<span class="token punctuation">(</span><span class="token string">'tom'</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>cy<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>cy<span class="token punctuation">.</span>__dict__<span class="token punctuation">)</span>       
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行会报错：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">AttributeError: <span class="token string">'_cython_magic_e4a8c4d3168d5a0c706f7d3032ab2aae57cb'</span> object has no attribute <span class="token string">'__dict__'</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>这里说对象没有<code>__dict__</code>属性，编译过后的类就没有<code>__dict__</code>属性是为什么？</p>
+<p>由于Cython关键字 cdef class就是告知Cython编译器将Fruit类的定义编译为C版本的类，若你了解C的话，C版本的类定义可以类比下面的C代码：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">typedef</span> <span class="token keyword">struct</span><span class="token punctuation">{</span>
+    <span class="token keyword">char</span><span class="token operator">*</span> name<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> age<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>CyPerson<span class="token punctuation">;</span>
+
+<span class="token keyword">void</span> <span class="token function">add_age</span><span class="token punctuation">(</span>Cython<span class="token operator">*</span> self<span class="token punctuation">)</span><span class="token punctuation">{</span>
+      self<span class="token operator">-></span>age<span class="token operator">++</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ol>
+<li>对于C来说,类的本体就是一个具备以上字段的结构体，</li>
+<li>CyPerson类在实例化时，必须明确告知编译器它自己内部字段(属性)的<strong>类型</strong>，编译器根据字段的类型能计算出整个CyPerson结构体实例化时该为它分配多大的内存量。</li>
+</ol>
+<pre class="line-numbers language-python"><code class="language-python">cy <span class="token operator">=</span> CyPerson<span class="token punctuation">(</span><span class="token string">'tom'</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>cy<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>cy<span class="token punctuation">.</span>name<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>当使用如下代码去访问name属性也会报错：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">AttributeError: <span class="token string">'_cython_magic_e4a8c4d3168d5a0c706f7d3032ab2aae57cb'</span> object has no attribute <span class="token string">'name'</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>Cython的关键字cdef class集成了C++ class的特性就是<strong>类成员</strong>的<strong>访问控制</strong>，C++的关键字class就是提供了<strong>访问控制</strong>的struct的加强版。</p>
+<h3 id="Cython类声明为C-的类"><a href="#Cython类声明为C-的类" class="headerlink" title="Cython类声明为C++的类"></a>Cython类声明为C++的类</h3><p>这里需要说一下：Cython与C++访问控制修饰符的对应关系。</p>
+<p><strong>private</strong>:对于Cython编译器来说，任何使用cdef定义的类属性&#x2F;方法默认是<strong>私有的</strong>，类外部代码无法访问之,并且在声明类成员时,<strong>Cython语法层面不提供显式的private关键字声明</strong>，因为像<strong>cdef private</strong> double price 等同画蛇舔足。</p>
+<p><strong>public</strong>: Cython编译器继承了C++这一特性，例如类内声明<strong>cdef public double</strong> price,表示外部代码可以自由访问和修改该属性值。</p>
+<p><strong>protected</strong>:要在Cython中实现类似C++类继承的protected访问控制特性，在Cython中不能使用protected，而是使用cppclass关键字。</p>
+<p>这里可以看出Cython类更像是C++的类，有对属性进行封装，有权限的控制。</p>
+<p>Cython也提供了对属性的权限声明，这里定义了一个CyPeron类：</p>
+<p>名字一般不能修改，年龄和外号可以修改</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token operator">%</span><span class="token operator">%</span>cython <span class="token operator">-</span>a
+
+cdef <span class="token keyword">class</span> <span class="token class-name">CyPerson</span><span class="token punctuation">(</span>object<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    cdef readonly str name
+    cdef public int age
+    cdef public str alias
+    
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> name<span class="token punctuation">,</span> age<span class="token punctuation">,</span> alias<span class="token operator">=</span><span class="token string">''</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>name <span class="token operator">=</span> name
+        self<span class="token punctuation">.</span>age <span class="token operator">=</span> age
+        self<span class="token punctuation">.</span>alias <span class="token operator">=</span> alias
+
+    <span class="token keyword">def</span> <span class="token function">add_age</span><span class="token punctuation">(</span>self<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>age <span class="token operator">+=</span> <span class="token number">1</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>调用：</p>
+<pre class="line-numbers language-python"><code class="language-python">tom <span class="token operator">=</span> CyPerson<span class="token punctuation">(</span><span class="token string">'tom'</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token string">'tommy'</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>tom<span class="token punctuation">.</span>name<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>tom<span class="token punctuation">.</span>age<span class="token punctuation">)</span>
+tom<span class="token punctuation">.</span>age <span class="token operator">+=</span> <span class="token number">1</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>tom<span class="token punctuation">.</span>age<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># 这里会报错，AttributeError: attribute 'name' of '_cython_magic_d88d05a2af4e7dc7410ccdd57e5efb257d141766.CyPerson' objects is not writable</span>
+tom<span class="token punctuation">.</span>name <span class="token operator">=</span> <span class="token string">"Jerry"</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ol>
+<li>当readonly关键字修饰类属性时,其实很类似Java中的final关键字的原理一样：<strong>类实例属性值一旦在初始化之后便不能更改,但允许调用代码访问</strong>；</li>
+<li>public关键字允许外部Python代码调用被public修饰的类实例属性，并且可以自由修改类实例属性的值</li>
+</ol>
+<h4 id="对类方法的修饰"><a href="#对类方法的修饰" class="headerlink" title="对类方法的修饰"></a>对类方法的修饰</h4><p>C++对类的方法也可以进行封装，比如如下代码：</p>
+<pre class="line-numbers language-c++"><code class="language-c++">#include <iostream>
+#include <string>
+
+class Person {
+private:
+    std::string name;
+    int age;
+
+    // 私有成员函数，只能在类内部访问
+    void displayAge() {
+        std::cout << "Age: " << age << std::endl;
+    }
+
+public:
+    // 构造函数
+    Person(std::string n, int a) : name(n), age(a) {}
+
+    // 公共成员函数，可以在类的外部访问
+    void display() {
+        std::cout << "Name: " << name << std::endl;
+        displayAge(); // 可以访问私有成员函数
+    }
+
+    // 公共成员函数，用于修改私有成员变量
+    void setAge(int a) {
+        if (a > 0) { // 简单的验证
+            age = a;
+        }
+    }
+
+    // 公共成员函数，用于访问私有成员变量
+    int getAge() {
+        return age;
+    }
+};
+
+int main() {
+    Person person("Alice", 30);
+
+    // 访问公共成员函数
+    person.display();
+
+    // 尝试直接访问私有成员变量（会报错）
+    // person.age = 40; // 错误，不能直接访问私有成员
+
+    // 使用公共成员函数修改私有成员变量
+    person.setAge(35);
+    std::cout << "Updated Age: " << person.getAge() << std::endl;
+
+    return 0;
+}
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>那么Cython是否也可以对方法就行封装？</p>
+<p>修改CyPerson代码，对add_age 使用cdef 和 public 定义和修饰：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token operator">%</span><span class="token operator">%</span>cython <span class="token operator">-</span>a
+
+cdef <span class="token keyword">class</span> <span class="token class-name">CyPerson</span><span class="token punctuation">(</span>object<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    cdef readonly str name
+    cdef public int age
+    cdef public str alias
+    
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> name<span class="token punctuation">,</span> age<span class="token punctuation">,</span> alias<span class="token operator">=</span><span class="token string">''</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>name <span class="token operator">=</span> name
+        self<span class="token punctuation">.</span>age <span class="token operator">=</span> age
+        self<span class="token punctuation">.</span>alias <span class="token operator">=</span> alias
+
+    cdef public add_age<span class="token punctuation">(</span>self<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>age <span class="token operator">+=</span> <span class="token number">1</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行代码，报错。为什么呢？</p>
+<pre class="line-numbers language-python"><code class="language-python">tom <span class="token operator">=</span> CyPerson<span class="token punctuation">(</span><span class="token string">'tom'</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token string">'tommy'</span><span class="token punctuation">)</span>
+tom<span class="token punctuation">.</span>add_age<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p><code>cdef</code> 定义的方法，只能在Cython中调用，无法在Python中调用。</p>
+<p>在这种情况，cdef关键字声明的类方法忽略了任何访问控制修饰符</p>
+<ul>
+<li>cdef 声明的类方法对于Python外部代码是不可见的，仅有类内部的其他C级别类方法才能相互调用。</li>
+<li>C级别下的类实例的方法可以自由访问类实例属性。</li>
+</ul>
+<p>怎么实现add_age在Python中调用?改成<code>cpdef</code>的方法：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token operator">%</span><span class="token operator">%</span>cython <span class="token operator">-</span>a
+
+cdef <span class="token keyword">class</span> <span class="token class-name">CyPerson</span><span class="token punctuation">(</span>object<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    cdef readonly str name
+    cdef public int age
+    cdef public str alias
+    
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> name<span class="token punctuation">,</span> age<span class="token punctuation">,</span> alias<span class="token operator">=</span><span class="token string">''</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>name <span class="token operator">=</span> name
+        self<span class="token punctuation">.</span>age <span class="token operator">=</span> age
+        self<span class="token punctuation">.</span>alias <span class="token operator">=</span> alias
+
+    cpdef public add_age<span class="token punctuation">(</span>self<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>age <span class="token operator">+=</span> <span class="token number">1</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>这里主要介绍了Cython类方法的封装原理，以及再次明确了不同方法定义函数的可见范围。</p>
+<ol>
+<li>Cython的类会被编译为类似C++的类，可以进行封装，Python的类一般是没有封装的，要自己实现。</li>
+<li><code>cdef</code>定义的方法就是C&#x2F;C++方法，外部Python是无法调用的。</li>
+</ol>
+<p>参考：</p>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/212611264">https://zhuanlan.zhihu.com/p/212611264</a></p>
+
+</article>
+    
+    
+
+</div>
+<div class="trm-post-next-prev row">
+    <div class="col-lg-12">
+        <!-- title -->
+        <h5 class="trm-title-with-divider">
+            其他文章
+            <span data-number="02"></span>
+        </h5>
+    </div>
+    
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/06/02/Cython%E5%AF%B9%E5%AE%9E%E4%BE%8B%E5%B1%9E%E6%80%A7%E7%9A%84%E4%BC%98%E5%8C%96/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" #.">
+                    未分类
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/06/02/Cython%E5%AF%B9%E5%AE%9E%E4%BE%8B%E5%B1%9E%E6%80%A7%E7%9A%84%E4%BC%98%E5%8C%96/" class="trm-anima-link">
+                    Cython对实例属性的优化
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/06/02</li>
+                <li>11:00</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+</div>
+
+    
+
+
+
+                    <div class="trm-divider footer-divider"></div>
+
+                    <!-- footer -->
+                    <footer class="trm-scroll-animation">
+
+    
+
+    
+
+    
+        <div class="trm-footer-item">
+            <span>
+                由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v7.0.0
+            </span>
+            <span class="footer-separator" data-separator=" | "></span>
+            <span> 
+                主题 - 
+                <a rel="noopener" href='https://github.com/MaLuns/hexo-theme-async' target='_blank'>Async</a>
+                v2.1.8
+            </span>
+        </div>
+      
+
+     
+
+     
+</footer>
+ 
+                    <!-- footer end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- body end -->
+
+            
+
+            
+<div class="trm-fixed-container">
+    
+    
+        <div class="trm-fixed-btn" data-title="阅读模式" onclick="asyncFun.switchReadMode()">
+            <i class="iconfont fas fa-book-reader"></i>
+        </div>
+    
+    
+    <div id="trm-back-top" class="trm-fixed-btn" data-title="回到顶部">
+        <i class="iconfont fas fa-arrow-up"></i>
+    </div>
+</div>
+        </div>
+      </div>
+      <!-- scroll container end -->
+  </div>
+  <!-- app wrapper end -->
+
+  
+  <!-- Plugin -->
+
+
+
+
+    
+    
+<script src="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+
+    
+
+    
+
+    
+
+    <!-- 数学公式 -->
+    
+
+    <!-- 评论插件 -->
+    
+        
+
+        
+    
+
+
+
+<!-- CDN -->
+
+
+    
+
+    
+
+    
+
+
+
+
+    <!-- Service Worker -->
+    
+    <!-- baidu push -->
+    
+
+
+<script id="async-script" src="/js/main.js?v=2.1.8"></script>
+
+</body>
+
+</html>
