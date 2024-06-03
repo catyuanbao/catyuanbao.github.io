@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="x5-fullscreen" content="true">
+<meta name="full-screen" content="yes">
+<meta name="theme-color" content="#317EFB" />
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
+<meta name="description" content="背景本文主要总结下Python __new__和__init__方法的区别与联系，以及和C++语言的new，构造方法的类比，掌握Python语言的对象初始化相关知识。 __new__方法用途__new__ 是Python类中最容易滥用的功能之一。 它晦涩难懂，到处都是陷阱，当您确实需要 __new__ 时，它的功能就非常强大且难以理解。__new__ 的主要用例在元类中。  在Python以及许多">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Python new和init方法总结">
+<meta property="og:url" content="http://example.com/2024/06/03/Python-new%E5%92%8Cinit%E6%96%B9%E6%B3%95%E6%80%BB%E7%BB%93/index.html">
+<meta property="og:site_name" content="Cat YuanBao">
+<meta property="og:description" content="背景本文主要总结下Python __new__和__init__方法的区别与联系，以及和C++语言的new，构造方法的类比，掌握Python语言的对象初始化相关知识。 __new__方法用途__new__ 是Python类中最容易滥用的功能之一。 它晦涩难懂，到处都是陷阱，当您确实需要 __new__ 时，它的功能就非常强大且难以理解。__new__ 的主要用例在元类中。  在Python以及许多">
+<meta property="og:locale">
+<meta property="article:published_time" content="2024-06-03T13:46:51.000Z">
+<meta property="article:modified_time" content="2024-06-03T13:47:12.917Z">
+<meta property="article:author" content="橘猫元宝">
+<meta property="article:tag" content="cat">
+<meta name="twitter:card" content="summary">
+
+    <meta name="keywords" content="cat">
+
+
+<title >Python new和init方法总结</title>
+
+<!-- Favicon -->
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='16x16' ></link>
+
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='32x32' ></link>
+
+
+
+
+<!-- Plugin -->
+
+
+
+
+    
+<link rel="stylesheet" href="/css/plugins/bootstrap.row.css">
+
+    
+<link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.css">
+
+    
+    
+
+
+
+
+<!-- Icon -->
+
+    
+<link rel="stylesheet" href="/css/plugins/font-awesome.min.css">
+
+
+
+
+<!-- Variable -->
+<script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-06-03 21:47:12"};</script>
+
+<!-- Theme mode css -->
+<link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
+<script>
+    let defaultMode = ASYNC_CONFIG.theme.default !=='auto' ?  ASYNC_CONFIG.theme.default : (window.matchMedia("(prefers-color-scheme: light)").matches ? 'style-light' : 'style-dark')
+    let catchMode = localStorage.getItem('theme-mode') || defaultMode;
+    let type = catchMode === 'style-dark' ? 'add' : 'remove';
+    document.documentElement.classList[type]('dark')
+</script>
+
+<!-- CDN -->
+
+
+    
+    
+
+
+
+<!-- Site Analytics -->
+ 
+<meta name="generator" content="Hexo 7.0.0"><link rel="stylesheet" href="/css/prism.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+<body>
+
+  <!-- app wrapper -->
+  <div class="trm-app-frame">
+
+    <!-- page preloader -->
+    <div class="trm-preloader">
+    <div class="trm-holder">
+        <div class="preloader">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+    <!-- page preloader end -->
+
+    <!-- change mode preloader -->
+    <div class="trm-mode-swich-animation-frame">
+    <div class="trm-mode-swich-animation">
+        <i class="i-sun"><i class="iconfont far fa-sun"></i></i>
+        <div class="trm-horizon"></div>
+        <i class="i-moon"><i class="iconfont far fa-moon"></i></i>
+    </div>
+</div>
+    <!-- change mode preloader end -->
+
+      <!-- scroll container -->
+      <div id="trm-dynamic-content" class="trm-swup-animation">
+        <div id="trm-scroll-container" class="trm-scroll-container" style="opacity: 0">
+            <!-- top bar -->
+            <header class="trm-top-bar">
+	<div class="container">
+		<div class="trm-left-side">
+			<!-- logo -->
+<a href="/" class="trm-logo-frame trm-anima-link">
+    
+        <img alt="logo" src="/img/favicon.svg">
+    
+    
+        <div class="trm-logo-text">
+            元宝<span>橘猫</span>
+        </div>
+    
+</a>
+<!-- logo end -->
+		</div>
+		<div class="trm-right-side">
+			<!-- menu -->
+<div class="trm-menu">
+    <nav>
+        <ul>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/" target="">
+                    首页
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/archives/" target="">
+                    归档
+                </a>
+                
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+<!-- menu end -->
+			
+    <!-- mode switcher place -->
+    <div class="trm-mode-switcher-place">
+        <div class="trm-mode-switcher">
+            <i class="iconfont far fa-sun"></i>
+            <input class="tgl tgl-light" id="trm-swich" type="checkbox">
+            <label class="trm-swich" for="trm-swich"></label>
+            <i class="iconfont far fa-moon"></i>
+        </div>
+    </div>
+    <!-- mode switcher place end -->
+
+			
+		</div>
+		<div class="trm-menu-btn">
+			<span></span>
+		</div>
+	</div>
+</header>
+            <!-- top bar end -->
+
+            <!-- body -->
+            
+<div class="trm-content-start">
+    <!-- banner -->
+    <div class="trm-banner">
+    
+    <!-- banner cover -->
+    <img style="object-position:top;object-fit:cover;" alt="banner" class="trm-banner-cover" src="/img/banner.png">
+    <!-- banner cover end -->
+    
+
+    <!-- banner content -->
+    <div class="trm-banner-content trm-overlay">
+        <div class="container">
+            <div class="row">
+                
+                <div class="col-lg-4"></div>
+                
+                <div class="col-lg-8">
+
+                    <!-- banner title -->
+                    <div class="trm-banner-text ">
+                        <div class="trm-label trm-mb-20">
+                            NEWS LETTER
+                        </div>
+                        <h1 class="trm-mb-30 trm-hsmb-font">
+                            Python new和init方法总结
+                        </h1>
+
+                        
+                            <ul class="trm-breadcrumbs trm-label">
+                                <li>
+                                    <a href="/" class="trm-anima-link">Home</a>
+                                </li>
+                                <li>
+                                    <span>
+                                        2024
+                                    </span>
+                                </li>
+                            </ul>
+                        
+                    </div>
+                    <!-- banner title end -->
+
+                    <!-- scroll hint -->
+                    <span id="scroll-triger" class="trm-scroll-hint-frame">
+                        <div class="trm-scroll-hint"></div>
+                        <span class="trm-label">Scroll down</span>
+                    </span>
+                    <!-- scroll hint end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- banner content end -->
+</div>
+    <!-- banner end -->
+    <div class="container">
+        <div class="row">
+            
+                <div class="trm-page-sidebar col-lg-4 hidden-sm">
+                    <!-- main card -->
+                    <div class="trm-main-card-frame trm-sidebar">
+    <div class="trm-main-card"> 
+        <!-- card header -->
+<div class="trm-mc-header">
+    <div class="trm-avatar-frame trm-mb-20">
+        <img alt="Avatar" class="trm-avatar" src="/img/cat.jpg">
+    </div>
+    <h5 class="trm-name trm-mb-15">
+        橘猫元宝
+    </h5>
+    
+</div>
+<!-- card header end -->
+        <!-- sidebar social -->
+
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<div class="trm-social">
+    
+        <a href="https://github.com" title="Github" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-github"></i>
+        </a>
+    
+</div>
+
+<!-- sidebar social end -->
+        <!-- info -->
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<ul class="trm-table trm-mb-20">
+    
+        <li>
+            <div class="trm-label">
+                Residence:
+            </div>
+            <div class="trm-label trm-label-light">
+                Mars
+            </div>
+        </li>
+    
+</ul>
+<!-- info end -->
+
+        
+    </div>
+</div>
+                    <!-- main card end -->
+                </div>
+            
+            <div class="trm-page-content col-lg-8">
+                <div id="trm-content" class="trm-content">
+                    <div class="trm-post-info row hidden-sm">
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-calendar-alt trm-icon"></i><br>
+            06/03
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-clock trm-icon"></i><br>
+            21:46
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div id="post-author" class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-user trm-icon"></i><br>
+            橘猫元宝
+        </div>
+    </div>
+</div>
+<div class="trm-card ">
+    <article id="article-container" class="trm-publication">
+    <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>本文主要总结下Python <code>__new__</code>和<code>__init__</code>方法的区别与联系，以及和C++语言的new，构造方法的类比，掌握Python语言的对象初始化相关知识。</p>
+<h3 id="new-方法用途"><a href="#new-方法用途" class="headerlink" title="__new__方法用途"></a><code>__new__</code>方法用途</h3><p><code>__new__</code> 是Python类中最容易滥用的功能之一。 它晦涩难懂，到处都是陷阱，当您确实需要 <code>__new__</code> 时，它的功能就非常强大且难以理解。<code>__new__</code> 的主要用例在元类中。 </p>
+<p>在Python以及许多其他语言中，对象分为两个步骤：</p>
+<ol>
+<li><strong>生成对象</strong>要访问对象,必须先创建该对象。对象创建就需要为其分配对应类型尺寸的内存空间，该对象存在的唯一标识符就是<strong>其内存实体的内存地址</strong>,由于Python中的所有对象都继承基类object，因此创建对象会调用<code>object.__new__</code>，而且__ new__会返回类的一个<strong>实例对象(通常指定为self)</strong></li>
+<li><strong>构造对象</strong>：生成对象后，Python将该对象实例(通常用self表示,对于C底层就是该Py结构体的指针)传递给该类的构造函数 <code>__init __</code>,这一步通常是<strong>对类属性初始化</strong>或<strong>调用类内部的类方法</strong></li>
+</ol>
+<p>这个第一步，有点类似于C&#x2F;C++的malloc和new，用于申请内存，后一步类似于C&#x2F;C++的指针数据初始化以及构造方法。</p>
+<p><code>__new__</code>方法必须返回一个实例。</p>
+<h4 id="重写-new-方法"><a href="#重写-new-方法" class="headerlink" title="重写__new__方法"></a>重写<code>__new__</code>方法</h4><p>Python允许通过<code>__new__</code> magic方法覆盖任何对象的<code>__ new__</code>。</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">class</span> <span class="token class-name">MyClass</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__new__</span><span class="token punctuation">(</span>cls<span class="token punctuation">,</span> <span class="token operator">*</span>args<span class="token punctuation">,</span> <span class="token operator">**</span>kwargs<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Creating instance"</span><span class="token punctuation">)</span>
+        instance <span class="token operator">=</span> super<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>__new__<span class="token punctuation">(</span>cls<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> instance
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>最经典的用途就是实现单例模式：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">class</span> <span class="token class-name">Singleton</span><span class="token punctuation">:</span>
+    _instance <span class="token operator">=</span> None
+
+    <span class="token keyword">def</span> <span class="token function">__new__</span><span class="token punctuation">(</span>cls<span class="token punctuation">,</span> <span class="token operator">*</span>args<span class="token punctuation">,</span> <span class="token operator">**</span>kwargs<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">if</span> cls<span class="token punctuation">.</span>_instance <span class="token keyword">is</span> None<span class="token punctuation">:</span>
+            cls<span class="token punctuation">.</span>_instance <span class="token operator">=</span> super<span class="token punctuation">(</span>Singleton<span class="token punctuation">,</span> cls<span class="token punctuation">)</span><span class="token punctuation">.</span>__new__<span class="token punctuation">(</span>cls<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> cls<span class="token punctuation">.</span>_instance
+
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> value<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>value <span class="token operator">=</span> value
+
+<span class="token comment" spellcheck="true"># 创建实例</span>
+singleton1 <span class="token operator">=</span> Singleton<span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">)</span>
+singleton2 <span class="token operator">=</span> Singleton<span class="token punctuation">(</span><span class="token number">20</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 验证是否是同一个实例</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>singleton1 <span class="token keyword">is</span> singleton2<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 输出: True</span>
+
+<span class="token comment" spellcheck="true"># 验证实例属性是否相同</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>singleton1<span class="token punctuation">.</span>value<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 输出: 20</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>singleton2<span class="token punctuation">.</span>value<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 输出: 20</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里主要是 <code>            cls._instance = super(Singleton, cls).__new__(cls)</code>这一句，参数问题。</p>
+<p>Singleton和cls。</p>
+<ol>
+<li>在单继承情况下，<code>super(Singleton, cls).__new__(cls)</code> 等效于 <code>object.__new__(cls)</code>，但使用 <code>super()</code> 更加灵活，因为它不会硬编码父类名，这样如果将来修改继承关系，代码不需要改变。</li>
+<li>在多重继承情况下，<code>super()</code> 能够确保按照 MRO 调用下一个类的方法，这样可以正确处理多重继承中复杂的继承关系。</li>
+</ol>
+<p>多继承实例：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">class</span> <span class="token class-name">Base1</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__new__</span><span class="token punctuation">(</span>cls<span class="token punctuation">,</span> <span class="token operator">*</span>args<span class="token punctuation">,</span> <span class="token operator">**</span>kwargs<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Base1 __new__ called"</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> super<span class="token punctuation">(</span>Base1<span class="token punctuation">,</span> cls<span class="token punctuation">)</span><span class="token punctuation">.</span>__new__<span class="token punctuation">(</span>cls<span class="token punctuation">)</span>
+
+<span class="token keyword">class</span> <span class="token class-name">Base2</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__new__</span><span class="token punctuation">(</span>cls<span class="token punctuation">,</span> <span class="token operator">*</span>args<span class="token punctuation">,</span> <span class="token operator">**</span>kwargs<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Base2 __new__ called"</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> super<span class="token punctuation">(</span>Base2<span class="token punctuation">,</span> cls<span class="token punctuation">)</span><span class="token punctuation">.</span>__new__<span class="token punctuation">(</span>cls<span class="token punctuation">)</span>
+
+<span class="token keyword">class</span> <span class="token class-name">Singleton</span><span class="token punctuation">(</span>Base1<span class="token punctuation">,</span> Base2<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    _instance <span class="token operator">=</span> None
+
+    <span class="token keyword">def</span> <span class="token function">__new__</span><span class="token punctuation">(</span>cls<span class="token punctuation">,</span> <span class="token operator">*</span>args<span class="token punctuation">,</span> <span class="token operator">**</span>kwargs<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">if</span> cls<span class="token punctuation">.</span>_instance <span class="token keyword">is</span> None<span class="token punctuation">:</span>
+            cls<span class="token punctuation">.</span>_instance <span class="token operator">=</span> super<span class="token punctuation">(</span>Singleton<span class="token punctuation">,</span> cls<span class="token punctuation">)</span><span class="token punctuation">.</span>__new__<span class="token punctuation">(</span>cls<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> cls<span class="token punctuation">.</span>_instance
+
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> value<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">if</span> <span class="token operator">not</span> hasattr<span class="token punctuation">(</span>self<span class="token punctuation">,</span> <span class="token string">'initialized'</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            self<span class="token punctuation">.</span>value <span class="token operator">=</span> value
+            self<span class="token punctuation">.</span>initialized <span class="token operator">=</span> <span class="token boolean">True</span>
+
+singleton1 <span class="token operator">=</span> Singleton<span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">)</span>
+singleton2 <span class="token operator">=</span> Singleton<span class="token punctuation">(</span><span class="token number">20</span><span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>singleton1 <span class="token keyword">is</span> singleton2<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 输出: True</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>singleton1<span class="token punctuation">.</span>value<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 输出: 10</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>singleton2<span class="token punctuation">.</span>value<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 输出: 10</span>
+
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>一句话：super关键字是告知当前子类它指向子类“相对”的父类。</p>
+<h4 id="在-new-方法中使用属性初始化"><a href="#在-new-方法中使用属性初始化" class="headerlink" title="在__new__方法中使用属性初始化"></a>在<code>__new__</code>方法中使用属性初始化</h4><p>下面的实例，没有<code>__init__</code>方法，只有<code>__new__</code>方法，在其中做属性的赋值，这种情况Python会自己加一个空的<code>__init__</code>方法。</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">class</span> <span class="token class-name">Person</span><span class="token punctuation">(</span>object<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__new__</span><span class="token punctuation">(</span>cls<span class="token punctuation">,</span> name<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        instance <span class="token operator">=</span> super<span class="token punctuation">(</span>Person<span class="token punctuation">,</span> cls<span class="token punctuation">)</span><span class="token punctuation">.</span>__new__<span class="token punctuation">(</span>cls<span class="token punctuation">)</span>
+        instance<span class="token punctuation">.</span>name <span class="token operator">=</span> name
+        <span class="token keyword">return</span> instance
+
+tom <span class="token operator">=</span> Person<span class="token punctuation">(</span><span class="token string">'tom'</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>tom<span class="token punctuation">.</span>name<span class="token punctuation">)</span>
+    
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>显示调用<code>__new__</code>方法：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">class</span> <span class="token class-name">Person</span><span class="token punctuation">(</span>object<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__new__</span><span class="token punctuation">(</span>cls<span class="token punctuation">,</span> name<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        instance <span class="token operator">=</span> super<span class="token punctuation">(</span>Person<span class="token punctuation">,</span> cls<span class="token punctuation">)</span><span class="token punctuation">.</span>__new__<span class="token punctuation">(</span>cls<span class="token punctuation">)</span>
+        instance<span class="token punctuation">.</span>name <span class="token operator">=</span> name
+        <span class="token keyword">return</span> instance
+
+tom <span class="token operator">=</span> Person<span class="token punctuation">(</span><span class="token string">'tom'</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>tom<span class="token punctuation">.</span>name<span class="token punctuation">)</span>
+
+jerry <span class="token operator">=</span> Person<span class="token punctuation">.</span>__new__<span class="token punctuation">(</span>Person<span class="token punctuation">,</span> <span class="token string">"jerry"</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>jerry<span class="token punctuation">.</span>name<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>自定义一个和空的<code>__init__</code>方法冲突的<code>__init__</code>方法，会报错：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">class</span> <span class="token class-name">Person</span><span class="token punctuation">(</span>object<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__new__</span><span class="token punctuation">(</span>cls<span class="token punctuation">,</span> name<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        instance <span class="token operator">=</span> super<span class="token punctuation">(</span>Person<span class="token punctuation">,</span> cls<span class="token punctuation">)</span><span class="token punctuation">.</span>__new__<span class="token punctuation">(</span>cls<span class="token punctuation">)</span>
+        instance<span class="token punctuation">.</span>name <span class="token operator">=</span> name
+        <span class="token keyword">return</span> instance
+
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'call init'</span><span class="token punctuation">)</span>
+
+tom <span class="token operator">=</span> Person<span class="token punctuation">(</span><span class="token string">'tom'</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>tom<span class="token punctuation">.</span>name<span class="token punctuation">)</span>
+
+jerry <span class="token operator">=</span> Person<span class="token punctuation">.</span>__new__<span class="token punctuation">(</span>Person<span class="token punctuation">,</span> <span class="token string">"jerry"</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>jerry<span class="token punctuation">.</span>name<span class="token punctuation">)</span>
+    
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>除非参数名称和默认的一致：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">class</span> <span class="token class-name">Person</span><span class="token punctuation">(</span>object<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__new__</span><span class="token punctuation">(</span>cls<span class="token punctuation">,</span> name<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        instance <span class="token operator">=</span> super<span class="token punctuation">(</span>Person<span class="token punctuation">,</span> cls<span class="token punctuation">)</span><span class="token punctuation">.</span>__new__<span class="token punctuation">(</span>cls<span class="token punctuation">)</span>
+        instance<span class="token punctuation">.</span>name <span class="token operator">=</span> name
+        <span class="token keyword">return</span> instance
+
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> name<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'call init'</span><span class="token punctuation">)</span>
+
+tom <span class="token operator">=</span> Person<span class="token punctuation">(</span><span class="token string">'tom'</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>tom<span class="token punctuation">.</span>name<span class="token punctuation">)</span>
+
+jerry <span class="token operator">=</span> Person<span class="token punctuation">.</span>__new__<span class="token punctuation">(</span>Person<span class="token punctuation">,</span> <span class="token string">"jerry"</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>jerry<span class="token punctuation">.</span>name<span class="token punctuation">)</span>
+    
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>输出：</p>
+<pre class="line-numbers language-python"><code class="language-python">call init
+tom
+jerry
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>说明，显式的调用<code>__new__</code>只会执行<code>__new__</code>，并不执行<code>__init__</code>方法。</p>
+<h3 id="对比C-C"><a href="#对比C-C" class="headerlink" title="对比C&#x2F;C++"></a>对比C&#x2F;C++</h3><p>Python实例化对象方法：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">class</span> <span class="token class-name">MyClass</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__new__</span><span class="token punctuation">(</span>cls<span class="token punctuation">,</span> <span class="token operator">*</span>args<span class="token punctuation">,</span> <span class="token operator">**</span>kwargs<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Creating instance"</span><span class="token punctuation">)</span>
+        instance <span class="token operator">=</span> super<span class="token punctuation">(</span>MyClass<span class="token punctuation">,</span> cls<span class="token punctuation">)</span><span class="token punctuation">.</span>__new__<span class="token punctuation">(</span>cls<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> instance
+
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> value<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Initializing instance"</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>value <span class="token operator">=</span> value
+
+obj <span class="token operator">=</span> MyClass<span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>C++实例化对象方法：</p>
+<pre class="line-numbers language-c++"><code class="language-c++">#include <iostream>
+
+class MyClass {
+public:
+    MyClass(int value) {
+        std::cout << "Initializing instance" << std::endl;
+        this->value = value;
+    }
+
+    static void* operator new(size_t size) {
+        std::cout << "Creating instance" << std::endl;
+        void* p = ::operator new(size);
+        return p;
+    }
+
+private:
+    int value;
+};
+
+int main() {
+    MyClass* obj = new MyClass(10);
+    return 0;
+}
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>以下是一个表格，总结了Python和C++这两个方法的不同：</p>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>Python <code>__new__</code></th>
+<th>Python <code>__init__</code></th>
+<th>C++ <code>new</code></th>
+<th>C++ 构造函数</th>
+</tr>
+</thead>
+<tbody><tr>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th>调用时机</th>
+<th>对象创建时</th>
+<th>对象初始化时</th>
+<th>对象创建时</th>
+<th>对象初始化时</th>
+</tr>
+</thead>
+<tbody><tr>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th>作用</th>
+<th>创建并返回一个新的实例</th>
+<th>初始化已创建的实例</th>
+<th>分配内存并调用构造函数</th>
+<th>初始化分配的内存</th>
+</tr>
+</thead>
+<tbody><tr>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th>返回值</th>
+<th>返回新创建的实例</th>
+<th>无返回值（隐式返回 <code>None</code>）</th>
+<th>返回对象的指针</th>
+<th>无返回值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th>是否显式调用父类方法</th>
+<th>是，通常用 <code>super()</code> 调用</th>
+<th>是，通常用 <code>super()</code> 调用</th>
+<th>否</th>
+<th>是，显式调用父类构造函数</th>
+</tr>
+</thead>
+<tbody><tr>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th>使用场景</th>
+<th>控制对象的创建过程</th>
+<th>初始化对象的属性</th>
+<th>分配对象并调用构造函数</th>
+<th>初始化对象的属性</th>
+</tr>
+</thead>
+<tbody><tr>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th>对象创建和初始化流程</th>
+<th>首先调用 <code>__new__</code></th>
+<th>其次调用 <code>__init__</code></th>
+<th>首先调用 <code>new</code></th>
+<th>其次调用构造函数</th>
+</tr>
+</thead>
+<tbody><tr>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th>内存管理</th>
+<th>负责分配内存</th>
+<th>不涉及内存分配</th>
+<th>负责分配内存</th>
+<th>不涉及内存分配</th>
+</tr>
+</thead>
+<tbody><tr>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th>参数传递</th>
+<th><code>cls</code> 和其他参数</th>
+<th><code>self</code> 和其他参数</th>
+<th>构造函数参数</th>
+<th>构造函数参数</th>
+</tr>
+</thead>
+<tbody><tr>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th>是否为静态方法</th>
+<th>是（通常通过 <code>cls</code> 传递）</th>
+<th>否</th>
+<th>否</th>
+<th>否</th>
+</tr>
+</thead>
+<tbody><tr>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<p>参考：</p>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/225834335">https://zhuanlan.zhihu.com/p/225834335</a></p>
+
+</article>
+    
+    
+
+</div>
+<div class="trm-post-next-prev row">
+    <div class="col-lg-12">
+        <!-- title -->
+        <h5 class="trm-title-with-divider">
+            其他文章
+            <span data-number="02"></span>
+        </h5>
+    </div>
+    
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/06/03/LeetCode-125-%E9%AA%8C%E8%AF%81%E5%9B%9E%E6%96%87%E4%B8%B2/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" /categories/LeetCode/">
+                    LeetCode
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/06/03/LeetCode-125-%E9%AA%8C%E8%AF%81%E5%9B%9E%E6%96%87%E4%B8%B2/" class="trm-anima-link">
+                    LeetCode-125-验证回文串
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/06/03</li>
+                <li>20:11</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+</div>
+
+    
+
+
+
+                    <div class="trm-divider footer-divider"></div>
+
+                    <!-- footer -->
+                    <footer class="trm-scroll-animation">
+
+    
+
+    
+
+    
+        <div class="trm-footer-item">
+            <span>
+                由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v7.0.0
+            </span>
+            <span class="footer-separator" data-separator=" | "></span>
+            <span> 
+                主题 - 
+                <a rel="noopener" href='https://github.com/MaLuns/hexo-theme-async' target='_blank'>Async</a>
+                v2.1.8
+            </span>
+        </div>
+      
+
+     
+
+     
+</footer>
+ 
+                    <!-- footer end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- body end -->
+
+            
+
+            
+<div class="trm-fixed-container">
+    
+    
+        <div class="trm-fixed-btn" data-title="阅读模式" onclick="asyncFun.switchReadMode()">
+            <i class="iconfont fas fa-book-reader"></i>
+        </div>
+    
+    
+    <div id="trm-back-top" class="trm-fixed-btn" data-title="回到顶部">
+        <i class="iconfont fas fa-arrow-up"></i>
+    </div>
+</div>
+        </div>
+      </div>
+      <!-- scroll container end -->
+  </div>
+  <!-- app wrapper end -->
+
+  
+  <!-- Plugin -->
+
+
+
+
+    
+    
+<script src="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+
+    
+
+    
+
+    
+
+    <!-- 数学公式 -->
+    
+
+    <!-- 评论插件 -->
+    
+        
+
+        
+    
+
+
+
+<!-- CDN -->
+
+
+    
+
+    
+
+    
+
+
+
+
+    <!-- Service Worker -->
+    
+    <!-- baidu push -->
+    
+
+
+<script id="async-script" src="/js/main.js?v=2.1.8"></script>
+
+</body>
+
+</html>
