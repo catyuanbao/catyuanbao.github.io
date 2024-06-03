@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="x5-fullscreen" content="true">
+<meta name="full-screen" content="yes">
+<meta name="theme-color" content="#317EFB" />
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
+<meta name="description" content="背景本文主要记录如何通过Cython调用C语言的库，之前了解过通过ctypes可以调用C语言的库，这次主要通过阅读官方文档，学习Cython如何调用C语言的库。 fprintfexample.pyx # example.pyx  # 导入所需的C库函数 from libc.stdio cimport fprintf, stderr  # 定义外部函数 cdef extern from &quot;stdio">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Cython如何调用C语言的库函数">
+<meta property="og:url" content="http://example.com/2024/06/03/Cython%E5%A6%82%E4%BD%95%E8%B0%83%E7%94%A8C%E8%AF%AD%E8%A8%80%E7%9A%84%E5%BA%93%E5%87%BD%E6%95%B0/index.html">
+<meta property="og:site_name" content="Cat YuanBao">
+<meta property="og:description" content="背景本文主要记录如何通过Cython调用C语言的库，之前了解过通过ctypes可以调用C语言的库，这次主要通过阅读官方文档，学习Cython如何调用C语言的库。 fprintfexample.pyx # example.pyx  # 导入所需的C库函数 from libc.stdio cimport fprintf, stderr  # 定义外部函数 cdef extern from &quot;stdio">
+<meta property="og:locale">
+<meta property="article:published_time" content="2024-06-03T00:44:24.000Z">
+<meta property="article:modified_time" content="2024-06-03T00:44:42.377Z">
+<meta property="article:author" content="橘猫元宝">
+<meta property="article:tag" content="cat">
+<meta name="twitter:card" content="summary">
+
+    <meta name="keywords" content="cat">
+
+
+<title >Cython如何调用C语言的库函数</title>
+
+<!-- Favicon -->
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='16x16' ></link>
+
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='32x32' ></link>
+
+
+
+
+<!-- Plugin -->
+
+
+
+
+    
+<link rel="stylesheet" href="/css/plugins/bootstrap.row.css">
+
+    
+<link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.css">
+
+    
+    
+
+
+
+
+<!-- Icon -->
+
+    
+<link rel="stylesheet" href="/css/plugins/font-awesome.min.css">
+
+
+
+
+<!-- Variable -->
+<script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-06-03 08:44:42"};</script>
+
+<!-- Theme mode css -->
+<link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
+<script>
+    let defaultMode = ASYNC_CONFIG.theme.default !=='auto' ?  ASYNC_CONFIG.theme.default : (window.matchMedia("(prefers-color-scheme: light)").matches ? 'style-light' : 'style-dark')
+    let catchMode = localStorage.getItem('theme-mode') || defaultMode;
+    let type = catchMode === 'style-dark' ? 'add' : 'remove';
+    document.documentElement.classList[type]('dark')
+</script>
+
+<!-- CDN -->
+
+
+    
+    
+
+
+
+<!-- Site Analytics -->
+ 
+<meta name="generator" content="Hexo 7.0.0"><link rel="stylesheet" href="/css/prism.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+<body>
+
+  <!-- app wrapper -->
+  <div class="trm-app-frame">
+
+    <!-- page preloader -->
+    <div class="trm-preloader">
+    <div class="trm-holder">
+        <div class="preloader">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+    <!-- page preloader end -->
+
+    <!-- change mode preloader -->
+    <div class="trm-mode-swich-animation-frame">
+    <div class="trm-mode-swich-animation">
+        <i class="i-sun"><i class="iconfont far fa-sun"></i></i>
+        <div class="trm-horizon"></div>
+        <i class="i-moon"><i class="iconfont far fa-moon"></i></i>
+    </div>
+</div>
+    <!-- change mode preloader end -->
+
+      <!-- scroll container -->
+      <div id="trm-dynamic-content" class="trm-swup-animation">
+        <div id="trm-scroll-container" class="trm-scroll-container" style="opacity: 0">
+            <!-- top bar -->
+            <header class="trm-top-bar">
+	<div class="container">
+		<div class="trm-left-side">
+			<!-- logo -->
+<a href="/" class="trm-logo-frame trm-anima-link">
+    
+        <img alt="logo" src="/img/favicon.svg">
+    
+    
+        <div class="trm-logo-text">
+            元宝<span>橘猫</span>
+        </div>
+    
+</a>
+<!-- logo end -->
+		</div>
+		<div class="trm-right-side">
+			<!-- menu -->
+<div class="trm-menu">
+    <nav>
+        <ul>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/" target="">
+                    首页
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/archives/" target="">
+                    归档
+                </a>
+                
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+<!-- menu end -->
+			
+    <!-- mode switcher place -->
+    <div class="trm-mode-switcher-place">
+        <div class="trm-mode-switcher">
+            <i class="iconfont far fa-sun"></i>
+            <input class="tgl tgl-light" id="trm-swich" type="checkbox">
+            <label class="trm-swich" for="trm-swich"></label>
+            <i class="iconfont far fa-moon"></i>
+        </div>
+    </div>
+    <!-- mode switcher place end -->
+
+			
+		</div>
+		<div class="trm-menu-btn">
+			<span></span>
+		</div>
+	</div>
+</header>
+            <!-- top bar end -->
+
+            <!-- body -->
+            
+<div class="trm-content-start">
+    <!-- banner -->
+    <div class="trm-banner">
+    
+    <!-- banner cover -->
+    <img style="object-position:top;object-fit:cover;" alt="banner" class="trm-banner-cover" src="/img/banner.png">
+    <!-- banner cover end -->
+    
+
+    <!-- banner content -->
+    <div class="trm-banner-content trm-overlay">
+        <div class="container">
+            <div class="row">
+                
+                <div class="col-lg-4"></div>
+                
+                <div class="col-lg-8">
+
+                    <!-- banner title -->
+                    <div class="trm-banner-text ">
+                        <div class="trm-label trm-mb-20">
+                            NEWS LETTER
+                        </div>
+                        <h1 class="trm-mb-30 trm-hsmb-font">
+                            Cython如何调用C语言的库函数
+                        </h1>
+
+                        
+                            <ul class="trm-breadcrumbs trm-label">
+                                <li>
+                                    <a href="/" class="trm-anima-link">Home</a>
+                                </li>
+                                <li>
+                                    <span>
+                                        2024
+                                    </span>
+                                </li>
+                            </ul>
+                        
+                    </div>
+                    <!-- banner title end -->
+
+                    <!-- scroll hint -->
+                    <span id="scroll-triger" class="trm-scroll-hint-frame">
+                        <div class="trm-scroll-hint"></div>
+                        <span class="trm-label">Scroll down</span>
+                    </span>
+                    <!-- scroll hint end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- banner content end -->
+</div>
+    <!-- banner end -->
+    <div class="container">
+        <div class="row">
+            
+                <div class="trm-page-sidebar col-lg-4 hidden-sm">
+                    <!-- main card -->
+                    <div class="trm-main-card-frame trm-sidebar">
+    <div class="trm-main-card"> 
+        <!-- card header -->
+<div class="trm-mc-header">
+    <div class="trm-avatar-frame trm-mb-20">
+        <img alt="Avatar" class="trm-avatar" src="/img/cat.jpg">
+    </div>
+    <h5 class="trm-name trm-mb-15">
+        橘猫元宝
+    </h5>
+    
+</div>
+<!-- card header end -->
+        <!-- sidebar social -->
+
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<div class="trm-social">
+    
+        <a href="https://github.com" title="Github" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-github"></i>
+        </a>
+    
+</div>
+
+<!-- sidebar social end -->
+        <!-- info -->
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<ul class="trm-table trm-mb-20">
+    
+        <li>
+            <div class="trm-label">
+                Residence:
+            </div>
+            <div class="trm-label trm-label-light">
+                Mars
+            </div>
+        </li>
+    
+</ul>
+<!-- info end -->
+
+        
+    </div>
+</div>
+                    <!-- main card end -->
+                </div>
+            
+            <div class="trm-page-content col-lg-8">
+                <div id="trm-content" class="trm-content">
+                    <div class="trm-post-info row hidden-sm">
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-calendar-alt trm-icon"></i><br>
+            06/03
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-clock trm-icon"></i><br>
+            08:44
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div id="post-author" class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-user trm-icon"></i><br>
+            橘猫元宝
+        </div>
+    </div>
+</div>
+<div class="trm-card ">
+    <article id="article-container" class="trm-publication">
+    <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>本文主要记录如何通过Cython调用C语言的库，之前了解过通过ctypes可以调用C语言的库，这次主要通过阅读官方文档，学习Cython如何调用C语言的库。</p>
+<h3 id="fprintf"><a href="#fprintf" class="headerlink" title="fprintf"></a>fprintf</h3><p>example.pyx</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token comment" spellcheck="true"># example.pyx</span>
+
+<span class="token comment" spellcheck="true"># 导入所需的C库函数</span>
+<span class="token keyword">from</span> libc<span class="token punctuation">.</span>stdio cimport fprintf<span class="token punctuation">,</span> stderr
+
+<span class="token comment" spellcheck="true"># 定义外部函数</span>
+cdef extern <span class="token keyword">from</span> <span class="token string">"stdio.h"</span><span class="token punctuation">:</span>
+    int fprintf<span class="token punctuation">(</span>FILE <span class="token operator">*</span>stream<span class="token punctuation">,</span> const char <span class="token operator">*</span>format<span class="token punctuation">,</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 调用C语言库函数</span>
+<span class="token keyword">def</span> <span class="token function">call_fprintf</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    fprintf<span class="token punctuation">(</span>stderr<span class="token punctuation">,</span> <span class="token string">"Hello, world from C with fprintf!\n"</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>setup.py</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token comment" spellcheck="true"># setup.py</span>
+
+<span class="token keyword">from</span> setuptools <span class="token keyword">import</span> setup
+<span class="token keyword">from</span> Cython<span class="token punctuation">.</span>Build <span class="token keyword">import</span> cythonize
+
+setup<span class="token punctuation">(</span>
+    ext_modules <span class="token operator">=</span> cythonize<span class="token punctuation">(</span><span class="token string">"example.pyx"</span><span class="token punctuation">)</span>
+<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>编译命令：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ python setup.py build_ext --inplace
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>运行结果：</p>
+<pre class="line-numbers language-python"><code class="language-python">$ python
+Python <span class="token number">3.9</span><span class="token punctuation">.</span><span class="token number">18</span> <span class="token punctuation">(</span>main<span class="token punctuation">,</span> Jan <span class="token number">24</span> <span class="token number">2024</span><span class="token punctuation">,</span> <span class="token number">00</span><span class="token punctuation">:</span><span class="token number">00</span><span class="token punctuation">:</span><span class="token number">00</span><span class="token punctuation">)</span>
+<span class="token punctuation">[</span>GCC <span class="token number">11.4</span><span class="token punctuation">.</span><span class="token number">1</span> <span class="token number">20231218</span> <span class="token punctuation">(</span>Red Hat <span class="token number">11.4</span><span class="token punctuation">.</span><span class="token number">1</span><span class="token operator">-</span><span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">]</span> on linux
+Type <span class="token string">"help"</span><span class="token punctuation">,</span> <span class="token string">"copyright"</span><span class="token punctuation">,</span> <span class="token string">"credits"</span> <span class="token operator">or</span> <span class="token string">"license"</span> <span class="token keyword">for</span> more information<span class="token punctuation">.</span>
+<span class="token operator">>></span><span class="token operator">></span> <span class="token keyword">import</span> example
+<span class="token operator">>></span><span class="token operator">></span> example<span class="token punctuation">.</span>call_fprintf<span class="token punctuation">(</span><span class="token punctuation">)</span>
+Hello<span class="token punctuation">,</span> world <span class="token keyword">from</span> C <span class="token keyword">with</span> fprintf!
+<span class="token operator">>></span><span class="token operator">></span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里主要关注这一行：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">from</span> libc<span class="token punctuation">.</span>stdio cimport fprintf<span class="token punctuation">,</span> stderr
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>这里会cimport一些C语言的方法，那么问题来了，我如何知道都有什么方法？以及方法是如何使用的？</p>
+<p>fprintf和stderr是常用的C方法，那么有没有一个列表，可以查看都有哪些方法？</p>
+<p>需要从Cython的源码看起，找到site-packages文件夹：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ python3
+Python 3.9.18 <span class="token punctuation">(</span>main, Jan 24 2024, 00:00:00<span class="token punctuation">)</span>
+<span class="token punctuation">[</span>GCC 11.4.1 20231218 <span class="token punctuation">(</span>Red Hat 11.4.1-3<span class="token punctuation">)</span><span class="token punctuation">]</span> on linux
+Type <span class="token string">"help"</span>, <span class="token string">"copyright"</span>, <span class="token string">"credits"</span> or <span class="token string">"license"</span> <span class="token keyword">for</span> <span class="token function">more</span> information.
+<span class="token operator">>></span><span class="token operator">></span> <span class="token function">import</span> cython
+<span class="token operator">>></span><span class="token operator">></span> cython.__file__
+<span class="token string">'/usr/local/lib64/python3.9/site-packages/cython.py'</span>
+<span class="token operator">>></span><span class="token operator">></span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>然后到这个目录（可能会根据版本和虚拟环境不同而有差异）：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">/usr/local/lib64/python3.9/site-packages/Cython/Includes
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>查看文件：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ ll
+total 20K
+drwxr-xr-x. 2 root root 4.0K May 11 05:23 cpython
+drwxr-xr-x. 2 root root 4.0K May 11 05:23 libc
+drwxr-xr-x. 2 root root 4.0K May 11 05:23 libcpp
+drwxr-xr-x. 2 root root   42 May 11 05:23 numpy
+-rw-r--r--. 1 root root 1.7K May 11 05:23 openmp.pxd
+drwxr-xr-x. 2 root root 4.0K May 11 05:23 posix
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里不光有C语言的库，还有其他的，比如cpython的，libcpp的，openmp的 posix相关的。</p>
+<p>每个文件夹里面有不同很多pyd文件:</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ ll libc
+total 64K
+-rw-r--r--. 1 root root   13 May 11 05:23 __init__.pxd
+-rw-r--r--. 1 root root 1.2K May 11 05:23 complex.pxd
+-rw-r--r--. 1 root root 2.1K May 11 05:23 errno.pxd
+-rw-r--r--. 1 root root  966 May 11 05:23 float.pxd
+-rw-r--r--. 1 root root  621 May 11 05:23 limits.pxd
+-rw-r--r--. 1 root root 1.2K May 11 05:23 locale.pxd
+-rw-r--r--. 1 root root 6.5K May 11 05:23 math.pxd
+-rw-r--r--. 1 root root  297 May 11 05:23 setjmp.pxd
+-rw-r--r--. 1 root root 1.2K May 11 05:23 signal.pxd
+-rw-r--r--. 1 root root  164 May 11 05:23 stddef.pxd
+-rw-r--r--. 1 root root 3.4K May 11 05:23 stdint.pxd
+-rw-r--r--. 1 root root 2.5K May 11 05:23 stdio.pxd
+-rw-r--r--. 1 root root 2.4K May 11 05:23 stdlib.pxd
+-rw-r--r--. 1 root root 2.0K May 11 05:23 string.pxd
+-rw-r--r--. 1 root root 1.4K May 11 05:23 time.pxd
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>以string.pxd文件为例：</p>
+<pre class="line-numbers language-c"><code class="language-c">$ more libc<span class="token operator">/</span>string<span class="token punctuation">.</span>pxd
+# <span class="token number">7.21</span> String handling <span class="token operator">&lt;</span>string<span class="token punctuation">.</span>h<span class="token operator">></span>
+
+cdef <span class="token keyword">extern</span> from <span class="token operator">*</span><span class="token punctuation">:</span>
+    <span class="token macro property"># deprecated backwards compatibility declarations</span>
+    ctypedef <span class="token keyword">const</span> <span class="token keyword">char</span> const_char <span class="token string">"const char"</span>
+    ctypedef <span class="token keyword">const</span> <span class="token keyword">signed</span> <span class="token keyword">char</span> const_schar <span class="token string">"const signed char"</span>
+    ctypedef <span class="token keyword">const</span> <span class="token keyword">unsigned</span> <span class="token keyword">char</span> const_uchar <span class="token string">"const unsigned char"</span>
+    ctypedef <span class="token keyword">const</span> <span class="token keyword">void</span> const_void <span class="token string">"const void"</span>
+
+cdef <span class="token keyword">extern</span> from <span class="token string">"&lt;string.h>"</span> nogil<span class="token punctuation">:</span>
+
+    <span class="token keyword">void</span> <span class="token operator">*</span><span class="token function">memcpy</span>  <span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span>pto<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">void</span> <span class="token operator">*</span>pfrom<span class="token punctuation">,</span> size_t size<span class="token punctuation">)</span>
+    <span class="token keyword">void</span> <span class="token operator">*</span><span class="token function">memmove</span> <span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span>pto<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">void</span> <span class="token operator">*</span>pfrom<span class="token punctuation">,</span> size_t size<span class="token punctuation">)</span>
+    <span class="token keyword">void</span> <span class="token operator">*</span><span class="token function">memset</span>  <span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span>block<span class="token punctuation">,</span> <span class="token keyword">int</span> c<span class="token punctuation">,</span> size_t size<span class="token punctuation">)</span>
+    <span class="token keyword">int</span>  <span class="token function">memcmp</span>   <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">void</span> <span class="token operator">*</span>a1<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">void</span> <span class="token operator">*</span>a2<span class="token punctuation">,</span> size_t size<span class="token punctuation">)</span>
+    <span class="token keyword">void</span> <span class="token operator">*</span><span class="token function">memchr</span>  <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">void</span> <span class="token operator">*</span>block<span class="token punctuation">,</span> <span class="token keyword">int</span> c<span class="token punctuation">,</span> size_t size<span class="token punctuation">)</span>
+
+    <span class="token keyword">void</span> <span class="token operator">*</span><span class="token function">memchr</span>  <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">void</span> <span class="token operator">*</span>block<span class="token punctuation">,</span> <span class="token keyword">int</span> c<span class="token punctuation">,</span> size_t size<span class="token punctuation">)</span>
+    <span class="token keyword">void</span> <span class="token operator">*</span><span class="token function">memrchr</span> <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">void</span> <span class="token operator">*</span>block<span class="token punctuation">,</span> <span class="token keyword">int</span> c<span class="token punctuation">,</span> size_t size<span class="token punctuation">)</span>
+
+    size_t <span class="token function">strlen</span>   <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>s<span class="token punctuation">)</span>
+    <span class="token keyword">char</span>   <span class="token operator">*</span><span class="token function">strcpy</span>  <span class="token punctuation">(</span><span class="token keyword">char</span> <span class="token operator">*</span>pto<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>pfrom<span class="token punctuation">)</span>
+    <span class="token keyword">char</span>   <span class="token operator">*</span><span class="token function">strncpy</span> <span class="token punctuation">(</span><span class="token keyword">char</span> <span class="token operator">*</span>pto<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>pfrom<span class="token punctuation">,</span> size_t size<span class="token punctuation">)</span>
+    <span class="token keyword">char</span>   <span class="token operator">*</span><span class="token function">strdup</span>  <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>s<span class="token punctuation">)</span>
+    <span class="token keyword">char</span>   <span class="token operator">*</span><span class="token function">strndup</span> <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>s<span class="token punctuation">,</span> size_t size<span class="token punctuation">)</span>
+    <span class="token keyword">char</span>   <span class="token operator">*</span><span class="token function">strcat</span>  <span class="token punctuation">(</span><span class="token keyword">char</span> <span class="token operator">*</span>pto<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>pfrom<span class="token punctuation">)</span>
+    <span class="token keyword">char</span>   <span class="token operator">*</span><span class="token function">strncat</span> <span class="token punctuation">(</span><span class="token keyword">char</span> <span class="token operator">*</span>pto<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>pfrom<span class="token punctuation">,</span> size_t size<span class="token punctuation">)</span>
+
+    <span class="token keyword">int</span> <span class="token function">strcmp</span> <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>s1<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>s2<span class="token punctuation">)</span>
+    <span class="token keyword">int</span> <span class="token function">strcasecmp</span> <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>s1<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>s2<span class="token punctuation">)</span>
+    <span class="token keyword">int</span> <span class="token function">strncmp</span> <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>s1<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>s2<span class="token punctuation">,</span> size_t size<span class="token punctuation">)</span>
+    <span class="token keyword">int</span> <span class="token function">strncasecmp</span> <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>s1<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>s2<span class="token punctuation">,</span> size_t n<span class="token punctuation">)</span>
+
+    <span class="token keyword">int</span>    <span class="token function">strcoll</span> <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>s1<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>s2<span class="token punctuation">)</span>
+    size_t <span class="token function">strxfrm</span> <span class="token punctuation">(</span><span class="token keyword">char</span> <span class="token operator">*</span>pto<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>pfrom<span class="token punctuation">,</span> size_t size<span class="token punctuation">)</span>
+
+    <span class="token keyword">char</span> <span class="token operator">*</span><span class="token function">strerror</span> <span class="token punctuation">(</span><span class="token keyword">int</span> errnum<span class="token punctuation">)</span>
+
+    <span class="token keyword">char</span> <span class="token operator">*</span><span class="token function">strchr</span>  <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>string<span class="token punctuation">,</span> <span class="token keyword">int</span> c<span class="token punctuation">)</span>
+    <span class="token keyword">char</span> <span class="token operator">*</span><span class="token function">strrchr</span> <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>string<span class="token punctuation">,</span> <span class="token keyword">int</span> c<span class="token punctuation">)</span>
+
+    <span class="token keyword">char</span> <span class="token operator">*</span><span class="token function">strstr</span>     <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>haystack<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>needle<span class="token punctuation">)</span>
+    <span class="token keyword">char</span> <span class="token operator">*</span><span class="token function">strcasestr</span> <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>haystack<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>needle<span class="token punctuation">)</span>
+
+    size_t <span class="token function">strcspn</span> <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>string<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>stopset<span class="token punctuation">)</span>
+    size_t <span class="token function">strspn</span>  <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>string<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>set<span class="token punctuation">)</span>
+    <span class="token keyword">char</span> <span class="token operator">*</span> <span class="token function">strpbrk</span> <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>string<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>stopset<span class="token punctuation">)</span>
+
+    <span class="token keyword">char</span> <span class="token operator">*</span><span class="token function">strtok</span> <span class="token punctuation">(</span><span class="token keyword">char</span> <span class="token operator">*</span>newstring<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>delimiters<span class="token punctuation">)</span>
+    <span class="token keyword">char</span> <span class="token operator">*</span><span class="token function">strsep</span> <span class="token punctuation">(</span><span class="token keyword">char</span> <span class="token operator">*</span><span class="token operator">*</span>string_ptr<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>delimiter<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里定义了和字符串相关的方法，有哪些就可以用哪些。</p>
+<p>参考：</p>
+<p><a target="_blank" rel="noopener" href="https://cython.readthedocs.io/en/stable/src/tutorial/external.html">https://cython.readthedocs.io/en/stable/src/tutorial/external.html</a></p>
+
+</article>
+    
+    
+
+</div>
+<div class="trm-post-next-prev row">
+    <div class="col-lg-12">
+        <!-- title -->
+        <h5 class="trm-title-with-divider">
+            其他文章
+            <span data-number="02"></span>
+        </h5>
+    </div>
+    
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/06/03/Cython%E5%87%BD%E6%95%B0%E5%92%8CCuda%E5%87%BD%E6%95%B0%E4%BF%AE%E9%A5%B0%E8%AF%8D%E7%9A%84%E7%B1%BB%E6%AF%94/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" /categories/Cython/">
+                    Cython
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/06/03/Cython%E5%87%BD%E6%95%B0%E5%92%8CCuda%E5%87%BD%E6%95%B0%E4%BF%AE%E9%A5%B0%E8%AF%8D%E7%9A%84%E7%B1%BB%E6%AF%94/" class="trm-anima-link">
+                    Cython函数和Cuda函数修饰词的类比
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/06/03</li>
+                <li>06:12</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+</div>
+
+    
+
+
+
+                    <div class="trm-divider footer-divider"></div>
+
+                    <!-- footer -->
+                    <footer class="trm-scroll-animation">
+
+    
+
+    
+
+    
+        <div class="trm-footer-item">
+            <span>
+                由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v7.0.0
+            </span>
+            <span class="footer-separator" data-separator=" | "></span>
+            <span> 
+                主题 - 
+                <a rel="noopener" href='https://github.com/MaLuns/hexo-theme-async' target='_blank'>Async</a>
+                v2.1.8
+            </span>
+        </div>
+      
+
+     
+
+     
+</footer>
+ 
+                    <!-- footer end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- body end -->
+
+            
+
+            
+<div class="trm-fixed-container">
+    
+    
+        <div class="trm-fixed-btn" data-title="阅读模式" onclick="asyncFun.switchReadMode()">
+            <i class="iconfont fas fa-book-reader"></i>
+        </div>
+    
+    
+    <div id="trm-back-top" class="trm-fixed-btn" data-title="回到顶部">
+        <i class="iconfont fas fa-arrow-up"></i>
+    </div>
+</div>
+        </div>
+      </div>
+      <!-- scroll container end -->
+  </div>
+  <!-- app wrapper end -->
+
+  
+  <!-- Plugin -->
+
+
+
+
+    
+    
+<script src="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+
+    
+
+    
+
+    
+
+    <!-- 数学公式 -->
+    
+
+    <!-- 评论插件 -->
+    
+        
+
+        
+    
+
+
+
+<!-- CDN -->
+
+
+    
+
+    
+
+    
+
+
+
+
+    <!-- Service Worker -->
+    
+    <!-- baidu push -->
+    
+
+
+<script id="async-script" src="/js/main.js?v=2.1.8"></script>
+
+</body>
+
+</html>
