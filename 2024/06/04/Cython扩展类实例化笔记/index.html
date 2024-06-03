@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="x5-fullscreen" content="true">
+<meta name="full-screen" content="yes">
+<meta name="theme-color" content="#317EFB" />
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
+<meta name="description" content="背景本文主要记录Cython扩展类实例化相关的知识，使用cdef不光可以修饰函数，也可以修饰类。 这种类就称为扩展类，扩展类的实例化，可以支持手动的内存分配回收机制，性能更高。 什么是Cython扩展类在 Cython 中，使用 cdef 定义的类被称为 “extension types” 或 “cdef classes”。 这些类与普通的 Python 类有一些显著的不同，主要在性能优化和内存管">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Cython扩展类实例化笔记">
+<meta property="og:url" content="http://example.com/2024/06/04/Cython%E6%89%A9%E5%B1%95%E7%B1%BB%E5%AE%9E%E4%BE%8B%E5%8C%96%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="Cat YuanBao">
+<meta property="og:description" content="背景本文主要记录Cython扩展类实例化相关的知识，使用cdef不光可以修饰函数，也可以修饰类。 这种类就称为扩展类，扩展类的实例化，可以支持手动的内存分配回收机制，性能更高。 什么是Cython扩展类在 Cython 中，使用 cdef 定义的类被称为 “extension types” 或 “cdef classes”。 这些类与普通的 Python 类有一些显著的不同，主要在性能优化和内存管">
+<meta property="og:locale">
+<meta property="article:published_time" content="2024-06-03T16:40:14.000Z">
+<meta property="article:modified_time" content="2024-06-03T16:40:32.264Z">
+<meta property="article:author" content="橘猫元宝">
+<meta property="article:tag" content="cat">
+<meta name="twitter:card" content="summary">
+
+    <meta name="keywords" content="cat">
+
+
+<title >Cython扩展类实例化笔记</title>
+
+<!-- Favicon -->
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='16x16' ></link>
+
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='32x32' ></link>
+
+
+
+
+<!-- Plugin -->
+
+
+
+
+    
+<link rel="stylesheet" href="/css/plugins/bootstrap.row.css">
+
+    
+<link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.css">
+
+    
+    
+
+
+
+
+<!-- Icon -->
+
+    
+<link rel="stylesheet" href="/css/plugins/font-awesome.min.css">
+
+
+
+
+<!-- Variable -->
+<script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-06-04 00:40:32"};</script>
+
+<!-- Theme mode css -->
+<link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
+<script>
+    let defaultMode = ASYNC_CONFIG.theme.default !=='auto' ?  ASYNC_CONFIG.theme.default : (window.matchMedia("(prefers-color-scheme: light)").matches ? 'style-light' : 'style-dark')
+    let catchMode = localStorage.getItem('theme-mode') || defaultMode;
+    let type = catchMode === 'style-dark' ? 'add' : 'remove';
+    document.documentElement.classList[type]('dark')
+</script>
+
+<!-- CDN -->
+
+
+    
+    
+
+
+
+<!-- Site Analytics -->
+ 
+<meta name="generator" content="Hexo 7.0.0"><link rel="stylesheet" href="/css/prism.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+<body>
+
+  <!-- app wrapper -->
+  <div class="trm-app-frame">
+
+    <!-- page preloader -->
+    <div class="trm-preloader">
+    <div class="trm-holder">
+        <div class="preloader">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+    <!-- page preloader end -->
+
+    <!-- change mode preloader -->
+    <div class="trm-mode-swich-animation-frame">
+    <div class="trm-mode-swich-animation">
+        <i class="i-sun"><i class="iconfont far fa-sun"></i></i>
+        <div class="trm-horizon"></div>
+        <i class="i-moon"><i class="iconfont far fa-moon"></i></i>
+    </div>
+</div>
+    <!-- change mode preloader end -->
+
+      <!-- scroll container -->
+      <div id="trm-dynamic-content" class="trm-swup-animation">
+        <div id="trm-scroll-container" class="trm-scroll-container" style="opacity: 0">
+            <!-- top bar -->
+            <header class="trm-top-bar">
+	<div class="container">
+		<div class="trm-left-side">
+			<!-- logo -->
+<a href="/" class="trm-logo-frame trm-anima-link">
+    
+        <img alt="logo" src="/img/favicon.svg">
+    
+    
+        <div class="trm-logo-text">
+            元宝<span>橘猫</span>
+        </div>
+    
+</a>
+<!-- logo end -->
+		</div>
+		<div class="trm-right-side">
+			<!-- menu -->
+<div class="trm-menu">
+    <nav>
+        <ul>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/" target="">
+                    首页
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/archives/" target="">
+                    归档
+                </a>
+                
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+<!-- menu end -->
+			
+    <!-- mode switcher place -->
+    <div class="trm-mode-switcher-place">
+        <div class="trm-mode-switcher">
+            <i class="iconfont far fa-sun"></i>
+            <input class="tgl tgl-light" id="trm-swich" type="checkbox">
+            <label class="trm-swich" for="trm-swich"></label>
+            <i class="iconfont far fa-moon"></i>
+        </div>
+    </div>
+    <!-- mode switcher place end -->
+
+			
+		</div>
+		<div class="trm-menu-btn">
+			<span></span>
+		</div>
+	</div>
+</header>
+            <!-- top bar end -->
+
+            <!-- body -->
+            
+<div class="trm-content-start">
+    <!-- banner -->
+    <div class="trm-banner">
+    
+    <!-- banner cover -->
+    <img style="object-position:top;object-fit:cover;" alt="banner" class="trm-banner-cover" src="/img/banner.png">
+    <!-- banner cover end -->
+    
+
+    <!-- banner content -->
+    <div class="trm-banner-content trm-overlay">
+        <div class="container">
+            <div class="row">
+                
+                <div class="col-lg-4"></div>
+                
+                <div class="col-lg-8">
+
+                    <!-- banner title -->
+                    <div class="trm-banner-text ">
+                        <div class="trm-label trm-mb-20">
+                            NEWS LETTER
+                        </div>
+                        <h1 class="trm-mb-30 trm-hsmb-font">
+                            Cython扩展类实例化笔记
+                        </h1>
+
+                        
+                            <ul class="trm-breadcrumbs trm-label">
+                                <li>
+                                    <a href="/" class="trm-anima-link">Home</a>
+                                </li>
+                                <li>
+                                    <span>
+                                        2024
+                                    </span>
+                                </li>
+                            </ul>
+                        
+                    </div>
+                    <!-- banner title end -->
+
+                    <!-- scroll hint -->
+                    <span id="scroll-triger" class="trm-scroll-hint-frame">
+                        <div class="trm-scroll-hint"></div>
+                        <span class="trm-label">Scroll down</span>
+                    </span>
+                    <!-- scroll hint end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- banner content end -->
+</div>
+    <!-- banner end -->
+    <div class="container">
+        <div class="row">
+            
+                <div class="trm-page-sidebar col-lg-4 hidden-sm">
+                    <!-- main card -->
+                    <div class="trm-main-card-frame trm-sidebar">
+    <div class="trm-main-card"> 
+        <!-- card header -->
+<div class="trm-mc-header">
+    <div class="trm-avatar-frame trm-mb-20">
+        <img alt="Avatar" class="trm-avatar" src="/img/cat.jpg">
+    </div>
+    <h5 class="trm-name trm-mb-15">
+        橘猫元宝
+    </h5>
+    
+</div>
+<!-- card header end -->
+        <!-- sidebar social -->
+
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<div class="trm-social">
+    
+        <a href="https://github.com" title="Github" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-github"></i>
+        </a>
+    
+</div>
+
+<!-- sidebar social end -->
+        <!-- info -->
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<ul class="trm-table trm-mb-20">
+    
+        <li>
+            <div class="trm-label">
+                Residence:
+            </div>
+            <div class="trm-label trm-label-light">
+                Mars
+            </div>
+        </li>
+    
+</ul>
+<!-- info end -->
+
+        
+    </div>
+</div>
+                    <!-- main card end -->
+                </div>
+            
+            <div class="trm-page-content col-lg-8">
+                <div id="trm-content" class="trm-content">
+                    <div class="trm-post-info row hidden-sm">
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-calendar-alt trm-icon"></i><br>
+            06/04
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-clock trm-icon"></i><br>
+            00:40
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div id="post-author" class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-user trm-icon"></i><br>
+            橘猫元宝
+        </div>
+    </div>
+</div>
+<div class="trm-card ">
+    <article id="article-container" class="trm-publication">
+    <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>本文主要记录Cython扩展类实例化相关的知识，使用<code>cdef</code>不光可以修饰函数，也可以修饰类。</p>
+<p>这种类就称为扩展类，扩展类的实例化，可以支持手动的内存分配回收机制，性能更高。</p>
+<h3 id="什么是Cython扩展类"><a href="#什么是Cython扩展类" class="headerlink" title="什么是Cython扩展类"></a>什么是Cython扩展类</h3><p>在 Cython 中，使用 <code>cdef</code> 定义的类被称为 “extension types” 或 “cdef classes”。</p>
+<p>这些类与普通的 Python 类有一些显著的不同，主要在性能优化和内存管理方面。<code>cdef</code> 类提供了对底层 C 层面的更直接控制，因此它们通常比普通 Python 类更高效。</p>
+<h4 id="特点"><a href="#特点" class="headerlink" title="特点"></a>特点</h4><p><strong>高效性能</strong>：由于 <code>cdef</code> 类直接编译为 C 代码，所以它们的属性访问、方法调用和实例创建都比普通 Python 类更快。</p>
+<p><strong>更严格的类型检查</strong>：<code>cdef</code> 类的属性类型是静态的，在编译时确定，这减少了运行时的类型检查开销。</p>
+<p><strong>无法继承自纯 Python 类</strong>：<code>cdef</code> 类不能直接继承自普通的 Python 类，反之亦然。</p>
+<p><strong>限制性</strong>：<code>cdef</code> 类的实例不能直接与 Python 的内置类型进行交互，除非通过显式的接口转换。</p>
+<h4 id="简单实例"><a href="#简单实例" class="headerlink" title="简单实例"></a>简单实例</h4><pre class="line-numbers language-python"><code class="language-python">cdef <span class="token keyword">class</span> <span class="token class-name">MyCythonClass</span><span class="token punctuation">:</span>
+    cdef int attribute1
+    cdef double attribute2
+
+    <span class="token keyword">def</span> <span class="token function">__cinit__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> int attribute1<span class="token punctuation">,</span> double attribute2<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>attribute1 <span class="token operator">=</span> attribute1
+        self<span class="token punctuation">.</span>attribute2 <span class="token operator">=</span> attribute2
+
+    <span class="token keyword">def</span> <span class="token function">set_values</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> int attribute1<span class="token punctuation">,</span> double attribute2<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>attribute1 <span class="token operator">=</span> attribute1
+        self<span class="token punctuation">.</span>attribute2 <span class="token operator">=</span> attribute2
+
+    <span class="token keyword">def</span> <span class="token function">get_sum</span><span class="token punctuation">(</span>self<span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">></span> double<span class="token punctuation">:</span>
+        <span class="token keyword">return</span> self<span class="token punctuation">.</span>attribute1 <span class="token operator">+</span> self<span class="token punctuation">.</span>attribute2
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里有一个<code>__cinit__</code>方法。</p>
+<p><code>__cinit__</code>是负责执行C级别的类实例属性(指针类型)的内存分配和初始化，并且在外部代码的执行结束前，Cython编译器会默认隐含调用扩展类实例的 <code>__dealloc__</code>方法，这些行为和C++编译器是一致。</p>
+<p><code>__cinit__</code>等同C++类中默认构造函数</p>
+<p><code>__dealloc__</code> 等同于C++类的析构函数</p>
+<p>一个完整点的实例：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token operator">%</span><span class="token operator">%</span>cython <span class="token operator">-</span>a
+
+<span class="token keyword">from</span> libc<span class="token punctuation">.</span>stdlib cimport malloc<span class="token punctuation">,</span>free
+
+cdef <span class="token keyword">class</span> <span class="token class-name">Fruit</span><span class="token punctuation">(</span>object<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">'''Fruit Type'''</span>
+    
+    cdef readonly str name
+    cdef public double qty
+    cdef readonly double price
+    cdef double <span class="token operator">*</span>weight
+    
+    <span class="token keyword">def</span> <span class="token function">__cinit__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span>nm<span class="token punctuation">,</span>qt<span class="token punctuation">,</span>pc<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"__cinit__ method executed"</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>name<span class="token operator">=</span>nm
+        self<span class="token punctuation">.</span>qty<span class="token operator">=</span>qt
+        self<span class="token punctuation">.</span>price<span class="token operator">=</span>pc
+        self<span class="token punctuation">.</span>weight<span class="token operator">=</span><span class="token operator">&lt;</span>double<span class="token operator">*</span><span class="token operator">></span>malloc<span class="token punctuation">(</span>sizeof<span class="token punctuation">(</span>double<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>weight<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token operator">=</span><span class="token number">23.33</span>
+        
+        <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"weight: "</span><span class="token punctuation">,</span>self<span class="token punctuation">.</span>weight<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+        
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span>nm<span class="token punctuation">,</span>qt<span class="token punctuation">,</span>pc<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"__init__ method executed"</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">def</span> <span class="token function">amount</span><span class="token punctuation">(</span>self<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span>  self<span class="token punctuation">.</span>qty<span class="token operator">*</span>self<span class="token punctuation">.</span>price
+    
+    <span class="token keyword">def</span> <span class="token function">__dealloc__</span><span class="token punctuation">(</span>self<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"__dealloc__method executed"</span><span class="token punctuation">)</span>
+        
+        <span class="token keyword">if</span> self<span class="token punctuation">.</span>weight<span class="token operator">!=</span>NULL<span class="token punctuation">:</span>
+            free<span class="token punctuation">(</span>self<span class="token punctuation">.</span>weight<span class="token punctuation">)</span>
+
+
+apple <span class="token operator">=</span> Fruit<span class="token punctuation">(</span><span class="token string">'apple'</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>apple<span class="token punctuation">)</span>
+<span class="token keyword">del</span> apple
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果：</p>
+<pre class="line-numbers language-python"><code class="language-python">__cinit__ method executed
+weight<span class="token punctuation">:</span>  <span class="token number">23.33</span>
+__init__ method executed
+<span class="token operator">&lt;</span>_cython_magic_0fc2b174a0b816b2a1fdf0fb734aee3476c9e345<span class="token punctuation">.</span>Fruit object at <span class="token number">0x7fbb8452c4e0</span><span class="token operator">></span>
+__dealloc__method executed
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里可以看到，使用<code>del</code>删除了对象也会自动调用<code>__dealloc__</code>方法。</p>
+<h4 id="使用-cinit-注意点"><a href="#使用-cinit-注意点" class="headerlink" title="使用__cinit__注意点"></a>使用<code>__cinit__</code>注意点</h4><ul>
+<li><code>__cinit__</code>可能会带来额外的开销</li>
+<li><code>__cinit__</code>的参数声明和<code>__init__</code>必须一致，因为它们会被同时调用，因此<code>__cinit__</code>的参数会留下*kargs,**kwargs</li>
+<li><code>__cinit__</code>中涉及到C指针类型的类属性的内存分配，必须在类定中显式定义<code>__dealloc__</code>，因为需要通过<code>__dealloc __</code>对C指针类型的实例属性进行内存释放，类似malloc和free成对出现一样。</li>
+<li><code>__cinit__</code>和<code>__init__</code>只能使用def关键字申明，不能使用<code>cdef</code></li>
+<li><strong>Cython扩展类在构造时会保证<code>__cinit__</code>只能被调用一次</strong>，并且在<code>__init__</code>或其他Python级别的构造函数（例如，类方法构造函数）之前被调用。</li>
+<li><code>cdef</code>定义的扩展类中，不能包含<code>__new__</code>方法重写，因为<code>__cinit__</code>中包含了<code>__new__</code>的功能。</li>
+</ul>
+<h3 id="显式调用快速实例化对象"><a href="#显式调用快速实例化对象" class="headerlink" title="显式调用快速实例化对象"></a>显式调用快速实例化对象</h3><p>对于Cython扩展类来说，我们使用显式调用<code>Fruit.__new__</code>会比常规Fruit(…)语句执行实例化会少一个步骤，因为显式调__会默认只执行<code>Fruit.__cinit__</code>构造函数，不执行<code>__init__</code>方法，因此，会更快。</p>
+<p>因此，使用<code>__new__</code>的方法调用，比直接调用性能更高。</p>
+<p>测试用例：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token operator">%</span><span class="token operator">%</span>cython <span class="token operator">-</span>a
+
+<span class="token keyword">from</span> libc<span class="token punctuation">.</span>stdlib cimport malloc<span class="token punctuation">,</span>free
+
+cdef <span class="token keyword">class</span> <span class="token class-name">Fruit</span><span class="token punctuation">(</span>object<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">'''Fruit Type'''</span>
+    
+    cdef readonly str name
+    cdef public double qty
+    cdef readonly double price
+    cdef double <span class="token operator">*</span>weight
+    
+    <span class="token keyword">def</span> <span class="token function">__cinit__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span>nm<span class="token punctuation">,</span>qt<span class="token punctuation">,</span>pc<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token comment" spellcheck="true"># print("__cinit__ method executed")</span>
+        self<span class="token punctuation">.</span>name<span class="token operator">=</span>nm
+        self<span class="token punctuation">.</span>qty<span class="token operator">=</span>qt
+        self<span class="token punctuation">.</span>price<span class="token operator">=</span>pc
+        self<span class="token punctuation">.</span>weight<span class="token operator">=</span><span class="token operator">&lt;</span>double<span class="token operator">*</span><span class="token operator">></span>malloc<span class="token punctuation">(</span>sizeof<span class="token punctuation">(</span>double<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>weight<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token operator">=</span><span class="token number">23.33</span>
+        
+        <span class="token comment" spellcheck="true"># print("weight: ",self.weight[0])</span>
+        
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span>nm<span class="token punctuation">,</span>qt<span class="token punctuation">,</span>pc<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">pass</span>
+        <span class="token comment" spellcheck="true"># # print("__init__ method executed")</span>
+
+    <span class="token keyword">def</span> <span class="token function">amount</span><span class="token punctuation">(</span>self<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span>  self<span class="token punctuation">.</span>qty<span class="token operator">*</span>self<span class="token punctuation">.</span>price
+    
+    <span class="token keyword">def</span> <span class="token function">__dealloc__</span><span class="token punctuation">(</span>self<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token comment" spellcheck="true"># print("__dealloc__method executed")</span>
+        
+        <span class="token keyword">if</span> self<span class="token punctuation">.</span>weight<span class="token operator">!=</span>NULL<span class="token punctuation">:</span>
+            free<span class="token punctuation">(</span>self<span class="token punctuation">.</span>weight<span class="token punctuation">)</span>
+
+
+apple <span class="token operator">=</span> Fruit<span class="token punctuation">(</span><span class="token string">'apple'</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>apple<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token operator">%</span>timeit <span class="token operator">-</span>n <span class="token number">100000</span> Fruit<span class="token punctuation">(</span><span class="token string">'apple'</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 710 ns ± 156 ns per loop (mean ± std. dev. of 7 runs, 100,000 loops each)</span>
+<span class="token operator">%</span>timeit <span class="token operator">-</span>n <span class="token number">100000</span> Fruit<span class="token punctuation">.</span>__new__<span class="token punctuation">(</span>Fruit<span class="token punctuation">,</span> <span class="token string">'apple'</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true"># 1.01 µs ± 112 ns per loop (mean ± std. dev. of 7 runs, 100,000 loops each)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>会比隐式调用<code>__new__</code>更快。</p>
+<h3 id="使用-cython-freelist-缓存对象"><a href="#使用-cython-freelist-缓存对象" class="headerlink" title="使用@cython.freelist()缓存对象"></a>使用<code>@cython.freelist()</code>缓存对象</h3><p>在 Cython 中，<code>freelist</code> 是一种优化技术，用于减少对象分配和释放的开销。这种技术通过维护一个空闲列表（freelist），在对象被销毁时将其加入空闲列表，而不是立即释放内存。当需要创建新的对象时，如果空闲列表中有可用对象，则直接复用这些对象，而不进行新的内存分配。相当于数据库的软删除，或者缓存。</p>
+<p>使用实例：</p>
+<pre class="line-numbers language-python"><code class="language-python">cimport cython
+
+
+@cython<span class="token punctuation">.</span>freelist<span class="token punctuation">(</span><span class="token number">8</span><span class="token punctuation">)</span>
+cdef <span class="token keyword">class</span> <span class="token class-name">Penguin</span><span class="token punctuation">:</span>
+    cdef object food
+    <span class="token keyword">def</span> <span class="token function">__cinit__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> food<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>food <span class="token operator">=</span> food
+
+penguin <span class="token operator">=</span> Penguin<span class="token punctuation">(</span><span class="token string">'fish 1'</span><span class="token punctuation">)</span>
+penguin <span class="token operator">=</span> None
+penguin <span class="token operator">=</span> Penguin<span class="token punctuation">(</span><span class="token string">'fish 2'</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># does not need to allocate memory!</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>那么如何从底层验证freelist生效呢？</p>
+<p>这里需要hook到malloc:</p>
+<p>hook_malloc_free.c:</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token comment" spellcheck="true">// hook_malloc_free.c</span>
+<span class="token macro property">#<span class="token directive keyword">define</span> _GNU_SOURCE</span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;dlfcn.h></span></span>
+
+<span class="token keyword">static</span> <span class="token keyword">int</span> malloc_count <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token keyword">static</span> <span class="token keyword">int</span> free_count <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+
+<span class="token keyword">void</span><span class="token operator">*</span> <span class="token function">malloc</span><span class="token punctuation">(</span>size_t size<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">void</span><span class="token operator">*</span> <span class="token punctuation">(</span><span class="token operator">*</span>real_malloc<span class="token punctuation">)</span><span class="token punctuation">(</span>size_t<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token function">dlsym</span><span class="token punctuation">(</span>RTLD_NEXT<span class="token punctuation">,</span> <span class="token string">"malloc"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    malloc_count<span class="token operator">++</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token function">real_malloc</span><span class="token punctuation">(</span>size<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">void</span> <span class="token function">free</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token operator">*</span> ptr<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">void</span> <span class="token punctuation">(</span><span class="token operator">*</span>real_free<span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token operator">*</span><span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token function">dlsym</span><span class="token punctuation">(</span>RTLD_NEXT<span class="token punctuation">,</span> <span class="token string">"free"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    free_count<span class="token operator">++</span><span class="token punctuation">;</span>
+    <span class="token function">real_free</span><span class="token punctuation">(</span>ptr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">void</span> <span class="token function">print_memory_allocations</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Malloc count: %d\n"</span><span class="token punctuation">,</span> malloc_count<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Free count: %d\n"</span><span class="token punctuation">,</span> free_count<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>编译：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">gcc -shared -fPIC hook_malloc_free.c -o libhook.so -ldl
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>hook.pyx:</p>
+<pre class="line-numbers language-python"><code class="language-python">cimport cython
+
+@cython<span class="token punctuation">.</span>freelist<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span>
+cdef <span class="token keyword">class</span> <span class="token class-name">MyClass</span><span class="token punctuation">:</span>
+    cdef object name
+    <span class="token keyword">def</span> <span class="token function">__cinit__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> name<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>name <span class="token operator">=</span> name
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> name<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>name <span class="token operator">=</span> name
+
+<span class="token keyword">def</span> <span class="token function">count_allocations</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    cdef extern void print_memory_allocations<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    print_memory_allocations<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token keyword">def</span> <span class="token function">test_freelist_reuse</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    count_allocations<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    obj1 <span class="token operator">=</span> MyClass<span class="token punctuation">(</span><span class="token string">'1'</span><span class="token punctuation">)</span>
+    count_allocations<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    obj2 <span class="token operator">=</span> MyClass<span class="token punctuation">(</span><span class="token string">'2'</span><span class="token punctuation">)</span>
+    count_allocations<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    obj3 <span class="token operator">=</span> MyClass<span class="token punctuation">(</span><span class="token string">'3'</span><span class="token punctuation">)</span>
+    count_allocations<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    obj4 <span class="token operator">=</span> MyClass<span class="token punctuation">(</span><span class="token string">'4'</span><span class="token punctuation">)</span>
+    count_allocations<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    obj5 <span class="token operator">=</span> MyClass<span class="token punctuation">(</span><span class="token string">'5'</span><span class="token punctuation">)</span>
+    count_allocations<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    obj6 <span class="token operator">=</span> MyClass<span class="token punctuation">(</span><span class="token string">'6'</span><span class="token punctuation">)</span>
+    count_allocations<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    obj7 <span class="token operator">=</span> MyClass<span class="token punctuation">(</span><span class="token string">'7'</span><span class="token punctuation">)</span>
+    count_allocations<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    obj8 <span class="token operator">=</span> MyClass<span class="token punctuation">(</span><span class="token string">'8'</span><span class="token punctuation">)</span>
+    count_allocations<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    obj9 <span class="token operator">=</span> MyClass<span class="token punctuation">(</span><span class="token string">'9'</span><span class="token punctuation">)</span>
+    count_allocations<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+test_freelist_reuse<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>编译为so文件：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">cythonize -i hook.pyx
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>调用hook模块：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token operator">>></span><span class="token operator">></span> <span class="token keyword">import</span> hook
+Malloc count<span class="token punctuation">:</span> <span class="token number">1979</span>
+Free count<span class="token punctuation">:</span> <span class="token number">1258</span>
+Malloc count<span class="token punctuation">:</span> <span class="token number">1979</span>
+Free count<span class="token punctuation">:</span> <span class="token number">1258</span>
+Malloc count<span class="token punctuation">:</span> <span class="token number">1979</span>
+Free count<span class="token punctuation">:</span> <span class="token number">1258</span>
+Malloc count<span class="token punctuation">:</span> <span class="token number">1979</span>
+Free count<span class="token punctuation">:</span> <span class="token number">1258</span>
+Malloc count<span class="token punctuation">:</span> <span class="token number">1979</span>
+Free count<span class="token punctuation">:</span> <span class="token number">1258</span>
+Malloc count<span class="token punctuation">:</span> <span class="token number">1979</span>
+Free count<span class="token punctuation">:</span> <span class="token number">1258</span>
+Malloc count<span class="token punctuation">:</span> <span class="token number">1979</span>
+Free count<span class="token punctuation">:</span> <span class="token number">1258</span>
+Malloc count<span class="token punctuation">:</span> <span class="token number">1979</span>
+Free count<span class="token punctuation">:</span> <span class="token number">1258</span>
+Malloc count<span class="token punctuation">:</span> <span class="token number">1979</span>
+Free count<span class="token punctuation">:</span> <span class="token number">1258</span>
+Malloc count<span class="token punctuation">:</span> <span class="token number">1979</span>
+Free count<span class="token punctuation">:</span> <span class="token number">1258</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里发现，并没有增加malloc的调用，这个验证可能不正确，把装饰器去掉也还是没有增加，说明这个验证不太对。</p>
+<p>这里后续如果深入Cython源代码时再详细研究一下。</p>
+<p>参考：</p>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/225848150">https://zhuanlan.zhihu.com/p/225848150</a></p>
+
+</article>
+    
+    
+
+</div>
+<div class="trm-post-next-prev row">
+    <div class="col-lg-12">
+        <!-- title -->
+        <h5 class="trm-title-with-divider">
+            其他文章
+            <span data-number="02"></span>
+        </h5>
+    </div>
+    
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/06/03/Python-new%E5%92%8Cinit%E6%96%B9%E6%B3%95%E6%80%BB%E7%BB%93/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" #.">
+                    未分类
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/06/03/Python-new%E5%92%8Cinit%E6%96%B9%E6%B3%95%E6%80%BB%E7%BB%93/" class="trm-anima-link">
+                    Python new和init方法总结
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/06/03</li>
+                <li>21:46</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+</div>
+
+    
+
+
+
+                    <div class="trm-divider footer-divider"></div>
+
+                    <!-- footer -->
+                    <footer class="trm-scroll-animation">
+
+    
+
+    
+
+    
+        <div class="trm-footer-item">
+            <span>
+                由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v7.0.0
+            </span>
+            <span class="footer-separator" data-separator=" | "></span>
+            <span> 
+                主题 - 
+                <a rel="noopener" href='https://github.com/MaLuns/hexo-theme-async' target='_blank'>Async</a>
+                v2.1.8
+            </span>
+        </div>
+      
+
+     
+
+     
+</footer>
+ 
+                    <!-- footer end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- body end -->
+
+            
+
+            
+<div class="trm-fixed-container">
+    
+    
+        <div class="trm-fixed-btn" data-title="阅读模式" onclick="asyncFun.switchReadMode()">
+            <i class="iconfont fas fa-book-reader"></i>
+        </div>
+    
+    
+    <div id="trm-back-top" class="trm-fixed-btn" data-title="回到顶部">
+        <i class="iconfont fas fa-arrow-up"></i>
+    </div>
+</div>
+        </div>
+      </div>
+      <!-- scroll container end -->
+  </div>
+  <!-- app wrapper end -->
+
+  
+  <!-- Plugin -->
+
+
+
+
+    
+    
+<script src="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+
+    
+
+    
+
+    
+
+    <!-- 数学公式 -->
+    
+
+    <!-- 评论插件 -->
+    
+        
+
+        
+    
+
+
+
+<!-- CDN -->
+
+
+    
+
+    
+
+    
+
+
+
+
+    <!-- Service Worker -->
+    
+    <!-- baidu push -->
+    
+
+
+<script id="async-script" src="/js/main.js?v=2.1.8"></script>
+
+</body>
+
+</html>
