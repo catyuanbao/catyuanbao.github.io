@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="x5-fullscreen" content="true">
+<meta name="full-screen" content="yes">
+<meta name="theme-color" content="#317EFB" />
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
+<meta name="description" content="背景本文主要记录《Hands-On System Programming with Linux》一书中第二章的内容，主要是虚拟内存相关知识。 什么是虚拟内存？虚拟内存是一种计算机系统内存管理技术，它允许程序运行时假装拥有连续的可用内存空间（称为虚拟地址空间），而实际上，这些内存空间可能会被分割成若干部分并存储在不同的物理内存和磁盘存储上。 虚拟内存通过以下几个关键概念和机制来实现：  虚拟地址空间">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux系统编程笔记二">
+<meta property="og:url" content="http://example.com/2024/06/08/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E7%AC%94%E8%AE%B0%E4%BA%8C/index.html">
+<meta property="og:site_name" content="Cat YuanBao">
+<meta property="og:description" content="背景本文主要记录《Hands-On System Programming with Linux》一书中第二章的内容，主要是虚拟内存相关知识。 什么是虚拟内存？虚拟内存是一种计算机系统内存管理技术，它允许程序运行时假装拥有连续的可用内存空间（称为虚拟地址空间），而实际上，这些内存空间可能会被分割成若干部分并存储在不同的物理内存和磁盘存储上。 虚拟内存通过以下几个关键概念和机制来实现：  虚拟地址空间">
+<meta property="og:locale">
+<meta property="article:published_time" content="2024-06-07T17:49:49.000Z">
+<meta property="article:modified_time" content="2024-06-07T17:50:12.868Z">
+<meta property="article:author" content="橘猫元宝">
+<meta property="article:tag" content="cat">
+<meta name="twitter:card" content="summary">
+
+    <meta name="keywords" content="cat">
+
+
+<title >Linux系统编程笔记二</title>
+
+<!-- Favicon -->
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='16x16' ></link>
+
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='32x32' ></link>
+
+
+
+
+<!-- Plugin -->
+
+
+
+
+    
+<link rel="stylesheet" href="/css/plugins/bootstrap.row.css">
+
+    
+<link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.css">
+
+    
+    
+
+
+
+
+<!-- Icon -->
+
+    
+<link rel="stylesheet" href="/css/plugins/font-awesome.min.css">
+
+
+
+
+<!-- Variable -->
+<script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-06-08 01:50:12"};</script>
+
+<!-- Theme mode css -->
+<link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
+<script>
+    let defaultMode = ASYNC_CONFIG.theme.default !=='auto' ?  ASYNC_CONFIG.theme.default : (window.matchMedia("(prefers-color-scheme: light)").matches ? 'style-light' : 'style-dark')
+    let catchMode = localStorage.getItem('theme-mode') || defaultMode;
+    let type = catchMode === 'style-dark' ? 'add' : 'remove';
+    document.documentElement.classList[type]('dark')
+</script>
+
+<!-- CDN -->
+
+
+    
+    
+
+
+
+<!-- Site Analytics -->
+ 
+<meta name="generator" content="Hexo 7.0.0"><link rel="stylesheet" href="/css/prism.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+<body>
+
+  <!-- app wrapper -->
+  <div class="trm-app-frame">
+
+    <!-- page preloader -->
+    <div class="trm-preloader">
+    <div class="trm-holder">
+        <div class="preloader">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+    <!-- page preloader end -->
+
+    <!-- change mode preloader -->
+    <div class="trm-mode-swich-animation-frame">
+    <div class="trm-mode-swich-animation">
+        <i class="i-sun"><i class="iconfont far fa-sun"></i></i>
+        <div class="trm-horizon"></div>
+        <i class="i-moon"><i class="iconfont far fa-moon"></i></i>
+    </div>
+</div>
+    <!-- change mode preloader end -->
+
+      <!-- scroll container -->
+      <div id="trm-dynamic-content" class="trm-swup-animation">
+        <div id="trm-scroll-container" class="trm-scroll-container" style="opacity: 0">
+            <!-- top bar -->
+            <header class="trm-top-bar">
+	<div class="container">
+		<div class="trm-left-side">
+			<!-- logo -->
+<a href="/" class="trm-logo-frame trm-anima-link">
+    
+        <img alt="logo" src="/img/favicon.svg">
+    
+    
+        <div class="trm-logo-text">
+            元宝<span>橘猫</span>
+        </div>
+    
+</a>
+<!-- logo end -->
+		</div>
+		<div class="trm-right-side">
+			<!-- menu -->
+<div class="trm-menu">
+    <nav>
+        <ul>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/" target="">
+                    首页
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/archives/" target="">
+                    归档
+                </a>
+                
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+<!-- menu end -->
+			
+    <!-- mode switcher place -->
+    <div class="trm-mode-switcher-place">
+        <div class="trm-mode-switcher">
+            <i class="iconfont far fa-sun"></i>
+            <input class="tgl tgl-light" id="trm-swich" type="checkbox">
+            <label class="trm-swich" for="trm-swich"></label>
+            <i class="iconfont far fa-moon"></i>
+        </div>
+    </div>
+    <!-- mode switcher place end -->
+
+			
+		</div>
+		<div class="trm-menu-btn">
+			<span></span>
+		</div>
+	</div>
+</header>
+            <!-- top bar end -->
+
+            <!-- body -->
+            
+<div class="trm-content-start">
+    <!-- banner -->
+    <div class="trm-banner">
+    
+    <!-- banner cover -->
+    <img style="object-position:top;object-fit:cover;" alt="banner" class="trm-banner-cover" src="/img/banner.png">
+    <!-- banner cover end -->
+    
+
+    <!-- banner content -->
+    <div class="trm-banner-content trm-overlay">
+        <div class="container">
+            <div class="row">
+                
+                <div class="col-lg-4"></div>
+                
+                <div class="col-lg-8">
+
+                    <!-- banner title -->
+                    <div class="trm-banner-text ">
+                        <div class="trm-label trm-mb-20">
+                            NEWS LETTER
+                        </div>
+                        <h1 class="trm-mb-30 trm-hsmb-font">
+                            Linux系统编程笔记二
+                        </h1>
+
+                        
+                            <ul class="trm-breadcrumbs trm-label">
+                                <li>
+                                    <a href="/" class="trm-anima-link">Home</a>
+                                </li>
+                                <li>
+                                    <span>
+                                        2024
+                                    </span>
+                                </li>
+                            </ul>
+                        
+                    </div>
+                    <!-- banner title end -->
+
+                    <!-- scroll hint -->
+                    <span id="scroll-triger" class="trm-scroll-hint-frame">
+                        <div class="trm-scroll-hint"></div>
+                        <span class="trm-label">Scroll down</span>
+                    </span>
+                    <!-- scroll hint end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- banner content end -->
+</div>
+    <!-- banner end -->
+    <div class="container">
+        <div class="row">
+            
+                <div class="trm-page-sidebar col-lg-4 hidden-sm">
+                    <!-- main card -->
+                    <div class="trm-main-card-frame trm-sidebar">
+    <div class="trm-main-card"> 
+        <!-- card header -->
+<div class="trm-mc-header">
+    <div class="trm-avatar-frame trm-mb-20">
+        <img alt="Avatar" class="trm-avatar" src="/img/cat.jpg">
+    </div>
+    <h5 class="trm-name trm-mb-15">
+        橘猫元宝
+    </h5>
+    
+</div>
+<!-- card header end -->
+        <!-- sidebar social -->
+
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<div class="trm-social">
+    
+        <a href="https://github.com" title="Github" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-github"></i>
+        </a>
+    
+</div>
+
+<!-- sidebar social end -->
+        <!-- info -->
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<ul class="trm-table trm-mb-20">
+    
+        <li>
+            <div class="trm-label">
+                Residence:
+            </div>
+            <div class="trm-label trm-label-light">
+                Mars
+            </div>
+        </li>
+    
+</ul>
+<!-- info end -->
+
+        
+    </div>
+</div>
+                    <!-- main card end -->
+                </div>
+            
+            <div class="trm-page-content col-lg-8">
+                <div id="trm-content" class="trm-content">
+                    <div class="trm-post-info row hidden-sm">
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-calendar-alt trm-icon"></i><br>
+            06/08
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-clock trm-icon"></i><br>
+            01:49
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div id="post-author" class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-user trm-icon"></i><br>
+            橘猫元宝
+        </div>
+    </div>
+</div>
+<div class="trm-card ">
+    <article id="article-container" class="trm-publication">
+    <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>本文主要记录《Hands-On System Programming with Linux》一书中第二章的内容，主要是虚拟内存相关知识。</p>
+<h3 id="什么是虚拟内存？"><a href="#什么是虚拟内存？" class="headerlink" title="什么是虚拟内存？"></a>什么是虚拟内存？</h3><p>虚拟内存是一种计算机系统内存管理技术，它允许程序运行时假装拥有连续的可用内存空间（称为虚拟地址空间），而实际上，这些内存空间可能会被分割成若干部分并存储在不同的物理内存和磁盘存储上。</p>
+<p>虚拟内存通过以下几个关键概念和机制来实现：</p>
+<ol>
+<li><strong>虚拟地址空间</strong></li>
+</ol>
+<p>每个进程都拥有自己的虚拟地址空间，这个地址空间是由操作系统为进程创建的。</p>
+<p>虚拟地址空间让每个进程以为它独占整个内存空间，而实际上，操作系统会将这个虚拟地址空间映射到物理内存和磁盘上的实际存储位置。</p>
+<ol start="2">
+<li><p><strong>页（Pages）和页框（Page Frames）</strong></p>
+<p>虚拟内存管理通常采用分页（paging）机制。虚拟地址空间被分成固定大小的块，称为页（通常是4KB）。物理内存也被分成相同大小的块，称为页框。操作系统会将虚拟页映射到物理页框。</p>
+</li>
+<li><p><strong>页表（Page Table）</strong></p>
+<p>页表是由操作系统维护的数据结构，它存储了虚拟地址到物理地址的映射关系。</p>
+<p>当进程访问某个虚拟地址时，操作系统通过查找页表找到对应的物理地址。如果虚拟页不在物理内存中，会触发一个缺页异常，操作系统会从磁盘加载所需页到物理内存中。</p>
+</li>
+<li><p><strong>交换空间（Swap Space）</strong></p>
+</li>
+</ol>
+<p>当物理内存不足时，操作系统会将一些不常用的内存页移到磁盘的交换空间中（也称为分页文件或交换文件）。</p>
+<p>这释放出物理内存供其他需要的进程使用。</p>
+<p>当这些被交换出去的页再次被访问时，操作系统会将它们从交换空间重新加载到物理内存中。</p>
+<h4 id="解决了什么问题？"><a href="#解决了什么问题？" class="headerlink" title="解决了什么问题？"></a>解决了什么问题？</h4><ol>
+<li><p>内存不足的问题。</p>
+<p>虚拟内存允许系统运行所需内存空间超过实际物理内存容量的程序。</p>
+<p>通过将物理内存和硬盘结合起来使用，操作系统可以在物理内存不足时，将不活跃的内存页交换到硬盘上的交换区（swap space）中，从而腾出空间给当前需要的进程。</p>
+<p>这使得系统能够运行更大的程序和多个程序，而不会受到物理内存容量的限制。</p>
+</li>
+<li><p>内存保护和隔离问题。</p>
+</li>
+</ol>
+<p>虚拟内存为每个进程提供独立的虚拟地址空间，实现进程间的内存保护和隔离。</p>
+<p>每个进程只能访问自己的虚拟地址空间，无法直接访问其他进程的内存。</p>
+<p>这不仅提高了系统的稳定性和安全性，还防止了进程间的相互干扰，保护了进程的数据完整性。</p>
+<ol start="3">
+<li>内存管理灵活性问题。</li>
+</ol>
+<p>虚拟内存简化了内存管理，使得内存分配和释放更加灵活。</p>
+<p>通过分页和分段机制，操作系统可以将进程的虚拟地址空间映射到任意的物理内存地址，方便内存的分配和回收。</p>
+<p>分页机制按需加载内存页（demand paging），即只有在进程实际访问内存时，才将对应的内存页调入物理内存，从而提高了内存利用率。</p>
+<h5 id="内存不足的情况举例"><a href="#内存不足的情况举例" class="headerlink" title="内存不足的情况举例"></a>内存不足的情况举例</h5><p>以32位主机为例，最大可以内存是<code>&gt;&gt;&gt; 2**32/1024.0/1024.0/1024.0</code>,是4GB内存。</p>
+<p>如果有三个程序，分别需要1,2,3GB内存，1和2的程序可以运行，如果运行以后，1GB的内存退出了，此时，内存是0，1，1，0，这样分布的，会产生内存碎片，超过1GB的内存程序都无法运行了。</p>
+<h4 id="程序安全问题举例"><a href="#程序安全问题举例" class="headerlink" title="程序安全问题举例"></a>程序安全问题举例</h4><p>还是以32位主机为例，如果每个进程都能访问整个32位内存，那么多个程序都去读写同一块内存地址，会造成什么？</p>
+<p>问题关键在于每个进程都能访问整个32位的内存。</p>
+<p>解决方法是使用虚拟内存，把物理内存映射到虚拟的内存（可能是磁盘上面）上面，实现内存访问的隔离与内存管理的抽象。</p>
+<h4 id="本质"><a href="#本质" class="headerlink" title="本质"></a>本质</h4><p>将程序的内存地址映射到物理内存地址上，这个过程，就是虚拟内存诞生的过程。</p>
+<p>程序的内存map到物理内存上，如果物理内存不够了，再使用磁盘的存储空间，这样就解决了内存不足的问题，不过映射到磁盘上，读写速度比较慢。</p>
+<p>使用map的方法，同样可以解决出现内存碎片的问题，把不同的部分的内存映射到不同部分的物理内存上面，解决了碎片装不下过大内存的问题。</p>
+<p>使用map的方法，将不同的进程内存映射到不同的物理内存上，这样不同的进程的可以访问的空间就变隔离了，无法读写不属于自己的内存空间，提高了安全性。这里不是所有的程序内存都要映射到不同物理地址，比如一些库函数，通用的软件包等，是需要映射到同样物理地址，公用资源。</p>
+<h4 id="如何实现"><a href="#如何实现" class="headerlink" title="如何实现"></a>如何实现</h4><p>物理内存简称PA，虚拟内存简称VA，程序看到的是VA，无法直接和PA交互。</p>
+<p>这个映射的map，被称为Page Table。</p>
+<p>这里引发一个问题，如果VA-&gt;PA的映射是1-&gt;1映射，需要多少内存空间保存这个映射？</p>
+<p>在一个32位系统中，如果虚拟地址和物理地址是一对一映射，需要 <strong>4 GB</strong> 的物理内存。这意味着系统中的每个虚拟地址都有一个唯一的物理地址对应，从而要求物理内存的大小与虚拟地址空间的大小相同，即 4 GB。</p>
+<p>这样就没法解决问题了，因为这个map就用掉了所有的内存。</p>
+<p>那么如何解决map使用过大的内存问题呢？</p>
+<p>解决这个问题，就是把映射的单位改大，一般是4KB，而不是每个byte一一映射。现在Page Table的大小就为4 MB。</p>
+<p>为了更准确的找到具体的一个单元的映射，在page的基础上，还引入了offset的概念，类似二维数组中，找到行以后再找具体的列。</p>
+<pre class="line-numbers language-bash"><code class="language-bash">Now we can see how address-translation works: the OS sees that the process
+wants an address <span class="token keyword">in</span> page 2. It does a lookup on the PT <span class="token keyword">for</span> that process, and finds that
+page 2 maps to page frame 5. 
+
+va <span class="token operator">=</span> <span class="token punctuation">(</span>page, offset<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token punctuation">(</span>2, 1000<span class="token punctuation">)</span>.
+
+pa <span class="token operator">=</span> <span class="token punctuation">(</span>pf * PAGE_SIZE<span class="token punctuation">)</span> + offset
+<span class="token operator">=</span> <span class="token punctuation">(</span>5 * 4096<span class="token punctuation">)</span> + 1000
+<span class="token operator">=</span> 21480
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>虚拟内存就是在物理内存上面，又抽象了一层，避免进程直接操作物理内存。</p>
+<p>通过<code>free</code>命令查看内存情况：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ <span class="token function">free</span> -m
+               total        used        <span class="token function">free</span>      shared  buff/cache   available
+Mem:            3662         605        2795          19         516        3056
+Swap:           4047           0        4047
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里的swap就是用于虚拟内存的磁盘部分，这里使用和物理内存一样大的空间当做虚拟内存。</p>
+<p>通过Python代码，使用完内存，观察是否使用swap空间。</p>
+<p>运行如下代码，死循环，构建列表：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token operator">>></span><span class="token operator">></span> a <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+<span class="token operator">>></span><span class="token operator">></span> x <span class="token operator">=</span> <span class="token number">1</span>
+<span class="token operator">>></span><span class="token operator">></span> <span class="token keyword">while</span> <span class="token boolean">True</span><span class="token punctuation">:</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>     a<span class="token punctuation">.</span>append<span class="token punctuation">(</span>x<span class="token punctuation">)</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>     x <span class="token operator">+=</span> <span class="token number">1</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>多次次观察内存情况：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ <span class="token function">free</span> -m
+               total        used        <span class="token function">free</span>      shared  buff/cache   available
+Mem:            3662        3633         109          16          86          29
+Swap:           4047           5        4042
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里可以看出，内存使用完了以后就交换到磁盘上面了。</p>
+<p>Linux如何查看页大小：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ getconf PAGE_SIZE
+4096
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>这个程序是一个简单的 C 程序示例，它演示了在内存分配和复制字符串时可能遇到的问题，特别是当使用了一个任意地址（即不安全或不正确的地址）时：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">define</span> _GNU_SOURCE</span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;unistd.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdlib.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;string.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">"../common.h"</span></span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token keyword">int</span> argc<span class="token punctuation">,</span> <span class="token keyword">char</span> <span class="token operator">*</span><span class="token operator">*</span>argv<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">void</span> <span class="token operator">*</span>ptr <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+    <span class="token keyword">void</span> <span class="token operator">*</span>dest<span class="token punctuation">,</span> <span class="token operator">*</span>src <span class="token operator">=</span> <span class="token string">"abcdef0123456789"</span><span class="token punctuation">;</span>
+    <span class="token keyword">void</span> <span class="token operator">*</span>arbit_addr <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span><span class="token punctuation">)</span><span class="token number">0xffffffffff601000</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// 一般是内核的地址</span>
+    <span class="token keyword">int</span> n <span class="token operator">=</span> <span class="token function">strlen</span><span class="token punctuation">(</span>src<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    ptr <span class="token operator">=</span> <span class="token function">malloc</span><span class="token punctuation">(</span><span class="token number">256</span> <span class="token operator">*</span> <span class="token number">1024</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>ptr<span class="token punctuation">)</span>
+        <span class="token function">FATAL</span><span class="token punctuation">(</span><span class="token string">"malloc(256*1024) failed\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>argc <span class="token operator">==</span> <span class="token number">1</span><span class="token punctuation">)</span>
+        dest <span class="token operator">=</span> ptr<span class="token punctuation">;</span>		<span class="token comment" spellcheck="true">/* correct */</span>
+    <span class="token keyword">else</span>
+        dest <span class="token operator">=</span> arbit_addr<span class="token punctuation">;</span>	<span class="token comment" spellcheck="true">/* bug! */</span>
+    <span class="token function">memcpy</span><span class="token punctuation">(</span>dest<span class="token punctuation">,</span> src<span class="token punctuation">,</span> n<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">free</span><span class="token punctuation">(</span>ptr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">exit</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ ./mem_app1buggy buggy-case pass-params forcing-argc-to-not-be-sss
+<span class="token punctuation">[</span>1<span class="token punctuation">]</span>    4543 segmentation fault <span class="token punctuation">(</span>core dumped<span class="token punctuation">)</span>  ./mem_app1buggy buggy-case pass-params forcing-argc-to-not-be-sss
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>如果提供了任何命令行参数，它将尝试将数据复制到任意地址 <code>arbit_addr</code>。这很可能会导致段错误（Segmentation Fault）或者未定义行为，因为程序可能没有权限访问这个地址。</p>
+<p>使用任意地址（例如 <code>arbit_addr</code>）是非常危险的，因为它可能会导致程序崩溃或者未定义行为。在实际编程中，应该避免使用未分配或未初始化的指针。</p>
+<p>这里就说明了现代操作系统的页式管理解决了程序任意写内存地址的行为，会造成程序崩溃或者其他未定义的行为。</p>
+<h3 id="Process-memory-layout（进程内存布局）"><a href="#Process-memory-layout（进程内存布局）" class="headerlink" title="Process memory layout（进程内存布局）"></a>Process memory layout（进程内存布局）</h3><p>这一节主要介绍程序内存的布局知识。</p>
+<p>下面是一个简单的程序，用来演示不同的变量所处于不同的代码段中，从而区分不同的变量在内存中是如何组织的：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdlib.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;unistd.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;string.h></span></span>
+
+<span class="token comment" spellcheck="true">// 全局变量（数据段）</span>
+<span class="token keyword">int</span> initialized_global_var <span class="token operator">=</span> <span class="token number">10</span><span class="token punctuation">;</span>
+
+<span class="token comment" spellcheck="true">// 全局变量（BSS段）</span>
+<span class="token keyword">int</span> uninitialized_global_var<span class="token punctuation">;</span>
+
+<span class="token comment" spellcheck="true">// 初始化的全局数组（数据段）</span>
+<span class="token keyword">int</span> initialized_global_array<span class="token punctuation">[</span><span class="token number">50000</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+<span class="token comment" spellcheck="true">// 未初始化的全局数组（BSS段）</span>
+<span class="token keyword">int</span> uninitialized_global_array<span class="token punctuation">[</span><span class="token number">5</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 局部变量（栈）</span>
+    <span class="token keyword">int</span> local_var <span class="token operator">=</span> <span class="token number">20</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// 动态分配内存（堆）</span>
+    <span class="token keyword">int</span> <span class="token operator">*</span>heap_var <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">int</span> <span class="token operator">*</span><span class="token punctuation">)</span><span class="token function">malloc</span><span class="token punctuation">(</span><span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token number">5</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> <span class="token number">5</span><span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        heap_var<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> i <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 打印变量地址</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Address of initialized_global_var: %p\n"</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span><span class="token punctuation">)</span><span class="token operator">&amp;</span>initialized_global_var<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Address of uninitialized_global_var: %p\n"</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span><span class="token punctuation">)</span><span class="token operator">&amp;</span>uninitialized_global_var<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Address of initialized_global_array: %p\n"</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span><span class="token punctuation">)</span>initialized_global_array<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Address of uninitialized_global_array: %p\n"</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span><span class="token punctuation">)</span>uninitialized_global_array<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Address of local_var: %p\n"</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span><span class="token punctuation">)</span><span class="token operator">&amp;</span>local_var<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Address of heap_var: %p\n"</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span><span class="token punctuation">)</span>heap_var<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// 打印程序内存布局</span>
+    <span class="token keyword">char</span> command<span class="token punctuation">[</span><span class="token number">50</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token function">sprintf</span><span class="token punctuation">(</span>command<span class="token punctuation">,</span> <span class="token string">"cat /proc/%d/maps"</span><span class="token punctuation">,</span> <span class="token function">getpid</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">system</span><span class="token punctuation">(</span>command<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// 释放动态分配的内存</span>
+    <span class="token function">free</span><span class="token punctuation">(</span>heap_var<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">Address of initialized_global_var: 0x404080
+Address of uninitialized_global_var: 0x434df0
+Address of initialized_global_array: 0x4040a0
+Address of uninitialized_global_array: 0x434e00
+Address of local_var: 0x7ffe8180019c
+Address of heap_var: 0xe3a2a0
+00400000-00401000 r--p 00000000 fd:00 70410210                           /root/Hands-on-System-Programming-with-Linux/ch2/a.out
+00401000-00402000 r-xp 00001000 fd:00 70410210                           /root/Hands-on-System-Programming-with-Linux/ch2/a.out
+00402000-00403000 r--p 00002000 fd:00 70410210                           /root/Hands-on-System-Programming-with-Linux/ch2/a.out
+00403000-00404000 r--p 00002000 fd:00 70410210                           /root/Hands-on-System-Programming-with-Linux/ch2/a.out
+00404000-00435000 rw-p 00003000 fd:00 70410210                           /root/Hands-on-System-Programming-with-Linux/ch2/a.out
+00e3a000-00e5b000 rw-p 00000000 00:00 0                                  <span class="token punctuation">[</span>heap<span class="token punctuation">]</span>
+7fc04aa00000-7fc04aa28000 r--p 00000000 fd:00 201368140                  /usr/lib64/libc.so.6
+7fc04aa28000-7fc04ab9d000 r-xp 00028000 fd:00 201368140                  /usr/lib64/libc.so.6
+7fc04ab9d000-7fc04abf5000 r--p 0019d000 fd:00 201368140                  /usr/lib64/libc.so.6
+7fc04abf5000-7fc04abf6000 ---p 001f5000 fd:00 201368140                  /usr/lib64/libc.so.6
+7fc04abf6000-7fc04abfa000 r--p 001f5000 fd:00 201368140                  /usr/lib64/libc.so.6
+7fc04abfa000-7fc04abfc000 rw-p 001f9000 fd:00 201368140                  /usr/lib64/libc.so.6
+7fc04abfc000-7fc04ac09000 rw-p 00000000 00:00 0
+7fc04acec000-7fc04acf0000 rw-p 00000000 00:00 0
+7fc04acf8000-7fc04acfa000 r--p 00000000 fd:00 201340528                  /usr/lib64/ld-linux-x86-64.so.2
+7fc04acfa000-7fc04ad20000 r-xp 00002000 fd:00 201340528                  /usr/lib64/ld-linux-x86-64.so.2
+7fc04ad20000-7fc04ad2b000 r--p 00028000 fd:00 201340528                  /usr/lib64/ld-linux-x86-64.so.2
+7fc04ad2c000-7fc04ad2e000 r--p 00033000 fd:00 201340528                  /usr/lib64/ld-linux-x86-64.so.2
+7fc04ad2e000-7fc04ad30000 rw-p 00035000 fd:00 201340528                  /usr/lib64/ld-linux-x86-64.so.2
+7ffe817e2000-7ffe81803000 rw-p 00000000 00:00 0                          <span class="token punctuation">[</span>stack<span class="token punctuation">]</span>
+7ffe8187f000-7ffe81883000 r--p 00000000 00:00 0                          <span class="token punctuation">[</span>vvar<span class="token punctuation">]</span>
+7ffe81883000-7ffe81885000 r-xp 00000000 00:00 0                          <span class="token punctuation">[</span>vdso<span class="token punctuation">]</span>
+ffffffffff600000-ffffffffff601000 --xp 00000000 00:00 0                  <span class="token punctuation">[</span>vsyscall<span class="token punctuation">]</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>使用<code>size</code>命令分析:</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ size ./a.out
+   text	   data	    bss	    dec	    hex	filename
+   1975	 200648	     56	 202679	  317b7	./a.out
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<h4 id="内存布局解释"><a href="#内存布局解释" class="headerlink" title="内存布局解释"></a>内存布局解释</h4><p><strong>text（代码段）</strong>：存放程序的机器代码。</p>
+<p><strong>data（数据段）</strong>：存放已初始化的全局变量和静态变量，包括初始化的全局数组。</p>
+<p><strong>bss（未初始化数据段）</strong>：存放未初始化的全局变量和静态变量，包括未初始化的全局数组。</p>
+<p><strong>dec</strong> 和 <strong>hex</strong>：分别是总大小的十进制和十六进制表示。</p>
+<h4 id="代码段解释"><a href="#代码段解释" class="headerlink" title="代码段解释"></a>代码段解释</h4><p>代码段（Code Segment），也称为文本段（Text Segment），在内存布局中是存放程序的机器指令（即可执行代码）的区域。以下是代码段的详细介绍：</p>
+<p><strong>存放可执行指令</strong>：代码段包含程序运行时需要执行的机器指令。它是程序中所有函数和方法的实现所在的地方。</p>
+<p><strong>只读属性</strong>：为了防止意外或恶意修改，大多数操作系统将代码段设置为只读。这有助于保护程序的完整性和安全性。</p>
+<p><strong>共享机制</strong>：在现代操作系统中，代码段是可共享的。如果多个进程运行同一个程序的不同实例，这些实例可以共享同一个代码段，从而节省内存。</p>
+<h4 id="数据段解释"><a href="#数据段解释" class="headerlink" title="数据段解释"></a>数据段解释</h4><p>数据段（Data Segment）是进程内存布局中的一个区域，用于存放已初始化的全局变量和静态变量。它在程序启动时由操作系统加载，并在程序的整个生命周期内保持存在。以下是数据段的详细介绍：</p>
+<p><strong>存放已初始化的全局变量</strong>：数据段包含程序中所有已初始化的全局变量。全局变量在程序的任何部分都可以访问，因此它们需要一个固定的位置来存储。</p>
+<p><strong>存放已初始化的静态变量</strong>：静态变量与全局变量类似，但它们的作用域仅限于定义它们的函数或文件。这些变量在程序的整个生命周期内保持存在，并保留它们的值。</p>
+<h4 id="bss段解释"><a href="#bss段解释" class="headerlink" title="bss段解释"></a>bss段解释</h4><p>BSS段（Block Started by Symbol）是进程内存布局中的一个区域，用于存放未初始化的全局变量和静态变量。尽管这些变量未在代码中显式初始化，但在程序启动时，它们会自动初始化为零。以下是BSS段的详细介绍：</p>
+<p><strong>存放未初始化的全局变量</strong>：BSS段包含程序中所有未初始化的全局变量。全局变量在程序的任何部分都可以访问，因此它们需要一个固定的位置来存储。</p>
+<p><strong>存放未初始化的静态变量</strong>：静态变量与全局变量类似，但它们的作用域仅限于定义它们的函数或文件。这些变量在程序的整个生命周期内保持存在，并自动初始化为零。</p>
+<h4 id="栈的介绍"><a href="#栈的介绍" class="headerlink" title="栈的介绍"></a>栈的介绍</h4><p><strong>生长方向</strong>：从高地址向低地址生长。</p>
+<p><strong>用途</strong>：栈主要用于存储函数的局部变量、函数参数、返回地址等。每当一个函数被调用时，会在栈上为该函数分配一个栈帧。当函数返回时，相应的栈帧会被释放。</p>
+<p><strong>特点</strong>：栈的内存分配和释放是自动管理的，具有LIFO（Last In, First Out）的特性，即最后分配的内存最先被释放。栈的大小是有限的，由操作系统或编译器在程序启动时确定。</p>
+<h4 id="堆的介绍"><a href="#堆的介绍" class="headerlink" title="堆的介绍"></a>堆的介绍</h4><p><strong>生长方向</strong>：从低地址向高地址生长。</p>
+<p><strong>用途</strong>：堆用于动态分配内存，例如使用 <code>malloc</code>、<code>calloc</code>、<code>realloc</code>（在C语言中）或 <code>new</code>（在C++中）等函数分配的内存。程序员需要手动管理堆内存的分配和释放（例如使用 <code>free</code> 或 <code>delete</code>）。</p>
+<p><strong>特点</strong>：堆的内存分配和释放是灵活的，但容易导致内存泄漏和碎片化问题。堆的大小通常比栈大得多，但同样是有限的，具体大小取决于系统的内存管理策略和物理内存的大小。</p>
+<h4 id="内存示意图"><a href="#内存示意图" class="headerlink" title="内存示意图"></a>内存示意图</h4><pre class="line-numbers language-bash"><code class="language-bash">+-----------------------+  <span class="token operator">&lt;</span>- 高地址
+<span class="token operator">|</span>        栈 <span class="token punctuation">(</span>Stack<span class="token punctuation">)</span>      <span class="token operator">|</span>  <span class="token operator">&lt;</span>- 从高地址向低地址生长
+<span class="token operator">|</span>         <span class="token punctuation">..</span>.           <span class="token operator">|</span>
+<span class="token operator">|</span>        局部变量        <span class="token operator">|</span>
+<span class="token operator">|</span>        函数参数        <span class="token operator">|</span>
+<span class="token operator">|</span>        返回地址        <span class="token operator">|</span>
+<span class="token operator">|</span>         <span class="token punctuation">..</span>.           <span class="token operator">|</span>
++-----------------------+
+<span class="token operator">|</span>   共享库 <span class="token punctuation">(</span>Shared Libraries<span class="token punctuation">)</span>  <span class="token operator">|</span>
++-----------------------+
+<span class="token operator">|</span>        堆 <span class="token punctuation">(</span>Heap<span class="token punctuation">)</span>       <span class="token operator">|</span>  <span class="token operator">&lt;</span>- 从低地址向高地址生长
+<span class="token operator">|</span>         <span class="token punctuation">..</span>.           <span class="token operator">|</span>
+<span class="token operator">|</span>     动态分配的内存     <span class="token operator">|</span>
+<span class="token operator">|</span>         <span class="token punctuation">..</span>.           <span class="token operator">|</span>
++-----------------------+
+<span class="token operator">|</span>  数据段 <span class="token punctuation">(</span>Data Segment<span class="token punctuation">)</span> <span class="token operator">|</span>
+<span class="token operator">|</span> 已初始化和未初始化数据 <span class="token operator">|</span>
++-----------------------+
+<span class="token operator">|</span>  代码段 <span class="token punctuation">(</span>Code Segment<span class="token punctuation">)</span> <span class="token operator">|</span>
+<span class="token operator">|</span>    可执行指令代码      <span class="token operator">|</span>
++-----------------------+  <span class="token operator">&lt;</span>- 低地址
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="使用GDB-bt-命令查看调用的函数栈"><a href="#使用GDB-bt-命令查看调用的函数栈" class="headerlink" title="使用GDB bt 命令查看调用的函数栈"></a>使用GDB <code>bt</code> 命令查看调用的函数栈</h4><p>简单代码如下：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">define</span> _GNU_SOURCE</span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdlib.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;unistd.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;sys/types.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">"../common.h"</span></span>
+
+<span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">bar_is_now_closed</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">int</span> localvar <span class="token operator">=</span> <span class="token number">5</span><span class="token punctuation">;</span>
+
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"In function %20s; &amp;localvar = %p\n"</span>
+        <span class="token string">"\t(bye, pl go '~/' now).\n"</span><span class="token punctuation">,</span>
+        <span class="token constant">__func__</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>localvar<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"\n Now blocking on pause()...\n"</span>
+        <span class="token string">" Connect via GDB's 'attach' and then issue the 'bt' command"</span>
+        <span class="token string">" to view the process stack\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">pause</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">/*process blocks here until it receives a signal */</span>
+<span class="token punctuation">}</span>
+<span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">bar</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">int</span> localvar <span class="token operator">=</span> <span class="token number">5</span><span class="token punctuation">;</span>
+
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"In function %20s; &amp;localvar = %p\n"</span><span class="token punctuation">,</span> <span class="token constant">__func__</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>localvar<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">bar_is_now_closed</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">foo</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">int</span> localvar <span class="token operator">=</span> <span class="token number">5</span><span class="token punctuation">;</span>
+
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"In function %20s; &amp;localvar = %p\n"</span><span class="token punctuation">,</span> <span class="token constant">__func__</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>localvar<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">bar</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token keyword">int</span> argc<span class="token punctuation">,</span> <span class="token keyword">char</span> <span class="token operator">*</span><span class="token operator">*</span>argv<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">int</span> localvar <span class="token operator">=</span> <span class="token number">5</span><span class="token punctuation">;</span>
+
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"In function %20s; &amp;localvar = %p\n"</span><span class="token punctuation">,</span> <span class="token constant">__func__</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>localvar<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">foo</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">exit</span> <span class="token punctuation">(</span>EXIT_SUCCESS<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ ./stacker_dbg
+In <span class="token keyword">function</span>                 main<span class="token punctuation">;</span> <span class="token operator">&amp;</span>localvar <span class="token operator">=</span> 0x7ffc4be9847c
+In <span class="token keyword">function</span>                  foo<span class="token punctuation">;</span> <span class="token operator">&amp;</span>localvar <span class="token operator">=</span> 0x7ffc4be9844c
+In <span class="token keyword">function</span>                  bar<span class="token punctuation">;</span> <span class="token operator">&amp;</span>localvar <span class="token operator">=</span> 0x7ffc4be9842c
+In <span class="token keyword">function</span>    bar_is_now_closed<span class="token punctuation">;</span> <span class="token operator">&amp;</span>localvar <span class="token operator">=</span> 0x7ffc4be9840c
+    <span class="token punctuation">(</span>bye, pl go <span class="token string">'~/'</span> now<span class="token punctuation">)</span>.
+
+ Now blocking on pause<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">..</span>.
+ Connect via GDB<span class="token string">'s '</span>attach<span class="token string">' and then issue the '</span>bt' <span class="token function">command</span> to view the process stack
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>进程在这里停止住了，下一步开启<code>gdb</code>调试：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ gdb -q
+gdb-peda$ attach 5362
+Attaching to process 5362
+Reading symbols from /root/Hands-on-System-Programming-with-Linux/ch2/stacker_dbg<span class="token punctuation">..</span>.
+Reading symbols from /lib64/libc.so.6<span class="token punctuation">..</span>.
+<span class="token punctuation">(</span>No debugging symbols found <span class="token keyword">in</span> /lib64/libc.so.6<span class="token punctuation">)</span>
+Reading symbols from /lib64/ld-linux-x86-64.so.2<span class="token punctuation">..</span>.
+<span class="token punctuation">[</span>Thread debugging using libthread_db enabled<span class="token punctuation">]</span>
+Using host libthread_db library <span class="token string">"/lib64/libthread_db.so.1"</span><span class="token keyword">.</span>
+<span class="token punctuation">[</span>----------------------------------registers-----------------------------------<span class="token punctuation">]</span>
+RAX: 0xfffffffffffffdfe
+RBX: 0x0
+RCX: 0x7f2f9e7184a7 <span class="token punctuation">(</span><span class="token operator">&lt;</span>pause+23<span class="token operator">></span>:	<span class="token function">cmp</span>    rax,0xfffffffffffff000<span class="token punctuation">)</span>
+RDX: 0x1
+RSI: 0x1
+RDI: 0x7f2f9e7fca70 --<span class="token operator">></span> 0x0
+RBP: 0x7ffc4be98410 --<span class="token operator">></span> 0x7ffc4be98430 --<span class="token operator">></span> 0x7ffc4be98450 --<span class="token operator">></span> 0x7ffc4be98480 --<span class="token operator">></span> 0x1
+RSP: 0x7ffc4be983f8 --<span class="token operator">></span> 0x40124f <span class="token punctuation">(</span><span class="token operator">&lt;</span>bar_is_now_closed+57<span class="token operator">></span>:	nop<span class="token punctuation">)</span>
+RIP: 0x7f2f9e7184a7 <span class="token punctuation">(</span><span class="token operator">&lt;</span>pause+23<span class="token operator">></span>:	<span class="token function">cmp</span>    rax,0xfffffffffffff000<span class="token punctuation">)</span>
+R8 <span class="token keyword">:</span> 0x7f2f9e7fca70 --<span class="token operator">></span> 0x0
+R9 <span class="token keyword">:</span> 0x7ffc4be982cc --<span class="token operator">></span> 0x0
+R10: 0x7f2f9e6141a8 --<span class="token operator">></span> 0xe0022000060e9
+R11: 0x246
+R12: 0x7ffc4be98598 --<span class="token operator">></span> 0x7ffc4be99416 <span class="token punctuation">(</span><span class="token string">"./stacker_dbg"</span><span class="token punctuation">)</span>
+R13: 0x4012b6 <span class="token punctuation">(</span><span class="token operator">&lt;</span>main<span class="token operator">></span>:	push   rbp<span class="token punctuation">)</span>
+R14: 0x403e08 --<span class="token operator">></span> 0x4011e0 <span class="token punctuation">(</span><span class="token operator">&lt;</span>__do_global_dtors_aux<span class="token operator">></span>:	endbr64<span class="token punctuation">)</span>
+R15: 0x7f2f9e869000 --<span class="token operator">></span> 0x7f2f9e86a220 --<span class="token operator">></span> 0x0
+EFLAGS: 0x246 <span class="token punctuation">(</span>carry PARITY adjust ZERO sign <span class="token function">trap</span> INTERRUPT direction overflow<span class="token punctuation">)</span>
+<span class="token punctuation">[</span>-------------------------------------code-------------------------------------<span class="token punctuation">]</span>
+   0x7f2f9e71849e <span class="token operator">&lt;</span>pause+14<span class="token operator">></span>:	jne    0x7f2f9e7184b0 <span class="token operator">&lt;</span>pause+32<span class="token operator">></span>
+   0x7f2f9e7184a0 <span class="token operator">&lt;</span>pause+16<span class="token operator">></span>:	mov    eax,0x22
+   0x7f2f9e7184a5 <span class="token operator">&lt;</span>pause+21<span class="token operator">></span>:	syscall
+<span class="token operator">=</span><span class="token operator">></span> 0x7f2f9e7184a7 <span class="token operator">&lt;</span>pause+23<span class="token operator">></span>:	<span class="token function">cmp</span>    rax,0xfffffffffffff000
+   0x7f2f9e7184ad <span class="token operator">&lt;</span>pause+29<span class="token operator">></span>:	ja     0x7f2f9e7184e0 <span class="token operator">&lt;</span>pause+80<span class="token operator">></span>
+   0x7f2f9e7184af <span class="token operator">&lt;</span>pause+31<span class="token operator">></span>:	ret
+   0x7f2f9e7184b0 <span class="token operator">&lt;</span>pause+32<span class="token operator">></span>:	sub    rsp,0x18
+   0x7f2f9e7184b4 <span class="token operator">&lt;</span>pause+36<span class="token operator">></span>:	call   0x7f2f9e69bbf0 <span class="token operator">&lt;</span>__pthread_enable_asynccancel<span class="token operator">></span>
+<span class="token punctuation">[</span>------------------------------------stack-------------------------------------<span class="token punctuation">]</span>
+0000<span class="token operator">|</span> 0x7ffc4be983f8 --<span class="token operator">></span> 0x40124f <span class="token punctuation">(</span><span class="token operator">&lt;</span>bar_is_now_closed+57<span class="token operator">></span>:	nop<span class="token punctuation">)</span>
+0008<span class="token operator">|</span> 0x7ffc4be98400 --<span class="token operator">></span> 0x0
+0016<span class="token operator">|</span> 0x7ffc4be98408 --<span class="token operator">></span> 0x500000000
+0024<span class="token operator">|</span> 0x7ffc4be98410 --<span class="token operator">></span> 0x7ffc4be98430 --<span class="token operator">></span> 0x7ffc4be98450 --<span class="token operator">></span> 0x7ffc4be98480 --<span class="token operator">></span> 0x1
+0032<span class="token operator">|</span> 0x7ffc4be98418 --<span class="token operator">></span> 0x401281 <span class="token punctuation">(</span><span class="token operator">&lt;</span>bar+47<span class="token operator">></span>:	nop<span class="token punctuation">)</span>
+0040<span class="token operator">|</span> 0x7ffc4be98420 --<span class="token operator">></span> 0x0
+0048<span class="token operator">|</span> 0x7ffc4be98428 --<span class="token operator">></span> 0x500000000
+0056<span class="token operator">|</span> 0x7ffc4be98430 --<span class="token operator">></span> 0x7ffc4be98450 --<span class="token operator">></span> 0x7ffc4be98480 --<span class="token operator">></span> 0x1
+<span class="token punctuation">[</span>------------------------------------------------------------------------------<span class="token punctuation">]</span>
+Legend: code, data, rodata, value
+0x00007f2f9e7184a7 <span class="token keyword">in</span> pause <span class="token punctuation">(</span><span class="token punctuation">)</span> from /lib64/libc.so.6
+Missing separate debuginfos, use: dnf debuginfo-install glibc-2.34-83.el9.7.x86_64
+gdb-peda$ bt
+<span class="token comment" spellcheck="true">#0  0x00007f2f9e7184a7 in pause () from /lib64/libc.so.6</span>
+<span class="token comment" spellcheck="true">#1  0x000000000040124f in bar_is_now_closed () at stacker.c:41</span>
+<span class="token comment" spellcheck="true">#2  0x0000000000401281 in bar () at stacker.c:48</span>
+<span class="token comment" spellcheck="true">#3  0x00000000004012b3 in foo () at stacker.c:55</span>
+<span class="token comment" spellcheck="true">#4  0x00000000004012ec in main (argc=0x1, argv=0x7ffc4be98598) at stacker.c:63</span>
+<span class="token comment" spellcheck="true">#5  0x00007f2f9e63feb0 in __libc_start_call_main () from /lib64/libc.so.6</span>
+<span class="token comment" spellcheck="true">#6  0x00007f2f9e63ff60 in __libc_start_main_impl () from /lib64/libc.so.6</span>
+<span class="token comment" spellcheck="true">#7  0x0000000000401155 in _start ()</span>
+gdb-peda$ info r
+rax            0xfffffffffffffdfe  0xfffffffffffffdfe
+rbx            0x0                 0x0
+rcx            0x7f2f9e7184a7      0x7f2f9e7184a7
+rdx            0x1                 0x1
+rsi            0x1                 0x1
+rdi            0x7f2f9e7fca70      0x7f2f9e7fca70
+rbp            0x7ffc4be98410      0x7ffc4be98410
+rsp            0x7ffc4be983f8      0x7ffc4be983f8
+r8             0x7f2f9e7fca70      0x7f2f9e7fca70
+r9             0x7ffc4be982cc      0x7ffc4be982cc
+r10            0x7f2f9e6141a8      0x7f2f9e6141a8
+r11            0x246               0x246
+r12            0x7ffc4be98598      0x7ffc4be98598
+r13            0x4012b6            0x4012b6
+r14            0x403e08            0x403e08
+r15            0x7f2f9e869000      0x7f2f9e869000
+rip            0x7f2f9e7184a7      0x7f2f9e7184a7 <span class="token operator">&lt;</span>pause+23<span class="token operator">></span>
+eflags         0x246               <span class="token punctuation">[</span> PF ZF IF <span class="token punctuation">]</span>
+cs             0x33                0x33
+ss             0x2b                0x2b
+ds             0x0                 0x0
+es             0x0                 0x0
+fs             0x0                 0x0
+gs             0x0                 0x0
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里，通过<code>bt</code>命令，可以查看调用的函数情况：</p>
+<pre class="line-numbers language-bash"><code class="language-bash"><span class="token comment" spellcheck="true">#0  0x00007f2f9e7184a7 in pause () from /lib64/libc.so.6</span>
+<span class="token comment" spellcheck="true">#1  0x000000000040124f in bar_is_now_closed () at stacker.c:41</span>
+<span class="token comment" spellcheck="true">#2  0x0000000000401281 in bar () at stacker.c:48</span>
+<span class="token comment" spellcheck="true">#3  0x00000000004012b3 in foo () at stacker.c:55</span>
+<span class="token comment" spellcheck="true">#4  0x00000000004012ec in main (argc=0x1, argv=0x7ffc4be98598) at stacker.c:63</span>
+<span class="token comment" spellcheck="true">#5  0x00007f2f9e63feb0 in __libc_start_call_main () from /lib64/libc.so.6</span>
+<span class="token comment" spellcheck="true">#6  0x00007f2f9e63ff60 in __libc_start_main_impl () from /lib64/libc.so.6</span>
+<span class="token comment" spellcheck="true">#7  0x0000000000401155 in _start ()</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>从阻塞的<code>pause</code>，一直到libc的调用都有。</p>
+<h4 id="gdb-bt的原理"><a href="#gdb-bt的原理" class="headerlink" title="gdb bt的原理"></a>gdb bt的原理</h4><p><strong>调用栈（Call Stack）</strong>：</p>
+<ul>
+<li>当程序调用一个函数时，会在栈上创建一个新的栈帧（Stack Frame），包含函数的返回地址、参数和局部变量。</li>
+<li>当函数返回时，其对应的栈帧会被弹出栈，返回地址会指向调用该函数的下一条指令。</li>
+</ul>
+<p><strong>栈帧（Stack Frame）</strong>：</p>
+<ul>
+<li>栈帧是栈上的一块内存区域，每个函数调用对应一个栈帧。栈帧通常包含以下内容：<ul>
+<li>返回地址：函数返回后程序继续执行的地址。</li>
+<li>函数参数：传递给函数的参数。</li>
+<li>局部变量：函数内部声明的变量。</li>
+<li>上一个栈帧的指针：指向前一个栈帧（链式结构）。</li>
+</ul>
+</li>
+</ul>
+<p><strong>栈帧指针和基址指针</strong>：</p>
+<ul>
+<li><strong>栈指针（SP - Stack Pointer）</strong>：指向当前栈顶的位置，动态变化。</li>
+<li><strong>基址指针（BP&#x2F;FP - Base Pointer&#x2F;Frame Pointer）</strong>：固定指向当前栈帧的基址，帮助访问栈帧中的参数和局部变量。</li>
+</ul>
+<p><strong>Backtrace（回溯）</strong>：</p>
+<ul>
+<li><code>bt</code>命令从当前栈帧开始，逐层回溯，访问每个栈帧的返回地址和函数参数，形成一个调用栈的列表。</li>
+<li>调试器（如GDB）利用栈帧中的信息，沿着链式结构逐层遍历，显示每个函数调用的返回地址、函数名、参数等信息。</li>
+</ul>
+<h3 id="虚拟内存使用过多说明什么"><a href="#虚拟内存使用过多说明什么" class="headerlink" title="虚拟内存使用过多说明什么"></a>虚拟内存使用过多说明什么</h3><p>当系统物理内存不足时，操作系统会大量使用虚拟内存来继续运行程序。虚拟内存是通过磁盘上的交换空间（swap space）来模拟的，它允许系统运行超过物理内存容量的应用程序和数据。</p>
+<h4 id="内存不足时的行为"><a href="#内存不足时的行为" class="headerlink" title="内存不足时的行为"></a>内存不足时的行为</h4><p><strong>缺页频繁</strong>：</p>
+<ul>
+<li>当系统物理内存不足时，缺页中断会频繁发生。每次缺页中断都会导致磁盘I&#x2F;O操作，将页面从交换空间调入物理内存，导致系统性能下降。</li>
+</ul>
+<p><strong>交换（swapping）</strong>：</p>
+<ul>
+<li>系统会将不经常使用的页面从物理内存移出到交换空间中，以腾出物理内存给当前需要使用的页面。这种页面的调入调出过程称为交换（swapping）。</li>
+</ul>
+<p><strong>系统变慢</strong>：</p>
+<ul>
+<li>大量使用交换空间会导致系统变慢，因为磁盘I&#x2F;O速度远低于物理内存的访问速度。如果频繁发生交换，系统性能会明显下降，甚至出现“抖动”（thrashing），即系统花费大量时间在页面调度上，而不是实际执行应用程序代码。</li>
+</ul>
+<h4 id="监控和管理"><a href="#监控和管理" class="headerlink" title="监控和管理"></a>监控和管理</h4><p>操作系统提供了一些工具和方法来监控和管理内存使用情况，例如：</p>
+<ul>
+<li><strong><code>free</code>命令</strong>：显示系统的总内存、已用内存、空闲内存和交换空间使用情况。</li>
+<li><strong><code>vmstat</code>命令</strong>：显示内存、交换、I&#x2F;O、系统进程和CPU活动的统计信息。</li>
+<li><strong><code>top</code>命令</strong>：实时显示系统的资源使用情况，包括内存和交换空间的使用。</li>
+</ul>
+<h4 id="可能的现象"><a href="#可能的现象" class="headerlink" title="可能的现象"></a>可能的现象</h4><p><strong>系统时间升高</strong>：在性能监控工具（如<code>top</code>、<code>vmstat</code>）中，可以看到<code>sys</code>时间升高，表示内核花费更多时间处理系统调用和管理任务。</p>
+<p><strong>用户时间降低</strong>：<code>usr</code>（用户时间）可能相对降低，因为CPU更多时间用于处理系统级任务，而非用户级应用程序的执行。</p>
+<p><strong>负载升高</strong>：系统负载（load average）可能升高，因为更多的任务在等待I&#x2F;O操作完成。</p>
+<p><strong>性能下降</strong>：总体系统性能下降，应用程序响应变慢，甚至可能出现“抖动”（thrashing），即系统过多时间花费在页面调度上，而实际工作效率低下。</p>
+<h4 id="解决方法"><a href="#解决方法" class="headerlink" title="解决方法"></a>解决方法</h4><ul>
+<li><strong>增加物理内存</strong>：增加物理内存容量，可以减少缺页中断和交换操作的频率。</li>
+<li><strong>优化内存使用</strong>：优化应用程序的内存使用，减少内存占用。</li>
+<li><strong>调整交换空间</strong>：合理配置交换空间，确保在内存不足时有足够的交换空间使用，但要注意过大的交换空间可能导致更频繁的交换操作。</li>
+<li><strong>使用性能优化技术</strong>：使用性能分析工具识别和优化系统瓶颈，减少系统时间消耗。</li>
+</ul>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>这部分主要简单介绍了一下虚拟内存，主要是页式管理，如何使用磁盘映射到内存。</p>
+<p>程序的内存布局情况，gdb调试指令<code>bt</code>等，最后还整理一下关于内存不足时候虚拟内存和系统会发生什么状况，已经一些排查方向。</p>
+<p>下面一章主要介绍Linux内存分配相关的函数与知识。</p>
+<p>参考：</p>
+<p><a target="_blank" rel="noopener" href="https://www.youtube.com/playlist?list=PLiwt1iVUib9s2Uo5BeYmwkDFUh70fJPxX">https://www.youtube.com/playlist?list=PLiwt1iVUib9s2Uo5BeYmwkDFUh70fJPxX</a></p>
+<p><a target="_blank" rel="noopener" href="https://github.com/PacktPublishing/Hands-on-System-Programming-with-Linux">https://github.com/PacktPublishing/Hands-on-System-Programming-with-Linux</a></p>
+
+</article>
+    
+    
+
+</div>
+<div class="trm-post-next-prev row">
+    <div class="col-lg-12">
+        <!-- title -->
+        <h5 class="trm-title-with-divider">
+            其他文章
+            <span data-number="02"></span>
+        </h5>
+    </div>
+    
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/06/07/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E7%AC%94%E8%AE%B0%E4%B8%80/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" #.">
+                    未分类
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/06/07/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E7%AC%94%E8%AE%B0%E4%B8%80/" class="trm-anima-link">
+                    Linux系统编程笔记一
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/06/07</li>
+                <li>16:16</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+</div>
+
+    
+
+
+
+                    <div class="trm-divider footer-divider"></div>
+
+                    <!-- footer -->
+                    <footer class="trm-scroll-animation">
+
+    
+
+    
+
+    
+        <div class="trm-footer-item">
+            <span>
+                由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v7.0.0
+            </span>
+            <span class="footer-separator" data-separator=" | "></span>
+            <span> 
+                主题 - 
+                <a rel="noopener" href='https://github.com/MaLuns/hexo-theme-async' target='_blank'>Async</a>
+                v2.1.8
+            </span>
+        </div>
+      
+
+     
+
+     
+</footer>
+ 
+                    <!-- footer end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- body end -->
+
+            
+
+            
+<div class="trm-fixed-container">
+    
+    
+        <div class="trm-fixed-btn" data-title="阅读模式" onclick="asyncFun.switchReadMode()">
+            <i class="iconfont fas fa-book-reader"></i>
+        </div>
+    
+    
+    <div id="trm-back-top" class="trm-fixed-btn" data-title="回到顶部">
+        <i class="iconfont fas fa-arrow-up"></i>
+    </div>
+</div>
+        </div>
+      </div>
+      <!-- scroll container end -->
+  </div>
+  <!-- app wrapper end -->
+
+  
+  <!-- Plugin -->
+
+
+
+
+    
+    
+<script src="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+
+    
+
+    
+
+    
+
+    <!-- 数学公式 -->
+    
+
+    <!-- 评论插件 -->
+    
+        
+
+        
+    
+
+
+
+<!-- CDN -->
+
+
+    
+
+    
+
+    
+
+
+
+
+    <!-- Service Worker -->
+    
+    <!-- baidu push -->
+    
+
+
+<script id="async-script" src="/js/main.js?v=2.1.8"></script>
+
+</body>
+
+</html>
