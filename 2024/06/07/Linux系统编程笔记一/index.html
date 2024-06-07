@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="x5-fullscreen" content="true">
+<meta name="full-screen" content="yes">
+<meta name="theme-color" content="#317EFB" />
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
+<meta name="description" content="背景本文主要记录《Hands-On System Programming with Linux》一书中第一章的内容，主要是Linux系统编程的基本概念，Linux的一些设计哲学，以及一些简单代码。 学习本章，可以掌握一些基本概念，比如printf到底是不是系统调用，这类问题。 Linux 系统哲学 Everything is a process; if it’s not a process, it">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux系统编程笔记一">
+<meta property="og:url" content="http://example.com/2024/06/07/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E7%AC%94%E8%AE%B0%E4%B8%80/index.html">
+<meta property="og:site_name" content="Cat YuanBao">
+<meta property="og:description" content="背景本文主要记录《Hands-On System Programming with Linux》一书中第一章的内容，主要是Linux系统编程的基本概念，Linux的一些设计哲学，以及一些简单代码。 学习本章，可以掌握一些基本概念，比如printf到底是不是系统调用，这类问题。 Linux 系统哲学 Everything is a process; if it’s not a process, it">
+<meta property="og:locale">
+<meta property="og:image" content="http://example.com/img/404.jpg">
+<meta property="article:published_time" content="2024-06-07T08:16:24.000Z">
+<meta property="article:modified_time" content="2024-06-07T08:16:39.200Z">
+<meta property="article:author" content="橘猫元宝">
+<meta property="article:tag" content="cat">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/img/404.jpg">
+
+    <meta name="keywords" content="cat">
+
+
+<title >Linux系统编程笔记一</title>
+
+<!-- Favicon -->
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='16x16' ></link>
+
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='32x32' ></link>
+
+
+
+
+<!-- Plugin -->
+
+
+
+
+    
+<link rel="stylesheet" href="/css/plugins/bootstrap.row.css">
+
+    
+<link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.css">
+
+    
+    
+
+
+
+
+<!-- Icon -->
+
+    
+<link rel="stylesheet" href="/css/plugins/font-awesome.min.css">
+
+
+
+
+<!-- Variable -->
+<script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-06-07 16:16:39"};</script>
+
+<!-- Theme mode css -->
+<link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
+<script>
+    let defaultMode = ASYNC_CONFIG.theme.default !=='auto' ?  ASYNC_CONFIG.theme.default : (window.matchMedia("(prefers-color-scheme: light)").matches ? 'style-light' : 'style-dark')
+    let catchMode = localStorage.getItem('theme-mode') || defaultMode;
+    let type = catchMode === 'style-dark' ? 'add' : 'remove';
+    document.documentElement.classList[type]('dark')
+</script>
+
+<!-- CDN -->
+
+
+    
+    
+
+
+
+<!-- Site Analytics -->
+ 
+<meta name="generator" content="Hexo 7.0.0"><link rel="stylesheet" href="/css/prism.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+<body>
+
+  <!-- app wrapper -->
+  <div class="trm-app-frame">
+
+    <!-- page preloader -->
+    <div class="trm-preloader">
+    <div class="trm-holder">
+        <div class="preloader">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+    <!-- page preloader end -->
+
+    <!-- change mode preloader -->
+    <div class="trm-mode-swich-animation-frame">
+    <div class="trm-mode-swich-animation">
+        <i class="i-sun"><i class="iconfont far fa-sun"></i></i>
+        <div class="trm-horizon"></div>
+        <i class="i-moon"><i class="iconfont far fa-moon"></i></i>
+    </div>
+</div>
+    <!-- change mode preloader end -->
+
+      <!-- scroll container -->
+      <div id="trm-dynamic-content" class="trm-swup-animation">
+        <div id="trm-scroll-container" class="trm-scroll-container" style="opacity: 0">
+            <!-- top bar -->
+            <header class="trm-top-bar">
+	<div class="container">
+		<div class="trm-left-side">
+			<!-- logo -->
+<a href="/" class="trm-logo-frame trm-anima-link">
+    
+        <img alt="logo" src="/img/favicon.svg">
+    
+    
+        <div class="trm-logo-text">
+            元宝<span>橘猫</span>
+        </div>
+    
+</a>
+<!-- logo end -->
+		</div>
+		<div class="trm-right-side">
+			<!-- menu -->
+<div class="trm-menu">
+    <nav>
+        <ul>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/" target="">
+                    首页
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/archives/" target="">
+                    归档
+                </a>
+                
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+<!-- menu end -->
+			
+    <!-- mode switcher place -->
+    <div class="trm-mode-switcher-place">
+        <div class="trm-mode-switcher">
+            <i class="iconfont far fa-sun"></i>
+            <input class="tgl tgl-light" id="trm-swich" type="checkbox">
+            <label class="trm-swich" for="trm-swich"></label>
+            <i class="iconfont far fa-moon"></i>
+        </div>
+    </div>
+    <!-- mode switcher place end -->
+
+			
+		</div>
+		<div class="trm-menu-btn">
+			<span></span>
+		</div>
+	</div>
+</header>
+            <!-- top bar end -->
+
+            <!-- body -->
+            
+<div class="trm-content-start">
+    <!-- banner -->
+    <div class="trm-banner">
+    
+    <!-- banner cover -->
+    <img style="object-position:top;object-fit:cover;" alt="banner" class="trm-banner-cover" src="/img/banner.png">
+    <!-- banner cover end -->
+    
+
+    <!-- banner content -->
+    <div class="trm-banner-content trm-overlay">
+        <div class="container">
+            <div class="row">
+                
+                <div class="col-lg-4"></div>
+                
+                <div class="col-lg-8">
+
+                    <!-- banner title -->
+                    <div class="trm-banner-text ">
+                        <div class="trm-label trm-mb-20">
+                            NEWS LETTER
+                        </div>
+                        <h1 class="trm-mb-30 trm-hsmb-font">
+                            Linux系统编程笔记一
+                        </h1>
+
+                        
+                            <ul class="trm-breadcrumbs trm-label">
+                                <li>
+                                    <a href="/" class="trm-anima-link">Home</a>
+                                </li>
+                                <li>
+                                    <span>
+                                        2024
+                                    </span>
+                                </li>
+                            </ul>
+                        
+                    </div>
+                    <!-- banner title end -->
+
+                    <!-- scroll hint -->
+                    <span id="scroll-triger" class="trm-scroll-hint-frame">
+                        <div class="trm-scroll-hint"></div>
+                        <span class="trm-label">Scroll down</span>
+                    </span>
+                    <!-- scroll hint end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- banner content end -->
+</div>
+    <!-- banner end -->
+    <div class="container">
+        <div class="row">
+            
+                <div class="trm-page-sidebar col-lg-4 hidden-sm">
+                    <!-- main card -->
+                    <div class="trm-main-card-frame trm-sidebar">
+    <div class="trm-main-card"> 
+        <!-- card header -->
+<div class="trm-mc-header">
+    <div class="trm-avatar-frame trm-mb-20">
+        <img alt="Avatar" class="trm-avatar" src="/img/cat.jpg">
+    </div>
+    <h5 class="trm-name trm-mb-15">
+        橘猫元宝
+    </h5>
+    
+</div>
+<!-- card header end -->
+        <!-- sidebar social -->
+
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<div class="trm-social">
+    
+        <a href="https://github.com" title="Github" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-github"></i>
+        </a>
+    
+</div>
+
+<!-- sidebar social end -->
+        <!-- info -->
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<ul class="trm-table trm-mb-20">
+    
+        <li>
+            <div class="trm-label">
+                Residence:
+            </div>
+            <div class="trm-label trm-label-light">
+                Mars
+            </div>
+        </li>
+    
+</ul>
+<!-- info end -->
+
+        
+    </div>
+</div>
+                    <!-- main card end -->
+                </div>
+            
+            <div class="trm-page-content col-lg-8">
+                <div id="trm-content" class="trm-content">
+                    <div class="trm-post-info row hidden-sm">
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-calendar-alt trm-icon"></i><br>
+            06/07
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-clock trm-icon"></i><br>
+            16:16
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div id="post-author" class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-user trm-icon"></i><br>
+            橘猫元宝
+        </div>
+    </div>
+</div>
+<div class="trm-card ">
+    <article id="article-container" class="trm-publication">
+    <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>本文主要记录《Hands-On System Programming with Linux》一书中第一章的内容，主要是Linux系统编程的基本概念，Linux的一些设计哲学，以及一些简单代码。</p>
+<p>学习本章，可以掌握一些基本概念，比如<code>printf</code>到底是不是系统调用，这类问题。</p>
+<h3 id="Linux-系统哲学"><a href="#Linux-系统哲学" class="headerlink" title="Linux 系统哲学"></a>Linux 系统哲学</h3><ol>
+<li>Everything is a process; if it’s not a process, it’s a file</li>
+<li>One tool to do one task</li>
+<li>Three standard I&#x2F;O channel</li>
+<li>Combine tools seamlessly</li>
+<li>Plain text preferred</li>
+<li>CLI, not GUI</li>
+<li>Modular, designed to be repurposed by others</li>
+<li>Provide the mechanism, not the policy</li>
+</ol>
+<h4 id="进程or文件（所有玩意儿都是进程，不是进程就是一个文件）"><a href="#进程or文件（所有玩意儿都是进程，不是进程就是一个文件）" class="headerlink" title="进程or文件（所有玩意儿都是进程，不是进程就是一个文件）"></a>进程or文件（所有玩意儿都是进程，不是进程就是一个文件）</h4><pre class="line-numbers language-bash"><code class="language-bash">The Unix design philosophy abstracts peripheral devices <span class="token punctuation">(</span>such as the keyboard,
+monitor, mouse, a sensor, and touchscreen<span class="token punctuation">)</span> as files – what it calls device files. 
+
+By doing this, Unix allows the application programmer to conveniently ignore the details
+and just treat <span class="token punctuation">(</span>peripheral<span class="token punctuation">)</span> devices as though they are ordinary disk files.
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>Linux把设备都抽象为文件，这么做的好处在于开发者可以忽略设备的细节，只按照一般文件使用设备接口即可。</p>
+<p>每个进程都有三个<code>fd</code></p>
+<ol>
+<li>Standard input (stdin: fd 0): The keyboard device, by default</li>
+<li>Standard output (stdout: fd 1): The monitor (or terminal) device, by default</li>
+<li>Standard error (stderr: fd 2): The monitor (or terminal) device, by default</li>
+</ol>
+<p>一个组合命令：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ <span class="token function">sort</span> <span class="token operator">&lt;</span> fruit.txt <span class="token operator">></span> sorted.fruit.txt 2<span class="token operator">></span> /dev/null
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>这个命令作用就是从fruit.txt作为sort的输入，排序后将结果输出到sorted.fruit.txt 文件，同时，把标准错误重定向到<code>/dev/null</code>.</p>
+<h4 id="One-tool-to-do-one-task-一个工具做好一件事"><a href="#One-tool-to-do-one-task-一个工具做好一件事" class="headerlink" title="One tool to do one task(一个工具做好一件事)"></a>One tool to do one task(一个工具做好一件事)</h4><p><code>df</code>命令</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ <span class="token function">df</span> --local
+Filesystem          1K-blocks     Used Available Use% Mounted on
+devtmpfs                 4096        0      4096   0% /dev
+tmpfs                 1875064       16   1875048   1% /dev/shm
+tmpfs                  750028     8732    741296   2% /run
+/dev/mapper/rl-root  73364480 17292180  56072300  24% /
+/dev/sda1             1038336   253476    784860  25% /boot
+/dev/mapper/rl-home 131053036   959548 130093488   1% /home
+tmpfs                  375012        0    375012   0% /run/user/0
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>几个命令：</p>
+<pre class="line-numbers language-bash"><code class="language-bash"><span class="token function">df</span> --local <span class="token operator">></span> tmp
+<span class="token function">sed</span> --in-place <span class="token string">'1d'</span> tmp
+<span class="token function">sort</span> -k4nr tmp
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>第一行命令是列出来所有本地已经挂载的文件系统，一般用于查看磁盘容量。</p>
+<p>第二行命令是删除tmp文件第一行，直接在文件上修改。</p>
+<p>第三行是排序tmp文件，按照第四个字段排序，并逆序排序。</p>
+<h4 id="Three-standard-I-O-channels（三个标准IO-channels）"><a href="#Three-standard-I-O-channels（三个标准IO-channels）" class="headerlink" title="Three standard I&#x2F;O channels（三个标准IO channels）"></a>Three standard I&#x2F;O channels（三个标准IO channels）</h4><p>之前已经简单介绍过了，就是标准输入，标准输出，标准错误。</p>
+<p>这里简单提一下<code>stdout</code>的行缓冲机制，<strong>标准输出（stdout）</strong> 一般采用行缓冲机制，特别是在与终端（控制台）交互时。</p>
+<p>基本原理：</p>
+<ul>
+<li>当程序输出数据到 <code>stdout</code> 时，数据会被先存储在行缓冲区。</li>
+<li>当缓冲区遇到换行符（<code>\n</code>）或缓冲区满时，数据会被实际写入到输出设备。</li>
+<li>如果缓冲区没有遇到换行符或没有满，数据会暂时保存在缓冲区中，等待进一步的输入。</li>
+</ul>
+<p>比如以下Python代码：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> time
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Hello, world!"</span><span class="token punctuation">,</span> end<span class="token operator">=</span><span class="token string">""</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 使用end=""避免换行符</span>
+time<span class="token punctuation">.</span>sleep<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 等待2秒</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">" Still here!"</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 由于行缓冲机制，上面的内容和这一行会一起显示</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>Python提供了内置的<code>-u</code>选项，支持运行脚本&#x2F;程序无缓冲：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ python3 -u buffer.py
+Hello, world<span class="token operator">!</span> Still here<span class="token operator">!</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p><code>Hello world!</code>会被直接打印出来。</p>
+<p>stderr是无缓冲的，因为它是处理程序报错的输出，需要比较及时，所以，设计时没有缓冲机制。</p>
+<h4 id="Combine-tools-seamlessly（无缝组合工具）"><a href="#Combine-tools-seamlessly（无缝组合工具）" class="headerlink" title="Combine tools seamlessly（无缝组合工具）"></a>Combine tools seamlessly（无缝组合工具）</h4><p>Linux可以使用管道(pipe)做进程间通信，命令行中常用的<code>|</code>就是一个实际使用场景之一：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ <span class="token function">df</span> --local <span class="token operator">|</span> <span class="token function">sed</span> <span class="token string">'1d'</span> <span class="token operator">></span> tmp
+$ <span class="token function">sed</span> --in-place <span class="token string">'1d'</span> tmp
+$ <span class="token function">sort</span> -k4nr tmp
+rootfs 20640636 1155484 18436736 6% /
+tmpfs 102880 0 102880 0% /run/shm
+tmpfs 51444 160 51284 1% /run
+udev 10240 0 10240 0% /dev
+tmpfs 5120 0 5120 0% /run/loc
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-bash"><code class="language-bash">$ <span class="token function">df</span> --local <span class="token operator">|</span> <span class="token function">sed</span> <span class="token string">'1d'</span> <span class="token operator">|</span> <span class="token function">sort</span> -k4nr
+rootfs 20640636 1155492 18436728 6% /
+tmpfs 102880 0 102880 0% /run/shm
+tmpfs 51444 160 51284 1% /run
+udev 10240 0 10240 0% /dev
+tmpfs 5120 0 5120 0% /run/loc
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>使用管道可以将前一个命令的输出作为后一个命令的输入，这样数据流动下去。</p>
+<h4 id="Plain-text-preferred（首选纯文本）"><a href="#Plain-text-preferred（首选纯文本）" class="headerlink" title="Plain text preferred（首选纯文本）"></a>Plain text preferred（首选纯文本）</h4><p>文本的通用性强，不要搞复杂的东西。</p>
+<h4 id="CLI-not-GUI（使用命令行，而不是图形界面）"><a href="#CLI-not-GUI（使用命令行，而不是图形界面）" class="headerlink" title="CLI, not GUI（使用命令行，而不是图形界面）"></a>CLI, not GUI（使用命令行，而不是图形界面）</h4><p>一般管理服务器都是命令行，不安装图形界面。</p>
+<h4 id="Modular-designed-to-be-repurposed-by-others-（模块化，可供他人重新利用）"><a href="#Modular-designed-to-be-repurposed-by-others-（模块化，可供他人重新利用）" class="headerlink" title="Modular, designed to be repurposed by others  （模块化，可供他人重新利用）"></a>Modular, designed to be repurposed by others  （模块化，可供他人重新利用）</h4><p>设计软件常用的方法论-复用。</p>
+<h4 id="Provide-mechanisms-not-policies（提供机制，而不是政策）"><a href="#Provide-mechanisms-not-policies（提供机制，而不是政策）" class="headerlink" title="Provide mechanisms, not policies（提供机制，而不是政策）"></a>Provide mechanisms, not policies（提供机制，而不是政策）</h4><p>实例：</p>
+<p>Linux 提供了基本的安全机制，如用户和组权限、SELinux、安全模块等。</p>
+<p>这些机制提供了保障系统安全的基础工具，但具体如何配置和使用这些工具，取决于管理员的策略。</p>
+<p>例如，管理员可以根据需求开启或关闭 SELinux，设置不同的安全策略。</p>
+<p>优点在于模块化，可以配置，灵活选择。</p>
+<h3 id="LInux-系统架构"><a href="#LInux-系统架构" class="headerlink" title="LInux 系统架构"></a>LInux 系统架构</h3><p>这里的系统架构主要讨论3个主题。</p>
+<ol>
+<li>The processor Application Binary Interface (ABI).</li>
+<li>CPU privilege levels.</li>
+<li>How these affect the code we write.</li>
+</ol>
+<h4 id="ABI"><a href="#ABI" class="headerlink" title="ABI"></a>ABI</h4><p>Linux ABI（Application Binary Interface，应用二进制接口）是指应用程序与操作系统内核之间的接口定义，包括数据类型、系统调用、库函数等。</p>
+<p>这些接口定义了应用程序在二进制级别如何与操作系统和其他软件组件交互，确保应用程序能够在不同的系统环境中运行而无需重新编译。</p>
+<p>主要由以下几个部分：</p>
+<ol>
+<li><strong>系统调用接口（System Call Interface）</strong></li>
+<li><strong>库接口（Library Interface）</strong></li>
+<li><strong>二进制格式（Binary Format）</strong></li>
+<li><strong>调用约定（Calling Convention）</strong></li>
+<li><strong>数据类型和内存布局（Data Types and Memory Layout）</strong></li>
+</ol>
+<p>以一个简单的C代码为例：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;unistd.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdlib.h></span></span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> a<span class="token punctuation">;</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Hello, Linux System Programming, World!\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    a <span class="token operator">=</span> <span class="token number">5</span><span class="token punctuation">;</span>
+    <span class="token function">exit</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>使用<code>objdump</code>查看机器代码：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ objdump --source ./a.out
+./a.out:     <span class="token function">file</span> <span class="token function">format</span> elf64-x86-64
+
+
+Disassembly of section .init:
+
+0000000000401000 <span class="token operator">&lt;</span>_init<span class="token operator">></span>:
+  401000:	f3 0f 1e fa          	endbr64
+  401004:	48 83 ec 08          	sub    <span class="token variable">$0x8</span>,%rsp
+  401008:	48 8b 05 e1 2f 00 00 	mov    0x2fe1<span class="token punctuation">(</span>%rip<span class="token punctuation">)</span>,%rax        <span class="token comment" spellcheck="true"># 403ff0 &lt;__gmon_start__></span>
+  40100f:	48 85 c0             	<span class="token function">test</span>   %rax,%rax
+  401012:	74 02                	je     401016 <span class="token operator">&lt;</span>_init+0x16<span class="token operator">></span>
+  401014:	ff d0                	callq  *%rax
+  401016:	48 83 c4 08          	add    <span class="token variable">$0x8</span>,%rsp
+  40101a:	c3                   	retq
+
+Disassembly of section .plt:
+
+0000000000401020 <span class="token operator">&lt;</span>.plt<span class="token operator">></span>:
+  401020:	ff 35 e2 2f 00 00    	pushq  0x2fe2<span class="token punctuation">(</span>%rip<span class="token punctuation">)</span>        <span class="token comment" spellcheck="true"># 404008 &lt;_GLOBAL_OFFSET_TABLE_+0x8></span>
+  401026:	ff 25 e4 2f 00 00    	jmpq   *0x2fe4<span class="token punctuation">(</span>%rip<span class="token punctuation">)</span>        <span class="token comment" spellcheck="true"># 404010 &lt;_GLOBAL_OFFSET_TABLE_+0x10></span>
+  40102c:	0f 1f 40 00          	nopl   0x0<span class="token punctuation">(</span>%rax<span class="token punctuation">)</span>
+
+0000000000401030 <span class="token operator">&lt;</span>puts@plt<span class="token operator">></span>:
+  401030:	ff 25 e2 2f 00 00    	jmpq   *0x2fe2<span class="token punctuation">(</span>%rip<span class="token punctuation">)</span>        <span class="token comment" spellcheck="true"># 404018 &lt;puts@GLIBC_2.2.5></span>
+  401036:	68 00 00 00 00       	pushq  <span class="token variable">$0x0</span>
+  40103b:	e9 e0 ff ff ff       	jmpq   401020 <span class="token operator">&lt;</span>.plt<span class="token operator">></span>
+
+0000000000401040 <span class="token operator">&lt;</span>exit@plt<span class="token operator">></span>:
+  401040:	ff 25 da 2f 00 00    	jmpq   *0x2fda<span class="token punctuation">(</span>%rip<span class="token punctuation">)</span>        <span class="token comment" spellcheck="true"># 404020 &lt;exit@GLIBC_2.2.5></span>
+  401046:	68 01 00 00 00       	pushq  <span class="token variable">$0x1</span>
+  40104b:	e9 d0 ff ff ff       	jmpq   401020 <span class="token operator">&lt;</span>.plt<span class="token operator">></span>
+
+Disassembly of section .text:
+
+0000000000401050 <span class="token operator">&lt;</span>_start<span class="token operator">></span>:
+  401050:	f3 0f 1e fa          	endbr64
+  401054:	31 ed                	xor    %ebp,%ebp
+  401056:	49 89 d1             	mov    %rdx,%r9
+  401059:	5e                   	pop    %rsi
+  40105a:	48 89 e2             	mov    %rsp,%rdx
+  40105d:	48 83 e4 f0          	and    <span class="token variable">$0xfffffffffffffff0</span>,%rsp
+  401061:	50                   	push   %rax
+  401062:	54                   	push   %rsp
+  401063:	45 31 c0             	xor    %r8d,%r8d
+  401066:	31 c9                	xor    %ecx,%ecx
+  401068:	48 c7 c7 36 11 40 00 	mov    <span class="token variable">$0x401136</span>,%rdi
+  40106f:	ff 15 6b 2f 00 00    	callq  *0x2f6b<span class="token punctuation">(</span>%rip<span class="token punctuation">)</span>        <span class="token comment" spellcheck="true"># 403fe0 &lt;__libc_start_main@GLIBC_2.34></span>
+  401075:	f4                   	hlt
+
+0000000000401076 <span class="token operator">&lt;</span>.annobin_abi_note.c<span class="token operator">></span>:
+  401076:	66 2e 0f 1f 84 00 00 	nopw   %cs:0x0<span class="token punctuation">(</span>%rax,%rax,1<span class="token punctuation">)</span>
+  40107d:	00 00 00
+
+0000000000401080 <span class="token operator">&lt;</span>_dl_relocate_static_pie<span class="token operator">></span>:
+  401080:	f3 0f 1e fa          	endbr64
+  401084:	c3                   	retq
+
+0000000000401085 <span class="token operator">&lt;</span>.annobin__dl_relocate_static_pie.end<span class="token operator">></span>:
+  401085:	66 2e 0f 1f 84 00 00 	nopw   %cs:0x0<span class="token punctuation">(</span>%rax,%rax,1<span class="token punctuation">)</span>
+  40108c:	00 00 00
+  40108f:	90                   	nop
+
+0000000000401090 <span class="token operator">&lt;</span>deregister_tm_clones<span class="token operator">></span>:
+  401090:	48 8d 3d 99 2f 00 00 	lea    0x2f99<span class="token punctuation">(</span>%rip<span class="token punctuation">)</span>,%rdi        <span class="token comment" spellcheck="true"># 404030 &lt;__TMC_END__></span>
+  401097:	48 8d 05 92 2f 00 00 	lea    0x2f92<span class="token punctuation">(</span>%rip<span class="token punctuation">)</span>,%rax        <span class="token comment" spellcheck="true"># 404030 &lt;__TMC_END__></span>
+  40109e:	48 39 f8             	<span class="token function">cmp</span>    %rdi,%rax
+  4010a1:	74 15                	je     4010b8 <span class="token operator">&lt;</span>deregister_tm_clones+0x28<span class="token operator">></span>
+  4010a3:	48 8b 05 3e 2f 00 00 	mov    0x2f3e<span class="token punctuation">(</span>%rip<span class="token punctuation">)</span>,%rax        <span class="token comment" spellcheck="true"># 403fe8 &lt;_ITM_deregisterTMCloneTable></span>
+  4010aa:	48 85 c0             	<span class="token function">test</span>   %rax,%rax
+  4010ad:	74 09                	je     4010b8 <span class="token operator">&lt;</span>deregister_tm_clones+0x28<span class="token operator">></span>
+  4010af:	ff e0                	jmpq   *%rax
+  4010b1:	0f 1f 80 00 00 00 00 	nopl   0x0<span class="token punctuation">(</span>%rax<span class="token punctuation">)</span>
+  4010b8:	c3                   	retq
+  4010b9:	0f 1f 80 00 00 00 00 	nopl   0x0<span class="token punctuation">(</span>%rax<span class="token punctuation">)</span>
+
+00000000004010c0 <span class="token operator">&lt;</span>register_tm_clones<span class="token operator">></span>:
+  4010c0:	48 8d 3d 69 2f 00 00 	lea    0x2f69<span class="token punctuation">(</span>%rip<span class="token punctuation">)</span>,%rdi        <span class="token comment" spellcheck="true"># 404030 &lt;__TMC_END__></span>
+  4010c7:	48 8d 35 62 2f 00 00 	lea    0x2f62<span class="token punctuation">(</span>%rip<span class="token punctuation">)</span>,%rsi        <span class="token comment" spellcheck="true"># 404030 &lt;__TMC_END__></span>
+  4010ce:	48 29 fe             	sub    %rdi,%rsi
+  4010d1:	48 89 f0             	mov    %rsi,%rax
+  4010d4:	48 c1 ee 3f          	shr    <span class="token variable">$0x3f</span>,%rsi
+  4010d8:	48 c1 f8 03          	sar    <span class="token variable">$0x3</span>,%rax
+  4010dc:	48 01 c6             	add    %rax,%rsi
+  4010df:	48 d1 fe             	sar    %rsi
+  4010e2:	74 14                	je     4010f8 <span class="token operator">&lt;</span>register_tm_clones+0x38<span class="token operator">></span>
+  4010e4:	48 8b 05 0d 2f 00 00 	mov    0x2f0d<span class="token punctuation">(</span>%rip<span class="token punctuation">)</span>,%rax        <span class="token comment" spellcheck="true"># 403ff8 &lt;_ITM_registerTMCloneTable></span>
+  4010eb:	48 85 c0             	<span class="token function">test</span>   %rax,%rax
+  4010ee:	74 08                	je     4010f8 <span class="token operator">&lt;</span>register_tm_clones+0x38<span class="token operator">></span>
+  4010f0:	ff e0                	jmpq   *%rax
+  4010f2:	66 0f 1f 44 00 00    	nopw   0x0<span class="token punctuation">(</span>%rax,%rax,1<span class="token punctuation">)</span>
+  4010f8:	c3                   	retq
+  4010f9:	0f 1f 80 00 00 00 00 	nopl   0x0<span class="token punctuation">(</span>%rax<span class="token punctuation">)</span>
+
+0000000000401100 <span class="token operator">&lt;</span>__do_global_dtors_aux<span class="token operator">></span>:
+  401100:	f3 0f 1e fa          	endbr64
+  401104:	80 3d 21 2f 00 00 00 	cmpb   <span class="token variable">$0x0</span>,0x2f21<span class="token punctuation">(</span>%rip<span class="token punctuation">)</span>        <span class="token comment" spellcheck="true"># 40402c &lt;completed.0></span>
+  40110b:	75 13                	jne    401120 <span class="token operator">&lt;</span>__do_global_dtors_aux+0x20<span class="token operator">></span>
+  40110d:	55                   	push   %rbp
+  40110e:	48 89 e5             	mov    %rsp,%rbp
+  401111:	e8 7a ff ff ff       	callq  401090 <span class="token operator">&lt;</span>deregister_tm_clones<span class="token operator">></span>
+  401116:	c6 05 0f 2f 00 00 01 	movb   <span class="token variable">$0x1</span>,0x2f0f<span class="token punctuation">(</span>%rip<span class="token punctuation">)</span>        <span class="token comment" spellcheck="true"># 40402c &lt;completed.0></span>
+  40111d:	5d                   	pop    %rbp
+  40111e:	c3                   	retq
+  40111f:	90                   	nop
+  401120:	c3                   	retq
+  401121:	66 66 2e 0f 1f 84 00 	data16 nopw %cs:0x0<span class="token punctuation">(</span>%rax,%rax,1<span class="token punctuation">)</span>
+  401128:	00 00 00 00
+  40112c:	0f 1f 40 00          	nopl   0x0<span class="token punctuation">(</span>%rax<span class="token punctuation">)</span>
+
+0000000000401130 <span class="token operator">&lt;</span>frame_dummy<span class="token operator">></span>:
+  401130:	f3 0f 1e fa          	endbr64
+  401134:	eb 8a                	jmp    4010c0 <span class="token operator">&lt;</span>register_tm_clones<span class="token operator">></span>
+
+0000000000401136 <span class="token operator">&lt;</span>main<span class="token operator">></span>:
+  401136:	55                   	push   %rbp
+  401137:	48 89 e5             	mov    %rsp,%rbp
+  40113a:	48 83 ec 10          	sub    <span class="token variable">$0x10</span>,%rsp
+  40113e:	bf 10 20 40 00       	mov    <span class="token variable">$0x402010</span>,%edi
+  401143:	e8 e8 fe ff ff       	callq  401030 <span class="token operator">&lt;</span>puts@plt<span class="token operator">></span>
+  401148:	c7 45 fc 05 00 00 00 	movl   <span class="token variable">$0x5</span>,-0x4<span class="token punctuation">(</span>%rbp<span class="token punctuation">)</span>
+  40114f:	bf 00 00 00 00       	mov    <span class="token variable">$0x0</span>,%edi
+  401154:	e8 e7 fe ff ff       	callq  401040 <span class="token operator">&lt;</span>exit@plt<span class="token operator">></span>
+
+Disassembly of section .fini:
+
+000000000040115c <span class="token operator">&lt;</span>_fini<span class="token operator">></span>:
+  40115c:	f3 0f 1e fa          	endbr64
+  401160:	48 83 ec 08          	sub    <span class="token variable">$0x8</span>,%rsp
+  401164:	48 83 c4 08          	add    <span class="token variable">$0x8</span>,%rsp
+  401168:	c3                   	retq
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h5 id="Accessing-a-register’s-content-via-inline-assembly-使用内联汇编获取寄存器内容"><a href="#Accessing-a-register’s-content-via-inline-assembly-使用内联汇编获取寄存器内容" class="headerlink" title="Accessing a register’s content via inline assembly(使用内联汇编获取寄存器内容)"></a>Accessing a register’s content via inline assembly(使用内联汇编获取寄存器内容)</h5><p>通过内联汇编语句，获取到寄存器RCX内容：</p>
+<pre class="line-numbers language-bash"><code class="language-bash"><span class="token comment" spellcheck="true">#include &lt;stdio.h></span>
+<span class="token comment" spellcheck="true">#include &lt;unistd.h></span>
+<span class="token comment" spellcheck="true">#include &lt;stdlib.h></span>
+typedef unsigned long u64<span class="token punctuation">;</span>
+
+static u64 get_rcx<span class="token punctuation">(</span>void<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    __asm__ __volatile__<span class="token punctuation">(</span>
+        <span class="token string">"push %rcx\n\t"</span>
+        <span class="token string">"movq <span class="token variable">$5</span>, %rcx\n\t"</span>
+        <span class="token string">"movq %rcx, %rax"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    __asm__ __volatile__<span class="token punctuation">(</span><span class="token string">"pop %rcx"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+int main<span class="token punctuation">(</span>void<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    printf<span class="token punctuation">(</span><span class="token string">"Hello, inline assembly:\n [RCX] = 0x%lx\n"</span>,
+    get_rcx<span class="token punctuation">(</span><span class="token punctuation">))</span><span class="token punctuation">;</span>
+    exit<span class="token punctuation">(</span>0<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ ./a.out
+Hello, inline assembly:
+ <span class="token punctuation">[</span>RCX<span class="token punctuation">]</span> <span class="token operator">=</span> 0x5
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>修改代码：</p>
+<pre class="line-numbers language-bash"><code class="language-bash"><span class="token comment" spellcheck="true">#include &lt;stdio.h></span>
+<span class="token comment" spellcheck="true">#include &lt;unistd.h></span>
+<span class="token comment" spellcheck="true">#include &lt;stdlib.h></span>
+typedef unsigned long u64<span class="token punctuation">;</span>
+
+static u64 get_rcx<span class="token punctuation">(</span>void<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    __asm__ __volatile__<span class="token punctuation">(</span><span class="token string">"movq %cr0, %rax"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+int main<span class="token punctuation">(</span>void<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    printf<span class="token punctuation">(</span><span class="token string">"Hello, inline assembly:\n [RCX] = 0x%lx\n"</span>,
+    get_rcx<span class="token punctuation">(</span><span class="token punctuation">))</span><span class="token punctuation">;</span>
+    exit<span class="token punctuation">(</span>0<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ ./a.out
+<span class="token punctuation">[</span>1<span class="token punctuation">]</span>    2463 segmentation fault <span class="token punctuation">(</span>core dumped<span class="token punctuation">)</span>  ./a.out
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>为什么出现这种情况？</p>
+<h5 id="CPU-privilege-levels-CPU特权等级"><a href="#CPU-privilege-levels-CPU特权等级" class="headerlink" title="CPU privilege levels(CPU特权等级)"></a>CPU privilege levels(CPU特权等级)</h5><p>代码报错的原因与特权级别有关。</p>
+<p>在 x86 架构中，控制寄存器（如 <code>cr0</code>）只能在内核模式（Ring 0）下访问，而你的程序在用户模式（Ring 3）下运行，因此无法访问这些寄存器。</p>
+<p>那么什么是特权等级，有什么特权等级？</p>
+<p>在计算机系统中，CPU 操作权限通常被划分为不同的级别，以确保系统的安全性和稳定性。</p>
+<p>最常见的划分是 <strong>用户模式（User Mode）</strong> 和 <strong>内核模式（Kernel Mode）</strong>，也称为 <strong>监督模式（Supervisor Mode）</strong> 或 <strong>特权模式（Privileged Mode）</strong>。</p>
+<p>下面是特权模式和用户模式的对比，</p>
+<p>因为上面的代码试图访问CR0控制寄存器的内容，这在用户模式中是不允许的，以及仅在Ring 0特权下允许！</p>
+<p>只有操作系统或内核代码才能访问控件寄存器。</p>
+<table>
+<thead>
+<tr>
+<th>特性&#x2F;权限</th>
+<th>Supervisor Mode (Ring 0)</th>
+<th>User Mode (Ring 3)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th><strong>别名</strong></th>
+<th>内核模式</th>
+<th>用户模式</th>
+</tr>
+</thead>
+<tbody><tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th><strong>特权级别</strong></th>
+<th>Ring 0</th>
+<th>Ring 3</th>
+</tr>
+</thead>
+<tbody><tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th><strong>典型使用者</strong></th>
+<th>操作系统内核、设备驱动程序</th>
+<th>用户应用程序、标准库</th>
+</tr>
+</thead>
+<tbody><tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th><strong>访问权限</strong></th>
+<th>完全访问所有硬件资源</th>
+<th>受限访问，不能直接访问硬件资源</th>
+</tr>
+</thead>
+<tbody><tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th><strong>特权指令</strong></th>
+<th>可以执行</th>
+<th>不能执行</th>
+</tr>
+</thead>
+<tbody><tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th><strong>内存访问</strong></th>
+<th>可以访问所有内存区域</th>
+<th>受限访问，不能访问内核态内存</th>
+</tr>
+</thead>
+<tbody><tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th><strong>硬件访问</strong></th>
+<th>可以直接访问和操作硬件</th>
+<th>不能直接访问硬件，只能通过系统调用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th><strong>系统调用</strong></th>
+<th>不需要，通过直接访问硬件和内存</th>
+<th>需要，通过 <code>syscall</code> 等间接访问</th>
+</tr>
+</thead>
+<tbody><tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th><strong>错误处理</strong></th>
+<th>处理器异常、系统崩溃恢复</th>
+<th>通常不能处理，需要内核介入</th>
+</tr>
+</thead>
+<tbody><tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th><strong>安全性</strong></th>
+<th>高，控制整个系统</th>
+<th>低，受限于内核提供的接口</th>
+</tr>
+</thead>
+<tbody><tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th><strong>性能</strong></th>
+<th>高，直接操作硬件和内存</th>
+<th>低，通过系统调用间接操作硬件和内存</th>
+</tr>
+</thead>
+<tbody><tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th><strong>上下文切换</strong></th>
+<th>复杂，上下文包括所有特权级信息</th>
+<th>相对简单，不包含特权级信息</th>
+</tr>
+</thead>
+<tbody><tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<h4 id="Linux软件架构的分层"><a href="#Linux软件架构的分层" class="headerlink" title="Linux软件架构的分层"></a>Linux软件架构的分层</h4><p>下面是一个分层架构图：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">+----------------------------------+
+<span class="token operator">|</span>           用户应用程序            <span class="token operator">|</span>
++----------------------------------+
+<span class="token operator">|</span>           系统服务               <span class="token operator">|</span>
++----------------------------------+
+<span class="token operator">|</span>         shell 和命令行工具         <span class="token operator">|</span>
++----------------------------------+
+<span class="token operator">|</span>           系统库<span class="token punctuation">(</span>libc等<span class="token punctuation">)</span>                 <span class="token operator">|</span>
++----------------------------------+
+<span class="token operator">|</span>      系统调用接口 <span class="token punctuation">(</span>SCI<span class="token punctuation">)</span>           <span class="token operator">|</span>
++----------------------------------+
+<span class="token operator">|</span>            内核                   <span class="token operator">|</span>
+<span class="token operator">|</span> +------------------------------+ <span class="token operator">|</span>
+<span class="token operator">|</span> <span class="token operator">|</span>        进程管理              <span class="token operator">|</span> <span class="token operator">|</span>
+<span class="token operator">|</span> <span class="token operator">|</span>        内存管理              <span class="token operator">|</span> <span class="token operator">|</span>
+<span class="token operator">|</span> <span class="token operator">|</span>        设备管理              <span class="token operator">|</span> <span class="token operator">|</span>
+<span class="token operator">|</span> <span class="token operator">|</span>      文件系统管理            <span class="token operator">|</span> <span class="token operator">|</span>
+<span class="token operator">|</span> <span class="token operator">|</span>        网络管理              <span class="token operator">|</span> <span class="token operator">|</span>
+<span class="token operator">|</span> +------------------------------+ <span class="token operator">|</span>
++----------------------------------+
+<span class="token operator">|</span>     硬件抽象层 <span class="token punctuation">(</span>HAL<span class="token punctuation">)</span>              <span class="token operator">|</span>
++----------------------------------+
+<span class="token operator">|</span>           硬件层                 <span class="token operator">|</span>
++----------------------------------+
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h5 id="Libraries"><a href="#Libraries" class="headerlink" title="Libraries"></a>Libraries</h5><p>我们经常使用的<code>printf</code>就是一个Libraries函数，通常被放在GNU libc (glibc). 库函数下面还有一层，叫做系统调用接口(system all)</p>
+<h4 id="system-call"><a href="#system-call" class="headerlink" title="system call"></a>system call</h4><p>系统调用实际上是内核功能，可以通过glibc存根例程。</p>
+<p>它们起着关键作用；它们将用户空间连接到内核空间。</p>
+<p>如果用户程序想要请求内核的某些内容（从文件读取，写入网络，更改文件的权限），它通过发出系统调用来做到这一点。<br>因此，系统调用是内核的唯一合法入口点。没有其他可能。</p>
+<p>在程序调用到系统调用时，CPU就会陷入到内核态。</p>
+<p>以<code>hello.c</code>举例：</p>
+<pre class="line-numbers language-bash"><code class="language-bash"><span class="token comment" spellcheck="true">#include &lt;stdio.h></span>
+<span class="token comment" spellcheck="true">#include &lt;unistd.h></span>
+<span class="token comment" spellcheck="true">#include &lt;stdlib.h></span>
+
+int main<span class="token punctuation">(</span>void<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    int a<span class="token punctuation">;</span>
+    printf<span class="token punctuation">(</span><span class="token string">"Hello, Linux System Programming, World!\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    a <span class="token operator">=</span> 5<span class="token punctuation">;</span>
+    exit<span class="token punctuation">(</span>0<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>可以使用<code>strace</code>命令，查看程序做了哪些系统调用：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ <span class="token function">strace</span> ./a.out
+execve<span class="token punctuation">(</span><span class="token string">"./a.out"</span>, <span class="token punctuation">[</span><span class="token string">"./a.out"</span><span class="token punctuation">]</span>, 0x7ffe7f87b290 /* 44 vars */<span class="token punctuation">)</span> <span class="token operator">=</span> 0
+brk<span class="token punctuation">(</span>NULL<span class="token punctuation">)</span>                               <span class="token operator">=</span> 0x1072000
+arch_prctl<span class="token punctuation">(</span>0x3001 /* ARCH_??? */, 0x7ffd6888cbd0<span class="token punctuation">)</span> <span class="token operator">=</span> -1 EINVAL <span class="token punctuation">(</span>Invalid argument<span class="token punctuation">)</span>
+access<span class="token punctuation">(</span><span class="token string">"/etc/ld.so.preload"</span>, R_OK<span class="token punctuation">)</span>      <span class="token operator">=</span> -1 ENOENT <span class="token punctuation">(</span>No such <span class="token function">file</span> or directory<span class="token punctuation">)</span>
+openat<span class="token punctuation">(</span>AT_FDCWD, <span class="token string">"/etc/ld.so.cache"</span>, O_RDONLY<span class="token operator">|</span>O_CLOEXEC<span class="token punctuation">)</span> <span class="token operator">=</span> 3
+newfstatat<span class="token punctuation">(</span>3, <span class="token string">""</span>, <span class="token punctuation">{</span>st_mode<span class="token operator">=</span>S_IFREG<span class="token operator">|</span>0644, st_size<span class="token operator">=</span>29299, <span class="token punctuation">..</span>.<span class="token punctuation">}</span>, AT_EMPTY_PATH<span class="token punctuation">)</span> <span class="token operator">=</span> 0
+mmap<span class="token punctuation">(</span>NULL, 29299, PROT_READ, MAP_PRIVATE, 3, 0<span class="token punctuation">)</span> <span class="token operator">=</span> 0x7f1c4775c000
+close<span class="token punctuation">(</span>3<span class="token punctuation">)</span>                                <span class="token operator">=</span> 0
+openat<span class="token punctuation">(</span>AT_FDCWD, <span class="token string">"/lib64/libc.so.6"</span>, O_RDONLY<span class="token operator">|</span>O_CLOEXEC<span class="token punctuation">)</span> <span class="token operator">=</span> 3
+read<span class="token punctuation">(</span>3, <span class="token string">"\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0p\0\4\0\0\0\0\0"</span><span class="token punctuation">..</span>., 832<span class="token punctuation">)</span> <span class="token operator">=</span> 832
+pread64<span class="token punctuation">(</span>3, <span class="token string">"\6\0\0\0\4\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0"</span><span class="token punctuation">..</span>., 784, 64<span class="token punctuation">)</span> <span class="token operator">=</span> 784
+pread64<span class="token punctuation">(</span>3, <span class="token string">"\4\0\0\0 \0\0\0\5\0\0\0GNU\0\2\0\0\300\4\0\0\0\3\0\0\0\0\0\0\0"</span><span class="token punctuation">..</span>., 48, 848<span class="token punctuation">)</span> <span class="token operator">=</span> 48
+pread64<span class="token punctuation">(</span>3, <span class="token string">"\4\0\0\0\24\0\0\0\3\0\0\0GNU\0e\242\235\v\34\330\214\25\264L\375\245b\335\220N"</span><span class="token punctuation">..</span>., 68, 896<span class="token punctuation">)</span> <span class="token operator">=</span> 68
+newfstatat<span class="token punctuation">(</span>3, <span class="token string">""</span>, <span class="token punctuation">{</span>st_mode<span class="token operator">=</span>S_IFREG<span class="token operator">|</span>0755, st_size<span class="token operator">=</span>2387200, <span class="token punctuation">..</span>.<span class="token punctuation">}</span>, AT_EMPTY_PATH<span class="token punctuation">)</span> <span class="token operator">=</span> 0
+mmap<span class="token punctuation">(</span>NULL, 8192, PROT_READ<span class="token operator">|</span>PROT_WRITE, MAP_PRIVATE<span class="token operator">|</span>MAP_ANONYMOUS, -1, 0<span class="token punctuation">)</span> <span class="token operator">=</span> 0x7f1c4775a000
+pread64<span class="token punctuation">(</span>3, <span class="token string">"\6\0\0\0\4\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0"</span><span class="token punctuation">..</span>., 784, 64<span class="token punctuation">)</span> <span class="token operator">=</span> 784
+mmap<span class="token punctuation">(</span>NULL, 2133936, PROT_READ, MAP_PRIVATE<span class="token operator">|</span>MAP_DENYWRITE, 3, 0<span class="token punctuation">)</span> <span class="token operator">=</span> 0x7f1c47400000
+mprotect<span class="token punctuation">(</span>0x7f1c47428000, 1892352, PROT_NONE<span class="token punctuation">)</span> <span class="token operator">=</span> 0
+mmap<span class="token punctuation">(</span>0x7f1c47428000, 1527808, PROT_READ<span class="token operator">|</span>PROT_EXEC, MAP_PRIVATE<span class="token operator">|</span>MAP_FIXED<span class="token operator">|</span>MAP_DENYWRITE, 3, 0x28000<span class="token punctuation">)</span> <span class="token operator">=</span> 0x7f1c47428000
+mmap<span class="token punctuation">(</span>0x7f1c4759d000, 360448, PROT_READ, MAP_PRIVATE<span class="token operator">|</span>MAP_FIXED<span class="token operator">|</span>MAP_DENYWRITE, 3, 0x19d000<span class="token punctuation">)</span> <span class="token operator">=</span> 0x7f1c4759d000
+mmap<span class="token punctuation">(</span>0x7f1c475f6000, 24576, PROT_READ<span class="token operator">|</span>PROT_WRITE, MAP_PRIVATE<span class="token operator">|</span>MAP_FIXED<span class="token operator">|</span>MAP_DENYWRITE, 3, 0x1f5000<span class="token punctuation">)</span> <span class="token operator">=</span> 0x7f1c475f6000
+mmap<span class="token punctuation">(</span>0x7f1c475fc000, 53168, PROT_READ<span class="token operator">|</span>PROT_WRITE, MAP_PRIVATE<span class="token operator">|</span>MAP_FIXED<span class="token operator">|</span>MAP_ANONYMOUS, -1, 0<span class="token punctuation">)</span> <span class="token operator">=</span> 0x7f1c475fc000
+close<span class="token punctuation">(</span>3<span class="token punctuation">)</span>                                <span class="token operator">=</span> 0
+mmap<span class="token punctuation">(</span>NULL, 8192, PROT_READ<span class="token operator">|</span>PROT_WRITE, MAP_PRIVATE<span class="token operator">|</span>MAP_ANONYMOUS, -1, 0<span class="token punctuation">)</span> <span class="token operator">=</span> 0x7f1c47758000
+arch_prctl<span class="token punctuation">(</span>ARCH_SET_FS, 0x7f1c4775b600<span class="token punctuation">)</span> <span class="token operator">=</span> 0
+set_tid_address<span class="token punctuation">(</span>0x7f1c4775b8d0<span class="token punctuation">)</span>         <span class="token operator">=</span> 2574
+set_robust_list<span class="token punctuation">(</span>0x7f1c4775b8e0, 24<span class="token punctuation">)</span>     <span class="token operator">=</span> 0
+rseq<span class="token punctuation">(</span>0x7f1c4775bfa0, 0x20, 0, 0x53053053<span class="token punctuation">)</span> <span class="token operator">=</span> 0
+mprotect<span class="token punctuation">(</span>0x7f1c475f6000, 16384, PROT_READ<span class="token punctuation">)</span> <span class="token operator">=</span> 0
+mprotect<span class="token punctuation">(</span>0x403000, 4096, PROT_READ<span class="token punctuation">)</span>     <span class="token operator">=</span> 0
+mprotect<span class="token punctuation">(</span>0x7f1c47798000, 8192, PROT_READ<span class="token punctuation">)</span> <span class="token operator">=</span> 0
+prlimit64<span class="token punctuation">(</span>0, RLIMIT_STACK, NULL, <span class="token punctuation">{</span>rlim_cur<span class="token operator">=</span>8192*1024, rlim_max<span class="token operator">=</span>RLIM64_INFINITY<span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token operator">=</span> 0
+munmap<span class="token punctuation">(</span>0x7f1c4775c000, 29299<span class="token punctuation">)</span>           <span class="token operator">=</span> 0
+newfstatat<span class="token punctuation">(</span>1, <span class="token string">""</span>, <span class="token punctuation">{</span>st_mode<span class="token operator">=</span>S_IFCHR<span class="token operator">|</span>0620, st_rdev<span class="token operator">=</span>makedev<span class="token punctuation">(</span>0x88, 0<span class="token punctuation">)</span>, <span class="token punctuation">..</span>.<span class="token punctuation">}</span>, AT_EMPTY_PATH<span class="token punctuation">)</span> <span class="token operator">=</span> 0
+getrandom<span class="token punctuation">(</span><span class="token string">"\x2c\xf9\xeb\xd2\x13\xac\x9c\x63"</span>, 8, GRND_NONBLOCK<span class="token punctuation">)</span> <span class="token operator">=</span> 8
+brk<span class="token punctuation">(</span>NULL<span class="token punctuation">)</span>                               <span class="token operator">=</span> 0x1072000
+brk<span class="token punctuation">(</span>0x1093000<span class="token punctuation">)</span>                          <span class="token operator">=</span> 0x1093000
+write<span class="token punctuation">(</span>1, <span class="token string">"Hello, Linux System Programming,"</span><span class="token punctuation">..</span>., 40Hello, Linux System Programming, World<span class="token operator">!</span>
+<span class="token punctuation">)</span> <span class="token operator">=</span> 40
+exit_group<span class="token punctuation">(</span>0<span class="token punctuation">)</span>                           <span class="token operator">=</span> ?
++++ exited with 0 +++
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里看到：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">write<span class="token punctuation">(</span>1, <span class="token string">"Hello, Linux System Programming,"</span><span class="token punctuation">..</span>., 40Hello, Linux System Programming, World<span class="token operator">!</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>并没有发现<code>printf</code>的调用，而是进行<code>write</code>的系统调用。<code>write</code>是系统调用，不是库函数。</p>
+<p>具体流程如下图：</p>
+<p>  <img src="/images/sys-call.jpg" alt="alt text" loading="lazy" onerror='this.onerror=null;this.src="/img/404.jpg"'></p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>本章主要介绍了一下Linux的一些设计哲学，以及一些基本的知识，下一章主要介绍虚拟内存相关。</p>
+
+</article>
+    
+    
+
+</div>
+<div class="trm-post-next-prev row">
+    <div class="col-lg-12">
+        <!-- title -->
+        <h5 class="trm-title-with-divider">
+            其他文章
+            <span data-number="02"></span>
+        </h5>
+    </div>
+    
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/06/07/%E4%BB%80%E4%B9%88%E6%98%AF%E5%BA%95%E5%B1%82%E7%AE%97%E5%AD%90%E5%BC%80%E5%8F%91/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" #.">
+                    未分类
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/06/07/%E4%BB%80%E4%B9%88%E6%98%AF%E5%BA%95%E5%B1%82%E7%AE%97%E5%AD%90%E5%BC%80%E5%8F%91/" class="trm-anima-link">
+                    什么是底层算子开发
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/06/07</li>
+                <li>10:48</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+</div>
+
+    
+
+
+
+                    <div class="trm-divider footer-divider"></div>
+
+                    <!-- footer -->
+                    <footer class="trm-scroll-animation">
+
+    
+
+    
+
+    
+        <div class="trm-footer-item">
+            <span>
+                由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v7.0.0
+            </span>
+            <span class="footer-separator" data-separator=" | "></span>
+            <span> 
+                主题 - 
+                <a rel="noopener" href='https://github.com/MaLuns/hexo-theme-async' target='_blank'>Async</a>
+                v2.1.8
+            </span>
+        </div>
+      
+
+     
+
+     
+</footer>
+ 
+                    <!-- footer end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- body end -->
+
+            
+
+            
+<div class="trm-fixed-container">
+    
+    
+        <div class="trm-fixed-btn" data-title="阅读模式" onclick="asyncFun.switchReadMode()">
+            <i class="iconfont fas fa-book-reader"></i>
+        </div>
+    
+    
+    <div id="trm-back-top" class="trm-fixed-btn" data-title="回到顶部">
+        <i class="iconfont fas fa-arrow-up"></i>
+    </div>
+</div>
+        </div>
+      </div>
+      <!-- scroll container end -->
+  </div>
+  <!-- app wrapper end -->
+
+  
+  <!-- Plugin -->
+
+
+
+
+    
+    
+<script src="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+
+    
+
+    
+
+    
+
+    <!-- 数学公式 -->
+    
+
+    <!-- 评论插件 -->
+    
+        
+
+        
+    
+
+
+
+<!-- CDN -->
+
+
+    
+
+    
+
+    
+
+
+
+
+    <!-- Service Worker -->
+    
+    <!-- baidu push -->
+    
+
+
+<script id="async-script" src="/js/main.js?v=2.1.8"></script>
+
+</body>
+
+</html>
