@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="x5-fullscreen" content="true">
+<meta name="full-screen" content="yes">
+<meta name="theme-color" content="#317EFB" />
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
+<meta name="description" content="背景本文主要记录《Hands-On System Programming with Linux》一书中第四章的内容，主要是内存相关API，比如malloc等相关的知识，包括基础和内部实现原理。 malloc基本用法malloc并不是一个系统调用，而是glibc的一个库函数，比如如下的代码： #include &lt;stdlib.h&gt;  int main() {     int *p &#x3D; NULL">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux系统编程笔记三">
+<meta property="og:url" content="http://example.com/2024/06/10/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E7%AC%94%E8%AE%B0%E4%B8%89/index.html">
+<meta property="og:site_name" content="Cat YuanBao">
+<meta property="og:description" content="背景本文主要记录《Hands-On System Programming with Linux》一书中第四章的内容，主要是内存相关API，比如malloc等相关的知识，包括基础和内部实现原理。 malloc基本用法malloc并不是一个系统调用，而是glibc的一个库函数，比如如下的代码： #include &lt;stdlib.h&gt;  int main() {     int *p &#x3D; NULL">
+<meta property="og:locale">
+<meta property="article:published_time" content="2024-06-10T04:28:53.000Z">
+<meta property="article:modified_time" content="2024-06-10T04:29:13.452Z">
+<meta property="article:author" content="橘猫元宝">
+<meta property="article:tag" content="cat">
+<meta name="twitter:card" content="summary">
+
+    <meta name="keywords" content="cat">
+
+
+<title >Linux系统编程笔记三</title>
+
+<!-- Favicon -->
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='16x16' ></link>
+
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='32x32' ></link>
+
+
+
+
+<!-- Plugin -->
+
+
+
+
+    
+<link rel="stylesheet" href="/css/plugins/bootstrap.row.css">
+
+    
+<link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.css">
+
+    
+    
+
+
+
+
+<!-- Icon -->
+
+    
+<link rel="stylesheet" href="/css/plugins/font-awesome.min.css">
+
+
+
+
+<!-- Variable -->
+<script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-06-10 12:29:13"};</script>
+
+<!-- Theme mode css -->
+<link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
+<script>
+    let defaultMode = ASYNC_CONFIG.theme.default !=='auto' ?  ASYNC_CONFIG.theme.default : (window.matchMedia("(prefers-color-scheme: light)").matches ? 'style-light' : 'style-dark')
+    let catchMode = localStorage.getItem('theme-mode') || defaultMode;
+    let type = catchMode === 'style-dark' ? 'add' : 'remove';
+    document.documentElement.classList[type]('dark')
+</script>
+
+<!-- CDN -->
+
+
+    
+    
+
+
+
+<!-- Site Analytics -->
+ 
+<meta name="generator" content="Hexo 7.0.0"><link rel="stylesheet" href="/css/prism.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+<body>
+
+  <!-- app wrapper -->
+  <div class="trm-app-frame">
+
+    <!-- page preloader -->
+    <div class="trm-preloader">
+    <div class="trm-holder">
+        <div class="preloader">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+    <!-- page preloader end -->
+
+    <!-- change mode preloader -->
+    <div class="trm-mode-swich-animation-frame">
+    <div class="trm-mode-swich-animation">
+        <i class="i-sun"><i class="iconfont far fa-sun"></i></i>
+        <div class="trm-horizon"></div>
+        <i class="i-moon"><i class="iconfont far fa-moon"></i></i>
+    </div>
+</div>
+    <!-- change mode preloader end -->
+
+      <!-- scroll container -->
+      <div id="trm-dynamic-content" class="trm-swup-animation">
+        <div id="trm-scroll-container" class="trm-scroll-container" style="opacity: 0">
+            <!-- top bar -->
+            <header class="trm-top-bar">
+	<div class="container">
+		<div class="trm-left-side">
+			<!-- logo -->
+<a href="/" class="trm-logo-frame trm-anima-link">
+    
+        <img alt="logo" src="/img/favicon.svg">
+    
+    
+        <div class="trm-logo-text">
+            元宝<span>橘猫</span>
+        </div>
+    
+</a>
+<!-- logo end -->
+		</div>
+		<div class="trm-right-side">
+			<!-- menu -->
+<div class="trm-menu">
+    <nav>
+        <ul>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/" target="">
+                    首页
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/archives/" target="">
+                    归档
+                </a>
+                
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+<!-- menu end -->
+			
+    <!-- mode switcher place -->
+    <div class="trm-mode-switcher-place">
+        <div class="trm-mode-switcher">
+            <i class="iconfont far fa-sun"></i>
+            <input class="tgl tgl-light" id="trm-swich" type="checkbox">
+            <label class="trm-swich" for="trm-swich"></label>
+            <i class="iconfont far fa-moon"></i>
+        </div>
+    </div>
+    <!-- mode switcher place end -->
+
+			
+		</div>
+		<div class="trm-menu-btn">
+			<span></span>
+		</div>
+	</div>
+</header>
+            <!-- top bar end -->
+
+            <!-- body -->
+            
+<div class="trm-content-start">
+    <!-- banner -->
+    <div class="trm-banner">
+    
+    <!-- banner cover -->
+    <img style="object-position:top;object-fit:cover;" alt="banner" class="trm-banner-cover" src="/img/banner.png">
+    <!-- banner cover end -->
+    
+
+    <!-- banner content -->
+    <div class="trm-banner-content trm-overlay">
+        <div class="container">
+            <div class="row">
+                
+                <div class="col-lg-4"></div>
+                
+                <div class="col-lg-8">
+
+                    <!-- banner title -->
+                    <div class="trm-banner-text ">
+                        <div class="trm-label trm-mb-20">
+                            NEWS LETTER
+                        </div>
+                        <h1 class="trm-mb-30 trm-hsmb-font">
+                            Linux系统编程笔记三
+                        </h1>
+
+                        
+                            <ul class="trm-breadcrumbs trm-label">
+                                <li>
+                                    <a href="/" class="trm-anima-link">Home</a>
+                                </li>
+                                <li>
+                                    <span>
+                                        2024
+                                    </span>
+                                </li>
+                            </ul>
+                        
+                    </div>
+                    <!-- banner title end -->
+
+                    <!-- scroll hint -->
+                    <span id="scroll-triger" class="trm-scroll-hint-frame">
+                        <div class="trm-scroll-hint"></div>
+                        <span class="trm-label">Scroll down</span>
+                    </span>
+                    <!-- scroll hint end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- banner content end -->
+</div>
+    <!-- banner end -->
+    <div class="container">
+        <div class="row">
+            
+                <div class="trm-page-sidebar col-lg-4 hidden-sm">
+                    <!-- main card -->
+                    <div class="trm-main-card-frame trm-sidebar">
+    <div class="trm-main-card"> 
+        <!-- card header -->
+<div class="trm-mc-header">
+    <div class="trm-avatar-frame trm-mb-20">
+        <img alt="Avatar" class="trm-avatar" src="/img/cat.jpg">
+    </div>
+    <h5 class="trm-name trm-mb-15">
+        橘猫元宝
+    </h5>
+    
+</div>
+<!-- card header end -->
+        <!-- sidebar social -->
+
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<div class="trm-social">
+    
+        <a href="https://github.com" title="Github" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-github"></i>
+        </a>
+    
+</div>
+
+<!-- sidebar social end -->
+        <!-- info -->
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<ul class="trm-table trm-mb-20">
+    
+        <li>
+            <div class="trm-label">
+                Residence:
+            </div>
+            <div class="trm-label trm-label-light">
+                Mars
+            </div>
+        </li>
+    
+</ul>
+<!-- info end -->
+
+        
+    </div>
+</div>
+                    <!-- main card end -->
+                </div>
+            
+            <div class="trm-page-content col-lg-8">
+                <div id="trm-content" class="trm-content">
+                    <div class="trm-post-info row hidden-sm">
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-calendar-alt trm-icon"></i><br>
+            06/10
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-clock trm-icon"></i><br>
+            12:28
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div id="post-author" class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-user trm-icon"></i><br>
+            橘猫元宝
+        </div>
+    </div>
+</div>
+<div class="trm-card ">
+    <article id="article-container" class="trm-publication">
+    <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>本文主要记录《Hands-On System Programming with Linux》一书中第四章的内容，主要是内存相关API，比如<code>malloc</code>等相关的知识，包括基础和内部实现原理。</p>
+<h3 id="malloc基本用法"><a href="#malloc基本用法" class="headerlink" title="malloc基本用法"></a>malloc基本用法</h3><p><code>malloc</code>并不是一个系统调用，而是glibc的一个库函数，比如如下的代码：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdlib.h></span></span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> <span class="token operator">*</span>p <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+    p <span class="token operator">=</span> <span class="token function">malloc</span><span class="token punctuation">(</span><span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">free</span><span class="token punctuation">(</span>p<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>使用<code>strace</code>测试：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ <span class="token function">strace</span> ./a.out
+execve<span class="token punctuation">(</span><span class="token string">"./a.out"</span>, <span class="token punctuation">[</span><span class="token string">"./a.out"</span><span class="token punctuation">]</span>, 0x7ffee9a03540 /* 44 vars */<span class="token punctuation">)</span> <span class="token operator">=</span> 0
+brk<span class="token punctuation">(</span>NULL<span class="token punctuation">)</span>                               <span class="token operator">=</span> 0x1845000
+arch_prctl<span class="token punctuation">(</span>0x3001 /* ARCH_??? */, 0x7fffc4b62070<span class="token punctuation">)</span> <span class="token operator">=</span> -1 EINVAL <span class="token punctuation">(</span>Invalid argument<span class="token punctuation">)</span>
+access<span class="token punctuation">(</span><span class="token string">"/etc/ld.so.preload"</span>, R_OK<span class="token punctuation">)</span>      <span class="token operator">=</span> -1 ENOENT <span class="token punctuation">(</span>No such <span class="token function">file</span> or directory<span class="token punctuation">)</span>
+openat<span class="token punctuation">(</span>AT_FDCWD, <span class="token string">"/etc/ld.so.cache"</span>, O_RDONLY<span class="token operator">|</span>O_CLOEXEC<span class="token punctuation">)</span> <span class="token operator">=</span> 3
+newfstatat<span class="token punctuation">(</span>3, <span class="token string">""</span>, <span class="token punctuation">{</span>st_mode<span class="token operator">=</span>S_IFREG<span class="token operator">|</span>0644, st_size<span class="token operator">=</span>29299, <span class="token punctuation">..</span>.<span class="token punctuation">}</span>, AT_EMPTY_PATH<span class="token punctuation">)</span> <span class="token operator">=</span> 0
+mmap<span class="token punctuation">(</span>NULL, 29299, PROT_READ, MAP_PRIVATE, 3, 0<span class="token punctuation">)</span> <span class="token operator">=</span> 0x7f71fbfe0000
+close<span class="token punctuation">(</span>3<span class="token punctuation">)</span>                                <span class="token operator">=</span> 0
+openat<span class="token punctuation">(</span>AT_FDCWD, <span class="token string">"/lib64/libc.so.6"</span>, O_RDONLY<span class="token operator">|</span>O_CLOEXEC<span class="token punctuation">)</span> <span class="token operator">=</span> 3
+read<span class="token punctuation">(</span>3, <span class="token string">"\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0p\0\4\0\0\0\0\0"</span><span class="token punctuation">..</span>., 832<span class="token punctuation">)</span> <span class="token operator">=</span> 832
+pread64<span class="token punctuation">(</span>3, <span class="token string">"\6\0\0\0\4\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0"</span><span class="token punctuation">..</span>., 784, 64<span class="token punctuation">)</span> <span class="token operator">=</span> 784
+pread64<span class="token punctuation">(</span>3, <span class="token string">"\4\0\0\0 \0\0\0\5\0\0\0GNU\0\2\0\0\300\4\0\0\0\3\0\0\0\0\0\0\0"</span><span class="token punctuation">..</span>., 48, 848<span class="token punctuation">)</span> <span class="token operator">=</span> 48
+pread64<span class="token punctuation">(</span>3, <span class="token string">"\4\0\0\0\24\0\0\0\3\0\0\0GNU\0e\242\235\v\34\330\214\25\264L\375\245b\335\220N"</span><span class="token punctuation">..</span>., 68, 896<span class="token punctuation">)</span> <span class="token operator">=</span> 68
+newfstatat<span class="token punctuation">(</span>3, <span class="token string">""</span>, <span class="token punctuation">{</span>st_mode<span class="token operator">=</span>S_IFREG<span class="token operator">|</span>0755, st_size<span class="token operator">=</span>2387200, <span class="token punctuation">..</span>.<span class="token punctuation">}</span>, AT_EMPTY_PATH<span class="token punctuation">)</span> <span class="token operator">=</span> 0
+mmap<span class="token punctuation">(</span>NULL, 8192, PROT_READ<span class="token operator">|</span>PROT_WRITE, MAP_PRIVATE<span class="token operator">|</span>MAP_ANONYMOUS, -1, 0<span class="token punctuation">)</span> <span class="token operator">=</span> 0x7f71fbfde000
+pread64<span class="token punctuation">(</span>3, <span class="token string">"\6\0\0\0\4\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0"</span><span class="token punctuation">..</span>., 784, 64<span class="token punctuation">)</span> <span class="token operator">=</span> 784
+mmap<span class="token punctuation">(</span>NULL, 2133936, PROT_READ, MAP_PRIVATE<span class="token operator">|</span>MAP_DENYWRITE, 3, 0<span class="token punctuation">)</span> <span class="token operator">=</span> 0x7f71fbc00000
+mprotect<span class="token punctuation">(</span>0x7f71fbc28000, 1892352, PROT_NONE<span class="token punctuation">)</span> <span class="token operator">=</span> 0
+mmap<span class="token punctuation">(</span>0x7f71fbc28000, 1527808, PROT_READ<span class="token operator">|</span>PROT_EXEC, MAP_PRIVATE<span class="token operator">|</span>MAP_FIXED<span class="token operator">|</span>MAP_DENYWRITE, 3, 0x28000<span class="token punctuation">)</span> <span class="token operator">=</span> 0x7f71fbc28000
+mmap<span class="token punctuation">(</span>0x7f71fbd9d000, 360448, PROT_READ, MAP_PRIVATE<span class="token operator">|</span>MAP_FIXED<span class="token operator">|</span>MAP_DENYWRITE, 3, 0x19d000<span class="token punctuation">)</span> <span class="token operator">=</span> 0x7f71fbd9d000
+mmap<span class="token punctuation">(</span>0x7f71fbdf6000, 24576, PROT_READ<span class="token operator">|</span>PROT_WRITE, MAP_PRIVATE<span class="token operator">|</span>MAP_FIXED<span class="token operator">|</span>MAP_DENYWRITE, 3, 0x1f5000<span class="token punctuation">)</span> <span class="token operator">=</span> 0x7f71fbdf6000
+mmap<span class="token punctuation">(</span>0x7f71fbdfc000, 53168, PROT_READ<span class="token operator">|</span>PROT_WRITE, MAP_PRIVATE<span class="token operator">|</span>MAP_FIXED<span class="token operator">|</span>MAP_ANONYMOUS, -1, 0<span class="token punctuation">)</span> <span class="token operator">=</span> 0x7f71fbdfc000
+close<span class="token punctuation">(</span>3<span class="token punctuation">)</span>                                <span class="token operator">=</span> 0
+mmap<span class="token punctuation">(</span>NULL, 8192, PROT_READ<span class="token operator">|</span>PROT_WRITE, MAP_PRIVATE<span class="token operator">|</span>MAP_ANONYMOUS, -1, 0<span class="token punctuation">)</span> <span class="token operator">=</span> 0x7f71fbfdc000
+arch_prctl<span class="token punctuation">(</span>ARCH_SET_FS, 0x7f71fbfdf600<span class="token punctuation">)</span> <span class="token operator">=</span> 0
+set_tid_address<span class="token punctuation">(</span>0x7f71fbfdf8d0<span class="token punctuation">)</span>         <span class="token operator">=</span> 2237
+set_robust_list<span class="token punctuation">(</span>0x7f71fbfdf8e0, 24<span class="token punctuation">)</span>     <span class="token operator">=</span> 0
+rseq<span class="token punctuation">(</span>0x7f71fbfdffa0, 0x20, 0, 0x53053053<span class="token punctuation">)</span> <span class="token operator">=</span> 0
+mprotect<span class="token punctuation">(</span>0x7f71fbdf6000, 16384, PROT_READ<span class="token punctuation">)</span> <span class="token operator">=</span> 0
+mprotect<span class="token punctuation">(</span>0x403000, 4096, PROT_READ<span class="token punctuation">)</span>     <span class="token operator">=</span> 0
+mprotect<span class="token punctuation">(</span>0x7f71fc01c000, 8192, PROT_READ<span class="token punctuation">)</span> <span class="token operator">=</span> 0
+prlimit64<span class="token punctuation">(</span>0, RLIMIT_STACK, NULL, <span class="token punctuation">{</span>rlim_cur<span class="token operator">=</span>8192*1024, rlim_max<span class="token operator">=</span>RLIM64_INFINITY<span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token operator">=</span> 0
+munmap<span class="token punctuation">(</span>0x7f71fbfe0000, 29299<span class="token punctuation">)</span>           <span class="token operator">=</span> 0
+getrandom<span class="token punctuation">(</span><span class="token string">"\x1a\xfb\xb6\x13\xd4\x1d\x38\x4a"</span>, 8, GRND_NONBLOCK<span class="token punctuation">)</span> <span class="token operator">=</span> 8
+brk<span class="token punctuation">(</span>NULL<span class="token punctuation">)</span>                               <span class="token operator">=</span> 0x1845000
+brk<span class="token punctuation">(</span>0x1866000<span class="token punctuation">)</span>                          <span class="token operator">=</span> 0x1866000
+exit_group<span class="token punctuation">(</span>0<span class="token punctuation">)</span>                           <span class="token operator">=</span> ?
++++ exited with 0 +++
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>并没有体现malloc和free的调用，说明它们并不是系统调用。</p>
+<h4 id="基本参数"><a href="#基本参数" class="headerlink" title="基本参数"></a>基本参数</h4><pre class="line-numbers language-bash"><code class="language-bash">The parameter to malloc<span class="token punctuation">(</span>3<span class="token punctuation">)</span> is the number of bytes to allocate. 
+But what is the size_t data type? Obviously, it<span class="token string">'s not a C primitive data type; it'</span>s a typedef – long
+unsigned int on your typical 64-bit platform.
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p><code>malloc</code>的参数是一个<code>size_t</code>是一个<code>long unsigned int</code>类型，参数不能是负数。</p>
+<h4 id="使用ltrace追踪库函数"><a href="#使用ltrace追踪库函数" class="headerlink" title="使用ltrace追踪库函数"></a>使用<code>ltrace</code>追踪库函数</h4><pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdlib.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> <span class="token operator">*</span>p <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+    p <span class="token operator">=</span> <span class="token function">malloc</span><span class="token punctuation">(</span><span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"p at %p \n"</span><span class="token punctuation">,</span> p<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">free</span><span class="token punctuation">(</span>p<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><code>ltrace</code>是ltrace - A library call tracer的简称，用来追踪库函数的调用：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ ltrace ./a.out
+malloc<span class="token punctuation">(</span>4<span class="token punctuation">)</span>                                                                               <span class="token operator">=</span> 0x13042a0
+printf<span class="token punctuation">(</span><span class="token string">"p at %p \n"</span>, 0x13042a0p at 0x13042a0
+<span class="token punctuation">)</span>                                                         <span class="token operator">=</span> 16
+free<span class="token punctuation">(</span>0x13042a0<span class="token punctuation">)</span>                                                                         <span class="token operator">=</span> <span class="token operator">&lt;</span>void<span class="token operator">></span>
++++ exited <span class="token punctuation">(</span>status 0<span class="token punctuation">)</span> +++
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="malloc的FAQ"><a href="#malloc的FAQ" class="headerlink" title="malloc的FAQ"></a>malloc的FAQ</h4><ol>
+<li>malloc最大可以支持多少内存？</li>
+</ol>
+<p><strong>32位系统</strong>：理论上，单个进程的地址空间最大为 4GB，但实际可用内存会受到内核和用户空间的划分（通常是 3GB 用户空间，1GB 内核空间）以及其他系统资源的影响。</p>
+<p><strong>64位系统</strong>：理论上，单个进程的地址空间可以达到 2^64 字节（16EB），但实际可用内存受到物理内存大小和操作系统的限制。</p>
+<ol start="2">
+<li>传一个负数给它会发生什么？</li>
+</ol>
+<p>由于 <code>size_t</code> 是无符号的，如果你传递一个负数（例如 -1）给 <code>malloc</code>，这个负数会被转换为一个非常大的正整数。例如，在大多数系统上，<code>size_t</code> 是一个 64 位无符号整数，-1 会被解释为 <code>18446744073709551615</code> (即 <code>2^64 - 1</code>)。</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdlib.h></span></span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    size_t negative_size <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token keyword">void</span> <span class="token operator">*</span>ptr <span class="token operator">=</span> <span class="token function">malloc</span><span class="token punctuation">(</span>negative_size<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>ptr <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Memory allocation failed\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Memory allocation succeeded\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">free</span><span class="token punctuation">(</span>ptr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ ./malloc
+Memory allocation failed
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<ol start="3">
+<li>传递0给它发生什么？</li>
+</ol>
+<pre class="line-numbers language-bash"><code class="language-bash"><span class="token comment" spellcheck="true">#include &lt;stdlib.h></span>
+<span class="token comment" spellcheck="true">#include &lt;stdio.h></span>
+
+int main<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    int *p <span class="token operator">=</span> NULL<span class="token punctuation">;</span>
+    p <span class="token operator">=</span> malloc<span class="token punctuation">(</span>0<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    printf<span class="token punctuation">(</span><span class="token string">"p at %p \n"</span>, p<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    free<span class="token punctuation">(</span>p<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> 0<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ ltrace ./a.out
+malloc<span class="token punctuation">(</span>0<span class="token punctuation">)</span>                                                                               <span class="token operator">=</span> 0x1f6d2a0
+printf<span class="token punctuation">(</span><span class="token string">"p at %p \n"</span>, 0x1f6d2a0p at 0x1f6d2a0
+<span class="token punctuation">)</span>                                                         <span class="token operator">=</span> 16
+free<span class="token punctuation">(</span>0x1f6d2a0<span class="token punctuation">)</span>                                                                         <span class="token operator">=</span> <span class="token operator">&lt;</span>void<span class="token operator">></span>
++++ exited <span class="token punctuation">(</span>status 0<span class="token punctuation">)</span> +++
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>不会返回<code>NULL</code>但是也不要这么使用。</p>
+<ol start="4">
+<li><p><code>malloc</code>是线程安全的嘛？</p>
+<p>在现代的 C 标准库实现中，<code>malloc</code> 及其相关的内存分配函数（如 <code>calloc</code>, <code>realloc</code>, <code>free</code>）通常是线程安全的。</p>
+<p>这意味着它们可以安全地被多个线程同时调用而不会引起数据竞争或未定义行为。这种线程安全性通常通过内部的锁机制来实现。</p>
+</li>
+</ol>
+<p>实例：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdlib.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;pthread.h></span></span>
+
+<span class="token macro property">#<span class="token directive keyword">define</span> NUM_THREADS 10</span>
+
+<span class="token keyword">void</span><span class="token operator">*</span> <span class="token function">thread_func</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token operator">*</span> arg<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span><span class="token operator">*</span> data <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">int</span><span class="token operator">*</span><span class="token punctuation">)</span><span class="token function">malloc</span><span class="token punctuation">(</span><span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>data <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Memory allocation failed\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token operator">*</span>data <span class="token operator">=</span> <span class="token operator">*</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token operator">*</span><span class="token punctuation">)</span>arg<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Thread %d allocated memory with value %d\n"</span><span class="token punctuation">,</span> <span class="token operator">*</span>data<span class="token punctuation">,</span> <span class="token operator">*</span>data<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">free</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    pthread_t threads<span class="token punctuation">[</span>NUM_THREADS<span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> thread_ids<span class="token punctuation">[</span>NUM_THREADS<span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> NUM_THREADS<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        thread_ids<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> i<span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">pthread_create</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>threads<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">,</span> thread_func<span class="token punctuation">,</span> <span class="token operator">&amp;</span>thread_ids<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">!=</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Error creating thread %d\n"</span><span class="token punctuation">,</span> i<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">return</span> <span class="token number">1</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> NUM_THREADS<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">pthread_join</span><span class="token punctuation">(</span>threads<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ ltrace ./a.out
+pthread_create<span class="token punctuation">(</span>0x7ffede80daa0, 0, 0x401176, 0x7ffede80da70<span class="token punctuation">)</span>                             <span class="token operator">=</span> 0
+pthread_create<span class="token punctuation">(</span>0x7ffede80daa8, 0, 0x401176, 0x7ffede80da74<span class="token punctuation">)</span>                             <span class="token operator">=</span> 0
+pthread_create<span class="token punctuation">(</span>0x7ffede80dab0, 0, 0x401176, 0x7ffede80da78<span class="token punctuation">)</span>                             <span class="token operator">=</span> 0
+pthread_create<span class="token punctuation">(</span>0x7ffede80dab8, 0, 0x401176, 0x7ffede80da7c<span class="token punctuation">)</span>                             <span class="token operator">=</span> 0
+pthread_create<span class="token punctuation">(</span>0x7ffede80dac0, 0, 0x401176, 0x7ffede80da80<span class="token punctuation">)</span>                             <span class="token operator">=</span> 0
+pthread_create<span class="token punctuation">(</span>0x7ffede80dac8, 0, 0x401176, 0x7ffede80da84<span class="token punctuation">)</span>                             <span class="token operator">=</span> 0
+pthread_create<span class="token punctuation">(</span>0x7ffede80dad0, 0, 0x401176, 0x7ffede80da88<span class="token punctuation">)</span>                             <span class="token operator">=</span> 0
+pthread_create<span class="token punctuation">(</span>0x7ffede80dad8, 0, 0x401176, 0x7ffede80da8c<span class="token punctuation">)</span>                             <span class="token operator">=</span> 0
+pthread_create<span class="token punctuation">(</span>0x7ffede80dae0, 0, 0x401176, 0x7ffede80da90<span class="token punctuation">)</span>                             <span class="token operator">=</span> 0
+pthread_create<span class="token punctuation">(</span>0x7ffede80dae8, 0, 0x401176, 0x7ffede80da94<span class="token punctuation">)</span>                             <span class="token operator">=</span> 0
+pthread_join<span class="token punctuation">(</span>0x7f59a7dff640, 0, 0, 0x7f59a7e9ff53Thread 5 allocated memory with value 5
+Thread 6 allocated memory with value 6
+Thread 8 allocated memory with value 8
+Thread 4 allocated memory with value 4
+Thread 7 allocated memory with value 7
+Thread 0 allocated memory with value 0
+Thread 3 allocated memory with value 3
+Thread 2 allocated memory with value 2
+Thread 1 allocated memory with value 1
+Thread 9 allocated memory with value 9
+<span class="token punctuation">)</span>                                      <span class="token operator">=</span> 0
+pthread_join<span class="token punctuation">(</span>0x7f59a75fe640, 0, 0x7f59a8129028, 0x7f59a8129028<span class="token punctuation">)</span>                         <span class="token operator">=</span> 0
+pthread_join<span class="token punctuation">(</span>0x7f59a6dfd640, 0, 0x7f59a7dff900, 0x7f59a8129028<span class="token punctuation">)</span>                         <span class="token operator">=</span> 0
+pthread_join<span class="token punctuation">(</span>0x7f59a65fc640, 0, 0x7f59a75fe900, 0x7f59a8129028<span class="token punctuation">)</span>                         <span class="token operator">=</span> 0
+pthread_join<span class="token punctuation">(</span>0x7f59a5dfb640, 0, 0x7f59a6dfd900, 0x7f59a8129028<span class="token punctuation">)</span>                         <span class="token operator">=</span> 0
+pthread_join<span class="token punctuation">(</span>0x7f59a55fa640, 0, 3898, 0x7f59a7e3ee8b<span class="token punctuation">)</span>                                   <span class="token operator">=</span> 0
+pthread_join<span class="token punctuation">(</span>0x7f59a4df9640, 0, 0xf3ad9a, 0x7f59a7e3ee8b<span class="token punctuation">)</span>                               <span class="token operator">=</span> 0
+pthread_join<span class="token punctuation">(</span>0x7f599ffff640, 0, 0xf3acfa, 0x7f59a7e3ee8b<span class="token punctuation">)</span>                               <span class="token operator">=</span> 0
+pthread_join<span class="token punctuation">(</span>0x7f598f7fe640, 0, 0xf3abda, 0x7f59a7e3ee8b<span class="token punctuation">)</span>                               <span class="token operator">=</span> 0
+pthread_join<span class="token punctuation">(</span>0x7f598effd640, 0, 0xf3a93a, 0x7f59a7e3ee8b<span class="token punctuation">)</span>                               <span class="token operator">=</span> 0
++++ exited <span class="token punctuation">(</span>status 0<span class="token punctuation">)</span> +++
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>虽然内部使用锁机制可以保证线程安全，但也可能带来一些性能开销，特别是在高并发情况下。为了提高性能，现代系统中有一些替代方案和优化手段，例如：</p>
+<ul>
+<li><strong>线程局部分配器</strong>：一些系统提供线程局部的内存分配器，减少了线程之间的锁争用。</li>
+<li><strong>高性能内存分配器</strong>：例如，<code>tcmalloc</code> (Google Thread-Caching Malloc), <code>jemalloc</code> (Facebook), 以及 <code>Hoard</code> 等第三方内存分配器，设计时考虑了多线程环境下的高性能和可扩展性。</li>
+</ul>
+<h3 id="free函数"><a href="#free函数" class="headerlink" title="free函数"></a>free函数</h3><p><code>free</code>函数没有太多可注意的。</p>
+<ol>
+<li>The parameter passed to free(3) must be a value returned by one of<br>the malloc(3) family APIs (malloc(3), calloc, or realloc[array]).</li>
+<li>free has no return value.</li>
+<li>Calling free(ptr) does not set ptr to NULL (that would be nice, though). Once freed, do not attempt to use the freed memory.</li>
+<li>Do not attempt to free the same memory chunk more than once.</li>
+</ol>
+<h3 id="calloc函数"><a href="#calloc函数" class="headerlink" title="calloc函数"></a>calloc函数</h3><p><code>calloc</code>和<code>malloc</code>类似，不过会做初始化，参数也不一样。</p>
+<p>使用举例：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdlib.h></span></span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> <span class="token operator">*</span>array<span class="token punctuation">;</span>
+    size_t num_elements <span class="token operator">=</span> <span class="token number">10</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// 使用 calloc 分配内存,包括元素个数，每个元素大小</span>
+    array <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">int</span> <span class="token operator">*</span><span class="token punctuation">)</span><span class="token function">calloc</span><span class="token punctuation">(</span>num_elements<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>array <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 分配失败</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Memory allocation failed\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 打印数组的元素，所有元素应该初始化为 0</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span>size_t i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> num_elements<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span><span class="token punctuation">,</span> i<span class="token punctuation">,</span> array<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 使用完毕后释放内存</span>
+    <span class="token function">free</span><span class="token punctuation">(</span>array<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ ltrace ./a.out
+calloc<span class="token punctuation">(</span>10, 4<span class="token punctuation">)</span>                                                                           <span class="token operator">=</span> 0x1c882a0
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 0, 0array<span class="token punctuation">[</span>0<span class="token punctuation">]</span> <span class="token operator">=</span> 0
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 1, 0array<span class="token punctuation">[</span>1<span class="token punctuation">]</span> <span class="token operator">=</span> 0
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 2, 0array<span class="token punctuation">[</span>2<span class="token punctuation">]</span> <span class="token operator">=</span> 0
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 3, 0array<span class="token punctuation">[</span>3<span class="token punctuation">]</span> <span class="token operator">=</span> 0
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 4, 0array<span class="token punctuation">[</span>4<span class="token punctuation">]</span> <span class="token operator">=</span> 0
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 5, 0array<span class="token punctuation">[</span>5<span class="token punctuation">]</span> <span class="token operator">=</span> 0
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 6, 0array<span class="token punctuation">[</span>6<span class="token punctuation">]</span> <span class="token operator">=</span> 0
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 7, 0array<span class="token punctuation">[</span>7<span class="token punctuation">]</span> <span class="token operator">=</span> 0
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 8, 0array<span class="token punctuation">[</span>8<span class="token punctuation">]</span> <span class="token operator">=</span> 0
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 9, 0array<span class="token punctuation">[</span>9<span class="token punctuation">]</span> <span class="token operator">=</span> 0
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+free<span class="token punctuation">(</span>0x1c882a0<span class="token punctuation">)</span>                                                                         <span class="token operator">=</span> <span class="token operator">&lt;</span>void<span class="token operator">></span>
++++ exited <span class="token punctuation">(</span>status 0<span class="token punctuation">)</span> +++
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="realloc函数"><a href="#realloc函数" class="headerlink" title="realloc函数"></a>realloc函数</h3><p><code>realloc</code> 函数用于调整之前分配的内存块的大小。它可以扩展或缩小已分配的内存块，并在必要时将内存块移动到新的位置。<code>realloc</code> 的原型如下：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">void</span> <span class="token operator">*</span><span class="token function">realloc</span><span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span>ptr<span class="token punctuation">,</span> size_t size<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><code>ptr</code>：指向之前通过 <code>malloc</code>、<code>calloc</code> 或 <code>realloc</code> 分配的内存块。如果 <code>ptr</code> 为 <code>NULL</code>，<code>realloc</code> 的行为与 <code>malloc</code> 相同。</p>
+<p><code>size</code>：新的内存块大小（以字节为单位）。</p>
+<p>使用实例：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdlib.h></span></span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> <span class="token operator">*</span>array<span class="token punctuation">;</span>
+    size_t initial_size <span class="token operator">=</span> <span class="token number">5</span><span class="token punctuation">;</span>
+    size_t new_size <span class="token operator">=</span> <span class="token number">10</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// 使用 malloc 分配初始内存</span>
+    array <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">int</span> <span class="token operator">*</span><span class="token punctuation">)</span><span class="token function">malloc</span><span class="token punctuation">(</span>initial_size <span class="token operator">*</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>array <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 分配失败</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Initial memory allocation failed\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 初始化前 5 个元素</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span>size_t i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> initial_size<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        array<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> i <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 打印初始数组</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Initial array:\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span>size_t i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> initial_size<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span><span class="token punctuation">,</span> i<span class="token punctuation">,</span> array<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 使用 realloc 扩展内存块</span>
+    array <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">int</span> <span class="token operator">*</span><span class="token punctuation">)</span><span class="token function">realloc</span><span class="token punctuation">(</span>array<span class="token punctuation">,</span> new_size <span class="token operator">*</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>array <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 分配失败</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Memory reallocation failed\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 初始化新分配的内存</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span>size_t i <span class="token operator">=</span> initial_size<span class="token punctuation">;</span> i <span class="token operator">&lt;</span> new_size<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        array<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> i <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 打印扩展后的数组</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Reallocated array:\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span>size_t i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> new_size<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span><span class="token punctuation">,</span> i<span class="token punctuation">,</span> array<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 使用完毕后释放内存</span>
+    <span class="token function">free</span><span class="token punctuation">(</span>array<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ ltrace ./a.out
+malloc<span class="token punctuation">(</span>20<span class="token punctuation">)</span>                                                                              <span class="token operator">=</span> 0x66b2a0
+puts<span class="token punctuation">(</span><span class="token string">"Initial array:"</span>Initial array:
+<span class="token punctuation">)</span>                                                                  <span class="token operator">=</span> 15
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 0, 1array<span class="token punctuation">[</span>0<span class="token punctuation">]</span> <span class="token operator">=</span> 1
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 1, 2array<span class="token punctuation">[</span>1<span class="token punctuation">]</span> <span class="token operator">=</span> 2
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 2, 3array<span class="token punctuation">[</span>2<span class="token punctuation">]</span> <span class="token operator">=</span> 3
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 3, 4array<span class="token punctuation">[</span>3<span class="token punctuation">]</span> <span class="token operator">=</span> 4
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 4, 5array<span class="token punctuation">[</span>4<span class="token punctuation">]</span> <span class="token operator">=</span> 5
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+realloc<span class="token punctuation">(</span>0x66b2a0, 40<span class="token punctuation">)</span>                                                                   <span class="token operator">=</span> 0x66b6d0
+puts<span class="token punctuation">(</span><span class="token string">"Reallocated array:"</span>Reallocated array:
+<span class="token punctuation">)</span>                                                              <span class="token operator">=</span> 19
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 0, 1array<span class="token punctuation">[</span>0<span class="token punctuation">]</span> <span class="token operator">=</span> 1
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 1, 2array<span class="token punctuation">[</span>1<span class="token punctuation">]</span> <span class="token operator">=</span> 2
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 2, 3array<span class="token punctuation">[</span>2<span class="token punctuation">]</span> <span class="token operator">=</span> 3
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 3, 4array<span class="token punctuation">[</span>3<span class="token punctuation">]</span> <span class="token operator">=</span> 4
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 4, 5array<span class="token punctuation">[</span>4<span class="token punctuation">]</span> <span class="token operator">=</span> 5
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 5, 6array<span class="token punctuation">[</span>5<span class="token punctuation">]</span> <span class="token operator">=</span> 6
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 6, 7array<span class="token punctuation">[</span>6<span class="token punctuation">]</span> <span class="token operator">=</span> 7
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 7, 8array<span class="token punctuation">[</span>7<span class="token punctuation">]</span> <span class="token operator">=</span> 8
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 8, 9array<span class="token punctuation">[</span>8<span class="token punctuation">]</span> <span class="token operator">=</span> 9
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 9, 10array<span class="token punctuation">[</span>9<span class="token punctuation">]</span> <span class="token operator">=</span> 10
+<span class="token punctuation">)</span>                                                      <span class="token operator">=</span> 14
+free<span class="token punctuation">(</span>0x66b6d0<span class="token punctuation">)</span>                                                                          <span class="token operator">=</span> <span class="token operator">&lt;</span>void<span class="token operator">></span>
++++ exited <span class="token punctuation">(</span>status 0<span class="token punctuation">)</span> +++
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="reallocarray函数"><a href="#reallocarray函数" class="headerlink" title="reallocarray函数"></a>reallocarray函数</h3><p><code>reallocarray</code> 是一个非标准的 C 函数，最初由 OpenBSD 引入，用于重新分配内存数组。它与 <code>realloc</code> 类似，但提供了一些额外的安全性，特别是在计算新内存块大小时避免整数溢出问题。</p>
+<p>使用实例：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdlib.h></span></span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> <span class="token operator">*</span>array<span class="token punctuation">;</span>
+    size_t initial_size <span class="token operator">=</span> <span class="token number">5</span><span class="token punctuation">;</span>
+    size_t new_size <span class="token operator">=</span> <span class="token number">10</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// 使用 calloc 分配初始内存</span>
+    array <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">int</span> <span class="token operator">*</span><span class="token punctuation">)</span><span class="token function">calloc</span><span class="token punctuation">(</span>initial_size<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>array <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 分配失败</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Initial memory allocation failed\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 初始化前 5 个元素</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span>size_t i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> initial_size<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        array<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> i <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 打印初始数组</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Initial array:\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span>size_t i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> initial_size<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span><span class="token punctuation">,</span> i<span class="token punctuation">,</span> array<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 使用 reallocarray 扩展内存块</span>
+    array <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">int</span> <span class="token operator">*</span><span class="token punctuation">)</span><span class="token function">reallocarray</span><span class="token punctuation">(</span>array<span class="token punctuation">,</span> new_size<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>array <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 分配失败</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Memory reallocation failed\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 初始化新分配的内存</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span>size_t i <span class="token operator">=</span> initial_size<span class="token punctuation">;</span> i <span class="token operator">&lt;</span> new_size<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        array<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> i <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 打印扩展后的数组</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Reallocated array:\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span>size_t i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> new_size<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span><span class="token punctuation">,</span> i<span class="token punctuation">,</span> array<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 使用完毕后释放内存</span>
+    <span class="token function">free</span><span class="token punctuation">(</span>array<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">$ ltrace ./a.out
+calloc<span class="token punctuation">(</span>5, 4<span class="token punctuation">)</span>                                                                            <span class="token operator">=</span> 0xa662a0
+puts<span class="token punctuation">(</span><span class="token string">"Initial array:"</span>Initial array:
+<span class="token punctuation">)</span>                                                                  <span class="token operator">=</span> 15
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 0, 1array<span class="token punctuation">[</span>0<span class="token punctuation">]</span> <span class="token operator">=</span> 1
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 1, 2array<span class="token punctuation">[</span>1<span class="token punctuation">]</span> <span class="token operator">=</span> 2
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 2, 3array<span class="token punctuation">[</span>2<span class="token punctuation">]</span> <span class="token operator">=</span> 3
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 3, 4array<span class="token punctuation">[</span>3<span class="token punctuation">]</span> <span class="token operator">=</span> 4
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 4, 5array<span class="token punctuation">[</span>4<span class="token punctuation">]</span> <span class="token operator">=</span> 5
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+reallocarray<span class="token punctuation">(</span>0xa662a0, 10, 4, 10<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 0xa666d0
+puts<span class="token punctuation">(</span><span class="token string">"Reallocated array:"</span>Reallocated array:
+<span class="token punctuation">)</span>                                                              <span class="token operator">=</span> 19
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 0, 1array<span class="token punctuation">[</span>0<span class="token punctuation">]</span> <span class="token operator">=</span> 1
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 1, 2array<span class="token punctuation">[</span>1<span class="token punctuation">]</span> <span class="token operator">=</span> 2
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 2, 3array<span class="token punctuation">[</span>2<span class="token punctuation">]</span> <span class="token operator">=</span> 3
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 3, 4array<span class="token punctuation">[</span>3<span class="token punctuation">]</span> <span class="token operator">=</span> 4
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 4, 5array<span class="token punctuation">[</span>4<span class="token punctuation">]</span> <span class="token operator">=</span> 5
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 5, 6array<span class="token punctuation">[</span>5<span class="token punctuation">]</span> <span class="token operator">=</span> 6
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 6, 7array<span class="token punctuation">[</span>6<span class="token punctuation">]</span> <span class="token operator">=</span> 7
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 7, 8array<span class="token punctuation">[</span>7<span class="token punctuation">]</span> <span class="token operator">=</span> 8
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 8, 9array<span class="token punctuation">[</span>8<span class="token punctuation">]</span> <span class="token operator">=</span> 9
+<span class="token punctuation">)</span>                                                       <span class="token operator">=</span> 13
+printf<span class="token punctuation">(</span><span class="token string">"array[%zu] = %d\n"</span>, 9, 10array<span class="token punctuation">[</span>9<span class="token punctuation">]</span> <span class="token operator">=</span> 10
+<span class="token punctuation">)</span>                                                      <span class="token operator">=</span> 14
+free<span class="token punctuation">(</span>0xa666d0<span class="token punctuation">)</span>                                                                          <span class="token operator">=</span> <span class="token operator">&lt;</span>void<span class="token operator">></span>
++++ exited <span class="token punctuation">(</span>status 0<span class="token punctuation">)</span> +++
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>这部分主要简单介绍了一下<code>malloc</code>相关的知识。</p>
+<p>下面一部分主要介绍Linux内存分配相关的函数，比如<code>brk</code>，<code>sbrk</code>函数等。</p>
+<p>参考：</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/PacktPublishing/Hands-on-System-Programming-with-Linux">https://github.com/PacktPublishing/Hands-on-System-Programming-with-Linux</a></p>
+
+</article>
+    
+    
+
+</div>
+<div class="trm-post-next-prev row">
+    <div class="col-lg-12">
+        <!-- title -->
+        <h5 class="trm-title-with-divider">
+            其他文章
+            <span data-number="02"></span>
+        </h5>
+    </div>
+    
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/06/08/Gcc%E7%BC%96%E8%AF%91%E8%BF%87%E7%A8%8B%E6%A6%82%E8%A6%81/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" #.">
+                    未分类
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/06/08/Gcc%E7%BC%96%E8%AF%91%E8%BF%87%E7%A8%8B%E6%A6%82%E8%A6%81/" class="trm-anima-link">
+                    Gcc编译过程概要
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/06/08</li>
+                <li>05:13</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+</div>
+
+    
+
+
+
+                    <div class="trm-divider footer-divider"></div>
+
+                    <!-- footer -->
+                    <footer class="trm-scroll-animation">
+
+    
+
+    
+
+    
+        <div class="trm-footer-item">
+            <span>
+                由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v7.0.0
+            </span>
+            <span class="footer-separator" data-separator=" | "></span>
+            <span> 
+                主题 - 
+                <a rel="noopener" href='https://github.com/MaLuns/hexo-theme-async' target='_blank'>Async</a>
+                v2.1.8
+            </span>
+        </div>
+      
+
+     
+
+     
+</footer>
+ 
+                    <!-- footer end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- body end -->
+
+            
+
+            
+<div class="trm-fixed-container">
+    
+    
+        <div class="trm-fixed-btn" data-title="阅读模式" onclick="asyncFun.switchReadMode()">
+            <i class="iconfont fas fa-book-reader"></i>
+        </div>
+    
+    
+    <div id="trm-back-top" class="trm-fixed-btn" data-title="回到顶部">
+        <i class="iconfont fas fa-arrow-up"></i>
+    </div>
+</div>
+        </div>
+      </div>
+      <!-- scroll container end -->
+  </div>
+  <!-- app wrapper end -->
+
+  
+  <!-- Plugin -->
+
+
+
+
+    
+    
+<script src="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+
+    
+
+    
+
+    
+
+    <!-- 数学公式 -->
+    
+
+    <!-- 评论插件 -->
+    
+        
+
+        
+    
+
+
+
+<!-- CDN -->
+
+
+    
+
+    
+
+    
+
+
+
+
+    <!-- Service Worker -->
+    
+    <!-- baidu push -->
+    
+
+
+<script id="async-script" src="/js/main.js?v=2.1.8"></script>
+
+</body>
+
+</html>
