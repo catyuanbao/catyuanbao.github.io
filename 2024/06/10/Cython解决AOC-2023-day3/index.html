@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="x5-fullscreen" content="true">
+<meta name="full-screen" content="yes">
+<meta name="theme-color" content="#317EFB" />
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
+<meta name="description" content="背景本文主要记录解决AOC-2023-day3的问题过程，主要使用Python和Cython分别测试效果。 题目大意第一部分给出一个矩阵： 467..114.. ...*...... ..35..633. ......#... 617*...... .....+.58. ..592..... ......755. ...$.*.... .664.598..  提取其中所有的数字，连续数字记为一个数">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Cython解决AOC-2023-day3">
+<meta property="og:url" content="http://example.com/2024/06/10/Cython%E8%A7%A3%E5%86%B3AOC-2023-day3/index.html">
+<meta property="og:site_name" content="Cat YuanBao">
+<meta property="og:description" content="背景本文主要记录解决AOC-2023-day3的问题过程，主要使用Python和Cython分别测试效果。 题目大意第一部分给出一个矩阵： 467..114.. ...*...... ..35..633. ......#... 617*...... .....+.58. ..592..... ......755. ...$.*.... .664.598..  提取其中所有的数字，连续数字记为一个数">
+<meta property="og:locale">
+<meta property="article:published_time" content="2024-06-10T14:19:55.000Z">
+<meta property="article:modified_time" content="2024-06-10T14:20:25.304Z">
+<meta property="article:author" content="橘猫元宝">
+<meta property="article:tag" content="cat">
+<meta name="twitter:card" content="summary">
+
+    <meta name="keywords" content="cat">
+
+
+<title >Cython解决AOC-2023-day3</title>
+
+<!-- Favicon -->
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='16x16' ></link>
+
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='32x32' ></link>
+
+
+
+
+<!-- Plugin -->
+
+
+
+
+    
+<link rel="stylesheet" href="/css/plugins/bootstrap.row.css">
+
+    
+<link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.css">
+
+    
+    
+
+
+
+
+<!-- Icon -->
+
+    
+<link rel="stylesheet" href="/css/plugins/font-awesome.min.css">
+
+
+
+
+<!-- Variable -->
+<script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-06-10 22:20:25"};</script>
+
+<!-- Theme mode css -->
+<link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
+<script>
+    let defaultMode = ASYNC_CONFIG.theme.default !=='auto' ?  ASYNC_CONFIG.theme.default : (window.matchMedia("(prefers-color-scheme: light)").matches ? 'style-light' : 'style-dark')
+    let catchMode = localStorage.getItem('theme-mode') || defaultMode;
+    let type = catchMode === 'style-dark' ? 'add' : 'remove';
+    document.documentElement.classList[type]('dark')
+</script>
+
+<!-- CDN -->
+
+
+    
+    
+
+
+
+<!-- Site Analytics -->
+ 
+<meta name="generator" content="Hexo 7.0.0"><link rel="stylesheet" href="/css/prism.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+<body>
+
+  <!-- app wrapper -->
+  <div class="trm-app-frame">
+
+    <!-- page preloader -->
+    <div class="trm-preloader">
+    <div class="trm-holder">
+        <div class="preloader">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+    <!-- page preloader end -->
+
+    <!-- change mode preloader -->
+    <div class="trm-mode-swich-animation-frame">
+    <div class="trm-mode-swich-animation">
+        <i class="i-sun"><i class="iconfont far fa-sun"></i></i>
+        <div class="trm-horizon"></div>
+        <i class="i-moon"><i class="iconfont far fa-moon"></i></i>
+    </div>
+</div>
+    <!-- change mode preloader end -->
+
+      <!-- scroll container -->
+      <div id="trm-dynamic-content" class="trm-swup-animation">
+        <div id="trm-scroll-container" class="trm-scroll-container" style="opacity: 0">
+            <!-- top bar -->
+            <header class="trm-top-bar">
+	<div class="container">
+		<div class="trm-left-side">
+			<!-- logo -->
+<a href="/" class="trm-logo-frame trm-anima-link">
+    
+        <img alt="logo" src="/img/favicon.svg">
+    
+    
+        <div class="trm-logo-text">
+            元宝<span>橘猫</span>
+        </div>
+    
+</a>
+<!-- logo end -->
+		</div>
+		<div class="trm-right-side">
+			<!-- menu -->
+<div class="trm-menu">
+    <nav>
+        <ul>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/" target="">
+                    首页
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/archives/" target="">
+                    归档
+                </a>
+                
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+<!-- menu end -->
+			
+    <!-- mode switcher place -->
+    <div class="trm-mode-switcher-place">
+        <div class="trm-mode-switcher">
+            <i class="iconfont far fa-sun"></i>
+            <input class="tgl tgl-light" id="trm-swich" type="checkbox">
+            <label class="trm-swich" for="trm-swich"></label>
+            <i class="iconfont far fa-moon"></i>
+        </div>
+    </div>
+    <!-- mode switcher place end -->
+
+			
+		</div>
+		<div class="trm-menu-btn">
+			<span></span>
+		</div>
+	</div>
+</header>
+            <!-- top bar end -->
+
+            <!-- body -->
+            
+<div class="trm-content-start">
+    <!-- banner -->
+    <div class="trm-banner">
+    
+    <!-- banner cover -->
+    <img style="object-position:top;object-fit:cover;" alt="banner" class="trm-banner-cover" src="/img/banner.png">
+    <!-- banner cover end -->
+    
+
+    <!-- banner content -->
+    <div class="trm-banner-content trm-overlay">
+        <div class="container">
+            <div class="row">
+                
+                <div class="col-lg-4"></div>
+                
+                <div class="col-lg-8">
+
+                    <!-- banner title -->
+                    <div class="trm-banner-text ">
+                        <div class="trm-label trm-mb-20">
+                            NEWS LETTER
+                        </div>
+                        <h1 class="trm-mb-30 trm-hsmb-font">
+                            Cython解决AOC-2023-day3
+                        </h1>
+
+                        
+                            <ul class="trm-breadcrumbs trm-label">
+                                <li>
+                                    <a href="/" class="trm-anima-link">Home</a>
+                                </li>
+                                <li>
+                                    <span>
+                                        2024
+                                    </span>
+                                </li>
+                            </ul>
+                        
+                    </div>
+                    <!-- banner title end -->
+
+                    <!-- scroll hint -->
+                    <span id="scroll-triger" class="trm-scroll-hint-frame">
+                        <div class="trm-scroll-hint"></div>
+                        <span class="trm-label">Scroll down</span>
+                    </span>
+                    <!-- scroll hint end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- banner content end -->
+</div>
+    <!-- banner end -->
+    <div class="container">
+        <div class="row">
+            
+                <div class="trm-page-sidebar col-lg-4 hidden-sm">
+                    <!-- main card -->
+                    <div class="trm-main-card-frame trm-sidebar">
+    <div class="trm-main-card"> 
+        <!-- card header -->
+<div class="trm-mc-header">
+    <div class="trm-avatar-frame trm-mb-20">
+        <img alt="Avatar" class="trm-avatar" src="/img/cat.jpg">
+    </div>
+    <h5 class="trm-name trm-mb-15">
+        橘猫元宝
+    </h5>
+    
+</div>
+<!-- card header end -->
+        <!-- sidebar social -->
+
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<div class="trm-social">
+    
+        <a href="https://github.com" title="Github" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-github"></i>
+        </a>
+    
+</div>
+
+<!-- sidebar social end -->
+        <!-- info -->
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<ul class="trm-table trm-mb-20">
+    
+        <li>
+            <div class="trm-label">
+                Residence:
+            </div>
+            <div class="trm-label trm-label-light">
+                Mars
+            </div>
+        </li>
+    
+</ul>
+<!-- info end -->
+
+        
+    </div>
+</div>
+                    <!-- main card end -->
+                </div>
+            
+            <div class="trm-page-content col-lg-8">
+                <div id="trm-content" class="trm-content">
+                    <div class="trm-post-info row hidden-sm">
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-calendar-alt trm-icon"></i><br>
+            06/10
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-clock trm-icon"></i><br>
+            22:19
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div id="post-author" class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-user trm-icon"></i><br>
+            橘猫元宝
+        </div>
+    </div>
+</div>
+<div class="trm-card ">
+    <article id="article-container" class="trm-publication">
+    <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>本文主要记录解决AOC-2023-day3的问题过程，主要使用Python和Cython分别测试效果。</p>
+<h3 id="题目大意"><a href="#题目大意" class="headerlink" title="题目大意"></a>题目大意</h3><h4 id="第一部分"><a href="#第一部分" class="headerlink" title="第一部分"></a>第一部分</h4><p>给出一个矩阵：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">467<span class="token punctuation">..</span>114<span class="token punctuation">..</span>
+<span class="token punctuation">..</span>.*<span class="token punctuation">..</span><span class="token punctuation">..</span><span class="token punctuation">..</span>
+<span class="token punctuation">..</span>35<span class="token punctuation">..</span>633.
+<span class="token punctuation">..</span><span class="token punctuation">..</span><span class="token punctuation">..</span><span class="token comment" spellcheck="true">#...</span>
+617*<span class="token punctuation">..</span><span class="token punctuation">..</span><span class="token punctuation">..</span>
+<span class="token punctuation">..</span><span class="token punctuation">..</span>.+.58.
+<span class="token punctuation">..</span>592<span class="token punctuation">..</span><span class="token punctuation">..</span>.
+<span class="token punctuation">..</span><span class="token punctuation">..</span><span class="token punctuation">..</span>755.
+<span class="token punctuation">..</span>.$.*<span class="token punctuation">..</span><span class="token punctuation">..</span>
+.664.598<span class="token punctuation">..</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>提取其中所有的数字，连续数字记为一个数字，需要把其中被<code>.</code>包围的数字去除掉，比如114和58，因为它们不管从各个方位看，都只被<code>.</code>包围。最后把没有被<code>.</code>包围的数字加和。</p>
+<p>思路有点像Life Game，对每个数字，判断它周围的所有点是否全是<code>.</code>全部是<code>.</code>的不要。其他的数字加和。</p>
+<p>Python实现：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> time
+
+<span class="token keyword">def</span> <span class="token function">read_data</span><span class="token punctuation">(</span>s<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">"""读取数字到列表"""</span>
+    s_list <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token keyword">for</span> line <span class="token keyword">in</span> s<span class="token punctuation">.</span>strip<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">'\n'</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        s_list<span class="token punctuation">.</span>append<span class="token punctuation">(</span>line<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> s_list
+
+
+<span class="token keyword">def</span> <span class="token function">get_num_or_zero</span><span class="token punctuation">(</span>s_list<span class="token punctuation">,</span> length_row<span class="token punctuation">,</span> length_column<span class="token punctuation">,</span> index_i<span class="token punctuation">,</span> index_j_start<span class="token punctuation">,</span> index_j_end<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">"""获取数值或者0，不满足条件返回0，否则返回数字"""</span>
+
+    other_ele <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>index_i<span class="token punctuation">,</span> index_j_start<span class="token number">-1</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token punctuation">(</span>index_i<span class="token punctuation">,</span> index_j_end<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+
+    <span class="token keyword">for</span> j <span class="token keyword">in</span> range<span class="token punctuation">(</span>index_j_start<span class="token number">-1</span><span class="token punctuation">,</span> index_j_end<span class="token operator">+</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        other_ele<span class="token punctuation">.</span>append<span class="token punctuation">(</span><span class="token punctuation">(</span>index_i<span class="token number">-1</span><span class="token punctuation">,</span> j<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        other_ele<span class="token punctuation">.</span>append<span class="token punctuation">(</span><span class="token punctuation">(</span>index_i<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">,</span> j<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+    ret <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+
+    <span class="token keyword">for</span> ele <span class="token keyword">in</span> other_ele<span class="token punctuation">:</span>
+        <span class="token keyword">if</span> ele<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">&lt;</span> <span class="token number">0</span> <span class="token operator">or</span> ele<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">>=</span> length_column <span class="token operator">or</span> ele<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">&lt;</span> <span class="token number">0</span> <span class="token operator">or</span> ele<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">>=</span> length_row<span class="token punctuation">:</span>
+            <span class="token keyword">continue</span>
+        <span class="token keyword">else</span><span class="token punctuation">:</span>
+            ret<span class="token punctuation">.</span>append<span class="token punctuation">(</span>ele<span class="token punctuation">)</span>
+    <span class="token keyword">for</span> ele <span class="token keyword">in</span> ret<span class="token punctuation">:</span>
+        <span class="token keyword">if</span> s_list<span class="token punctuation">[</span>ele<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">[</span>ele<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">]</span> <span class="token operator">!=</span> <span class="token string">'.'</span><span class="token punctuation">:</span>
+            <span class="token keyword">return</span> int<span class="token punctuation">(</span>s_list<span class="token punctuation">[</span>index_i<span class="token punctuation">]</span><span class="token punctuation">[</span>index_j_start<span class="token punctuation">:</span> index_j_end<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> <span class="token number">0</span>
+
+
+<span class="token keyword">def</span> <span class="token function">get_all_sum</span><span class="token punctuation">(</span>s_list<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">"""获取所有的数字"""</span>
+    length_row <span class="token operator">=</span> len<span class="token punctuation">(</span>s_list<span class="token punctuation">)</span>
+    length_column <span class="token operator">=</span> len<span class="token punctuation">(</span>s_list<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    all_sum <span class="token operator">=</span> <span class="token number">0</span>
+    <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span>length_row<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        line_count <span class="token operator">=</span> <span class="token number">0</span>
+        line_sum <span class="token operator">=</span> <span class="token number">0</span>
+        start_j <span class="token operator">=</span> None
+        end_j <span class="token operator">=</span> None
+        <span class="token keyword">for</span> j <span class="token keyword">in</span> range<span class="token punctuation">(</span>length_column<span class="token punctuation">)</span><span class="token punctuation">:</span>
+            <span class="token keyword">if</span> s_list<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">[</span>j<span class="token punctuation">]</span> <span class="token keyword">in</span> <span class="token string">'0123456789'</span> <span class="token operator">and</span> start_j <span class="token keyword">is</span> None<span class="token punctuation">:</span>
+                start_j <span class="token operator">=</span> j
+                end_j <span class="token operator">=</span> j
+            <span class="token keyword">elif</span> s_list<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">[</span>j<span class="token punctuation">]</span> <span class="token keyword">in</span> <span class="token string">'0123456789'</span> <span class="token operator">and</span> start_j <span class="token keyword">is</span> <span class="token operator">not</span> None<span class="token punctuation">:</span>
+                end_j <span class="token operator">=</span> j
+            <span class="token keyword">elif</span> s_list<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">[</span>j<span class="token punctuation">]</span> <span class="token operator">not</span> <span class="token keyword">in</span> <span class="token string">'0123456789'</span> <span class="token operator">and</span> start_j <span class="token keyword">is</span> <span class="token operator">not</span> None <span class="token operator">and</span> end_j <span class="token keyword">is</span> <span class="token operator">not</span> None<span class="token punctuation">:</span>
+                num <span class="token operator">=</span> get_num_or_zero<span class="token punctuation">(</span>s_list<span class="token punctuation">,</span> length_row<span class="token punctuation">,</span> length_column<span class="token punctuation">,</span> i<span class="token punctuation">,</span> start_j<span class="token punctuation">,</span> end_j<span class="token punctuation">)</span>
+                line_sum <span class="token operator">+=</span> num
+                all_sum <span class="token operator">+=</span> num
+                <span class="token comment" spellcheck="true"># print(f'line {i}, num {num}')</span>
+                line_count <span class="token operator">+=</span> <span class="token number">1</span>
+                start_j <span class="token operator">=</span> None
+                end_j <span class="token operator">=</span> None
+
+        <span class="token comment" spellcheck="true"># 最后一个数字也要处理</span>
+        <span class="token keyword">if</span> start_j <span class="token keyword">is</span> <span class="token operator">not</span> None <span class="token operator">and</span> end_j <span class="token keyword">is</span> <span class="token operator">not</span> None<span class="token punctuation">:</span>
+            num <span class="token operator">=</span> get_num_or_zero<span class="token punctuation">(</span>s_list<span class="token punctuation">,</span> length_row<span class="token punctuation">,</span> length_column<span class="token punctuation">,</span> i<span class="token punctuation">,</span> start_j<span class="token punctuation">,</span> end_j<span class="token punctuation">)</span>
+            line_sum <span class="token operator">+=</span> num
+            all_sum <span class="token operator">+=</span> num
+            <span class="token comment" spellcheck="true"># print(f'line {i}, num {num}')</span>
+            line_count <span class="token operator">+=</span> <span class="token number">1</span>
+        <span class="token comment" spellcheck="true"># print(f'line {i}, count {line_count}, sum {line_sum}')</span>
+    <span class="token comment" spellcheck="true"># print(f'Total sum: {all_sum}')</span>
+    <span class="token keyword">return</span> all_sum
+
+
+<span class="token comment" spellcheck="true"># 使用给定的字符串</span>
+s <span class="token operator">=</span> <span class="token triple-quoted-string string">'''
+467..114..
+...*......
+..35..633.
+......#...
+617*......
+.....+.58.
+..592.....
+......755.
+...$.*....
+.664.598..
+'''</span>
+
+all_list <span class="token operator">=</span> read_data<span class="token punctuation">(</span>s<span class="token punctuation">)</span>
+s <span class="token operator">=</span> time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">10000</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    get_all_sum<span class="token punctuation">(</span>all_list<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">-</span> s<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行时间：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">4.479648590087891
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>Cython只做简单的类型声明优化：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token operator">%</span><span class="token operator">%</span>cython <span class="token operator">-</span>a 
+
+
+<span class="token keyword">import</span> time
+
+<span class="token keyword">def</span> <span class="token function">read_data</span><span class="token punctuation">(</span>s<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">"""读取数字到列表"""</span>
+    s_list <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token keyword">for</span> line <span class="token keyword">in</span> s<span class="token punctuation">.</span>strip<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">'\n'</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        s_list<span class="token punctuation">.</span>append<span class="token punctuation">(</span>line<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> s_list
+
+
+<span class="token keyword">def</span> <span class="token function">get_num_or_zero</span><span class="token punctuation">(</span>s_list<span class="token punctuation">,</span> length_row<span class="token punctuation">,</span> length_column<span class="token punctuation">,</span> index_i<span class="token punctuation">,</span> index_j_start<span class="token punctuation">,</span> index_j_end<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">"""获取数值或者0，不满足条件返回0，否则返回数字"""</span>
+    cdef int c_length_row
+    cdef int c_length_column
+    cdef int c_index_i
+    cdef int c_index_j_start
+    cdef int c_index_j_end
+    cdef int j
+
+    c_length_row <span class="token operator">=</span> length_row
+    c_length_column <span class="token operator">=</span> length_column
+    c_index_i <span class="token operator">=</span> index_i
+    c_index_j_start <span class="token operator">=</span> index_j_start
+    c_index_j_end <span class="token operator">=</span> index_j_end
+    
+    other_ele <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>c_index_i<span class="token punctuation">,</span> c_index_j_start<span class="token number">-1</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token punctuation">(</span>c_index_i<span class="token punctuation">,</span> c_index_j_end<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+
+    <span class="token keyword">for</span> j <span class="token keyword">in</span> range<span class="token punctuation">(</span>c_index_j_start<span class="token number">-1</span><span class="token punctuation">,</span> c_index_j_end<span class="token operator">+</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        other_ele<span class="token punctuation">.</span>append<span class="token punctuation">(</span><span class="token punctuation">(</span>c_index_i<span class="token number">-1</span><span class="token punctuation">,</span> j<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        other_ele<span class="token punctuation">.</span>append<span class="token punctuation">(</span><span class="token punctuation">(</span>c_index_i<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">,</span> j<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    ret <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+
+    <span class="token keyword">for</span> ele <span class="token keyword">in</span> other_ele<span class="token punctuation">:</span>
+        <span class="token keyword">if</span> ele<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">&lt;</span> <span class="token number">0</span> <span class="token operator">or</span> ele<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">>=</span> c_length_column <span class="token operator">or</span> ele<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">&lt;</span> <span class="token number">0</span> <span class="token operator">or</span> ele<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">>=</span> c_length_row<span class="token punctuation">:</span>
+            <span class="token keyword">continue</span>
+        <span class="token keyword">else</span><span class="token punctuation">:</span>
+            ret<span class="token punctuation">.</span>append<span class="token punctuation">(</span>ele<span class="token punctuation">)</span>
+
+    <span class="token keyword">for</span> ele <span class="token keyword">in</span> ret<span class="token punctuation">:</span>
+        <span class="token keyword">if</span> s_list<span class="token punctuation">[</span>ele<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">[</span>ele<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">]</span> <span class="token operator">!=</span> <span class="token string">'.'</span><span class="token punctuation">:</span>
+            <span class="token keyword">return</span> int<span class="token punctuation">(</span>s_list<span class="token punctuation">[</span>c_index_i<span class="token punctuation">]</span><span class="token punctuation">[</span>c_index_j_start<span class="token punctuation">:</span> c_index_j_end<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> <span class="token number">0</span>
+
+
+<span class="token keyword">def</span> <span class="token function">get_all_sum</span><span class="token punctuation">(</span>s_list<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">"""获取所有的数字"""</span>
+    cdef int length_row
+    cdef int length_column
+    cdef int all_sum
+    cdef int line_count
+    cdef int line_sum
+    cdef int num
+    cdef int i
+    cdef int j
+
+    length_row <span class="token operator">=</span> len<span class="token punctuation">(</span>s_list<span class="token punctuation">)</span>
+    length_column <span class="token operator">=</span> len<span class="token punctuation">(</span>s_list<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    all_sum <span class="token operator">=</span> <span class="token number">0</span>
+    <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span>length_row<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        line_count <span class="token operator">=</span> <span class="token number">0</span>
+        line_sum <span class="token operator">=</span> <span class="token number">0</span>
+        start_j <span class="token operator">=</span> None
+        end_j <span class="token operator">=</span> None
+        <span class="token keyword">for</span> j <span class="token keyword">in</span> range<span class="token punctuation">(</span>length_column<span class="token punctuation">)</span><span class="token punctuation">:</span>
+            <span class="token keyword">if</span> s_list<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">[</span>j<span class="token punctuation">]</span> <span class="token keyword">in</span> <span class="token string">'0123456789'</span> <span class="token operator">and</span> start_j <span class="token keyword">is</span> None<span class="token punctuation">:</span>
+                start_j <span class="token operator">=</span> j
+                end_j <span class="token operator">=</span> j
+            <span class="token keyword">elif</span> s_list<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">[</span>j<span class="token punctuation">]</span> <span class="token keyword">in</span> <span class="token string">'0123456789'</span> <span class="token operator">and</span> start_j <span class="token keyword">is</span> <span class="token operator">not</span> None<span class="token punctuation">:</span>
+                end_j <span class="token operator">=</span> j
+            <span class="token keyword">elif</span> s_list<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">[</span>j<span class="token punctuation">]</span> <span class="token operator">not</span> <span class="token keyword">in</span> <span class="token string">'0123456789'</span> <span class="token operator">and</span> start_j <span class="token keyword">is</span> <span class="token operator">not</span> None <span class="token operator">and</span> end_j <span class="token keyword">is</span> <span class="token operator">not</span> None<span class="token punctuation">:</span>
+                num <span class="token operator">=</span> get_num_or_zero<span class="token punctuation">(</span>s_list<span class="token punctuation">,</span> length_row<span class="token punctuation">,</span> length_column<span class="token punctuation">,</span> i<span class="token punctuation">,</span> start_j<span class="token punctuation">,</span> end_j<span class="token punctuation">)</span>
+                line_sum <span class="token operator">+=</span> num
+                all_sum <span class="token operator">+=</span> num
+                <span class="token comment" spellcheck="true"># print(f'line {i}, num {num}')</span>
+                line_count <span class="token operator">+=</span> <span class="token number">1</span>
+                start_j <span class="token operator">=</span> None
+                end_j <span class="token operator">=</span> None
+        <span class="token comment" spellcheck="true"># 最后一个数字也要处理</span>
+        <span class="token keyword">if</span> start_j <span class="token keyword">is</span> <span class="token operator">not</span> None <span class="token operator">and</span> end_j <span class="token keyword">is</span> <span class="token operator">not</span> None<span class="token punctuation">:</span>
+            num <span class="token operator">=</span> get_num_or_zero<span class="token punctuation">(</span>s_list<span class="token punctuation">,</span> length_row<span class="token punctuation">,</span> length_column<span class="token punctuation">,</span> i<span class="token punctuation">,</span> start_j<span class="token punctuation">,</span> end_j<span class="token punctuation">)</span>
+            line_sum <span class="token operator">+=</span> num
+            all_sum <span class="token operator">+=</span> num
+            <span class="token comment" spellcheck="true"># print(f'line {i}, num {num}')</span>
+            line_count <span class="token operator">+=</span> <span class="token number">1</span>
+        <span class="token comment" spellcheck="true"># print(f'line {i}, count {line_count}, sum {line_sum}')</span>
+    <span class="token comment" spellcheck="true"># print(f'Total sum: {all_sum}')</span>
+    <span class="token keyword">return</span> all_sum
+
+
+<span class="token comment" spellcheck="true"># 使用给定的字符串</span>
+s <span class="token operator">=</span> <span class="token triple-quoted-string string">'''
+467..114..
+...*......
+..35..633.
+......#...
+617*......
+.....+.58.
+..592.....
+......755.
+...$.*....
+.664.598..
+'''</span>
+
+all_list <span class="token operator">=</span> read_data<span class="token punctuation">(</span>s<span class="token punctuation">)</span>
+s <span class="token operator">=</span> time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">10000</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    get_all_sum<span class="token punctuation">(</span>all_list<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">-</span> s<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">1.6862804889678955
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>只做类型声明就能够实现性能的翻倍，花费时间只有纯Python的37.5%。</p>
+<h4 id="第二部分"><a href="#第二部分" class="headerlink" title="第二部分"></a>第二部分</h4><p>缺失的零件并不是唯一的问题——发动机的一个齿轮出了问题。齿轮是与两个零件号正好相邻的任何<em>符号。</em></p>
+<p>它的传动比是这两个数字相乘的结果。</p>
+<p>这一次，你需要找到每个齿轮的传动比，并将其全部相加，以便工程师能够找出需要更换的齿轮。<br>再次考虑相同的发动机示意图：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">467<span class="token punctuation">..</span>114<span class="token punctuation">..</span>
+<span class="token punctuation">..</span>.*<span class="token punctuation">..</span><span class="token punctuation">..</span><span class="token punctuation">..</span>
+<span class="token punctuation">..</span>35<span class="token punctuation">..</span>633.
+<span class="token punctuation">..</span><span class="token punctuation">..</span><span class="token punctuation">..</span><span class="token comment" spellcheck="true">#...</span>
+617*<span class="token punctuation">..</span><span class="token punctuation">..</span><span class="token punctuation">..</span>
+<span class="token punctuation">..</span><span class="token punctuation">..</span>.+.58.
+<span class="token punctuation">..</span>592<span class="token punctuation">..</span><span class="token punctuation">..</span>.
+<span class="token punctuation">..</span><span class="token punctuation">..</span><span class="token punctuation">..</span>755.
+<span class="token punctuation">..</span>.$.*<span class="token punctuation">..</span><span class="token punctuation">..</span>
+.664.598<span class="token punctuation">..</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在这个示意图中，有两个齿轮。第一个在左上角；它的零件号分别为467和35，因此其传动比为16345。第二档在右下角；其传动比为451490。（与617相邻的*不是齿轮，因为它只与一个零件号相邻。）将所有传动比相加可得到467835。</p>
+<p>这里是找到所有<code>*</code>周围的2个数字，没有两个数字可以按0处理，计算乘积，把所有乘积加起来。</p>
+<p>容易想到的算法，可以基于第一部分的代码：</p>
+<p>对每个数字，返回它周围的<code>*</code>索引，如果有两个数字的索引一样，那么把他们两个乘起来，把所有结果加和即可。</p>
+<p>Python实现如下：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> time
+
+<span class="token keyword">def</span> <span class="token function">read_data</span><span class="token punctuation">(</span>s<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">"""读取数字到列表"""</span>
+    s_list <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token keyword">for</span> line <span class="token keyword">in</span> s<span class="token punctuation">.</span>strip<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">'\n'</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        s_list<span class="token punctuation">.</span>append<span class="token punctuation">(</span>line<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> s_list
+
+
+<span class="token keyword">def</span> <span class="token function">get_num_or_zero</span><span class="token punctuation">(</span>s_list<span class="token punctuation">,</span> length_row<span class="token punctuation">,</span> length_column<span class="token punctuation">,</span> index_i<span class="token punctuation">,</span> index_j_start<span class="token punctuation">,</span> index_j_end<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">"""获取数值或者0，不满足条件返回0，否则返回数字"""</span>
+
+    other_ele <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>index_i<span class="token punctuation">,</span> index_j_start<span class="token number">-1</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token punctuation">(</span>index_i<span class="token punctuation">,</span> index_j_end<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+
+    <span class="token keyword">for</span> j <span class="token keyword">in</span> range<span class="token punctuation">(</span>index_j_start<span class="token number">-1</span><span class="token punctuation">,</span> index_j_end<span class="token operator">+</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        other_ele<span class="token punctuation">.</span>append<span class="token punctuation">(</span><span class="token punctuation">(</span>index_i<span class="token number">-1</span><span class="token punctuation">,</span> j<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        other_ele<span class="token punctuation">.</span>append<span class="token punctuation">(</span><span class="token punctuation">(</span>index_i<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">,</span> j<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+    ret <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    res <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+
+    <span class="token keyword">for</span> ele <span class="token keyword">in</span> other_ele<span class="token punctuation">:</span>
+        <span class="token keyword">if</span> ele<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">&lt;</span> <span class="token number">0</span> <span class="token operator">or</span> ele<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">>=</span> length_column <span class="token operator">or</span> ele<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">&lt;</span> <span class="token number">0</span> <span class="token operator">or</span> ele<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">>=</span> length_row<span class="token punctuation">:</span>
+            <span class="token keyword">continue</span>
+        <span class="token keyword">else</span><span class="token punctuation">:</span>
+            ret<span class="token punctuation">.</span>append<span class="token punctuation">(</span>ele<span class="token punctuation">)</span>
+    <span class="token keyword">for</span> ele <span class="token keyword">in</span> ret<span class="token punctuation">:</span>
+        <span class="token keyword">if</span> s_list<span class="token punctuation">[</span>ele<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">[</span>ele<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">]</span> <span class="token operator">==</span> <span class="token string">'*'</span><span class="token punctuation">:</span>
+            key <span class="token operator">=</span> f<span class="token string">'{ele[0]}-{ele[1]}'</span>
+            num <span class="token operator">=</span> int<span class="token punctuation">(</span>s_list<span class="token punctuation">[</span>index_i<span class="token punctuation">]</span><span class="token punctuation">[</span>index_j_start<span class="token punctuation">:</span> index_j_end<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+            res<span class="token punctuation">[</span>key<span class="token punctuation">]</span> <span class="token operator">=</span> num
+            <span class="token keyword">return</span> res
+    <span class="token keyword">return</span> res
+
+
+<span class="token keyword">def</span> <span class="token function">get_all_sum</span><span class="token punctuation">(</span>s_list<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">"""获取所有的数字"""</span>
+    length_row <span class="token operator">=</span> len<span class="token punctuation">(</span>s_list<span class="token punctuation">)</span>
+    length_column <span class="token operator">=</span> len<span class="token punctuation">(</span>s_list<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    star_dict <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+    all_sum <span class="token operator">=</span> <span class="token number">0</span>
+    <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span>length_row<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        start_j <span class="token operator">=</span> None
+        end_j <span class="token operator">=</span> None
+        <span class="token keyword">for</span> j <span class="token keyword">in</span> range<span class="token punctuation">(</span>length_column<span class="token punctuation">)</span><span class="token punctuation">:</span>
+            <span class="token keyword">if</span> s_list<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">[</span>j<span class="token punctuation">]</span> <span class="token keyword">in</span> <span class="token string">'0123456789'</span> <span class="token operator">and</span> start_j <span class="token keyword">is</span> None<span class="token punctuation">:</span>
+                start_j <span class="token operator">=</span> j
+                end_j <span class="token operator">=</span> j
+            <span class="token keyword">elif</span> s_list<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">[</span>j<span class="token punctuation">]</span> <span class="token keyword">in</span> <span class="token string">'0123456789'</span> <span class="token operator">and</span> start_j <span class="token keyword">is</span> <span class="token operator">not</span> None<span class="token punctuation">:</span>
+                end_j <span class="token operator">=</span> j
+            <span class="token keyword">elif</span> s_list<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">[</span>j<span class="token punctuation">]</span> <span class="token operator">not</span> <span class="token keyword">in</span> <span class="token string">'0123456789'</span> <span class="token operator">and</span> start_j <span class="token keyword">is</span> <span class="token operator">not</span> None <span class="token operator">and</span> end_j <span class="token keyword">is</span> <span class="token operator">not</span> None<span class="token punctuation">:</span>
+                star_index_num <span class="token operator">=</span> get_num_or_zero<span class="token punctuation">(</span>s_list<span class="token punctuation">,</span> length_row<span class="token punctuation">,</span> length_column<span class="token punctuation">,</span> i<span class="token punctuation">,</span> start_j<span class="token punctuation">,</span> end_j<span class="token punctuation">)</span>
+                <span class="token keyword">if</span> star_index_num<span class="token punctuation">:</span>
+                    key <span class="token operator">=</span> list<span class="token punctuation">(</span>star_index_num<span class="token punctuation">.</span>keys<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+                    <span class="token keyword">if</span> key <span class="token keyword">in</span> star_dict<span class="token punctuation">:</span>
+                        star_dict<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">.</span>append<span class="token punctuation">(</span>star_index_num<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">)</span>
+                    <span class="token keyword">else</span><span class="token punctuation">:</span>
+                        star_dict<span class="token punctuation">[</span>key<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">[</span>star_index_num<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">]</span>
+                start_j <span class="token operator">=</span> None
+                end_j <span class="token operator">=</span> None
+
+        <span class="token comment" spellcheck="true"># 最后一个数字也要处理</span>
+        <span class="token keyword">if</span> start_j <span class="token keyword">is</span> <span class="token operator">not</span> None <span class="token operator">and</span> end_j <span class="token keyword">is</span> <span class="token operator">not</span> None<span class="token punctuation">:</span>
+            star_index_num <span class="token operator">=</span> get_num_or_zero<span class="token punctuation">(</span>s_list<span class="token punctuation">,</span> length_row<span class="token punctuation">,</span> length_column<span class="token punctuation">,</span> i<span class="token punctuation">,</span> start_j<span class="token punctuation">,</span> end_j<span class="token punctuation">)</span>
+            <span class="token keyword">if</span> star_index_num<span class="token punctuation">:</span>
+                key <span class="token operator">=</span> list<span class="token punctuation">(</span>star_index_num<span class="token punctuation">.</span>keys<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+                <span class="token keyword">if</span> key <span class="token keyword">in</span> star_dict<span class="token punctuation">:</span>
+                    star_dict<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">.</span>append<span class="token punctuation">(</span>star_index_num<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">)</span>
+                <span class="token keyword">else</span><span class="token punctuation">:</span>
+                    star_dict<span class="token punctuation">[</span>key<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">[</span>star_index_num<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">]</span>
+
+    <span class="token keyword">for</span> key <span class="token keyword">in</span> star_dict<span class="token punctuation">:</span>
+        <span class="token keyword">if</span> len<span class="token punctuation">(</span>star_dict<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">2</span><span class="token punctuation">:</span>
+            all_sum <span class="token operator">+=</span> star_dict<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">*</span> star_dict<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span>
+
+    <span class="token keyword">return</span> all_sum
+
+
+<span class="token comment" spellcheck="true"># 使用给定的字符串</span>
+s <span class="token operator">=</span> <span class="token triple-quoted-string string">'''
+467..114..
+...*......
+..35..633.
+......#...
+617*......
+.....+.58.
+..592.....
+......755.
+...$.*....
+.664.598..
+'''</span>
+
+all_list <span class="token operator">=</span> read_data<span class="token punctuation">(</span>s<span class="token punctuation">)</span>
+s <span class="token operator">=</span> time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">10000</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    get_all_sum<span class="token punctuation">(</span>all_list<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">-</span> s<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行时间：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">3.177982807159424
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>Cython简单优化：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token operator">%</span><span class="token operator">%</span>cython <span class="token operator">-</span>a 
+
+
+<span class="token keyword">import</span> time
+
+<span class="token keyword">def</span> <span class="token function">read_data</span><span class="token punctuation">(</span>s<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">"""读取数字到列表"""</span>
+    s_list <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token keyword">for</span> line <span class="token keyword">in</span> s<span class="token punctuation">.</span>strip<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">'\n'</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        s_list<span class="token punctuation">.</span>append<span class="token punctuation">(</span>line<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> s_list
+
+
+<span class="token keyword">def</span> <span class="token function">get_num_or_zero</span><span class="token punctuation">(</span>s_list<span class="token punctuation">,</span> length_row<span class="token punctuation">,</span> length_column<span class="token punctuation">,</span> index_i<span class="token punctuation">,</span> index_j_start<span class="token punctuation">,</span> index_j_end<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">"""获取数值或者0，不满足条件返回0，否则返回数字"""</span>
+
+    cdef int c_length_row
+    cdef int c_length_column
+    cdef int c_index_i
+    cdef int c_index_j_start
+    cdef int c_index_j_end
+    cdef int j
+
+    c_length_row <span class="token operator">=</span> length_row
+    c_length_column <span class="token operator">=</span> length_column
+    c_index_i <span class="token operator">=</span> index_i
+    c_index_j_start <span class="token operator">=</span> index_j_start
+    c_index_j_end <span class="token operator">=</span> index_j_end
+
+    other_ele <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>index_i<span class="token punctuation">,</span> index_j_start<span class="token number">-1</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token punctuation">(</span>index_i<span class="token punctuation">,</span> index_j_end<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+
+    <span class="token keyword">for</span> j <span class="token keyword">in</span> range<span class="token punctuation">(</span>index_j_start<span class="token number">-1</span><span class="token punctuation">,</span> index_j_end<span class="token operator">+</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        other_ele<span class="token punctuation">.</span>append<span class="token punctuation">(</span><span class="token punctuation">(</span>index_i<span class="token number">-1</span><span class="token punctuation">,</span> j<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        other_ele<span class="token punctuation">.</span>append<span class="token punctuation">(</span><span class="token punctuation">(</span>index_i<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">,</span> j<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+    ret <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    res <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+
+    <span class="token keyword">for</span> ele <span class="token keyword">in</span> other_ele<span class="token punctuation">:</span>
+        <span class="token keyword">if</span> ele<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">&lt;</span> <span class="token number">0</span> <span class="token operator">or</span> ele<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">>=</span> length_column <span class="token operator">or</span> ele<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">&lt;</span> <span class="token number">0</span> <span class="token operator">or</span> ele<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">>=</span> length_row<span class="token punctuation">:</span>
+            <span class="token keyword">continue</span>
+        <span class="token keyword">else</span><span class="token punctuation">:</span>
+            ret<span class="token punctuation">.</span>append<span class="token punctuation">(</span>ele<span class="token punctuation">)</span>
+    <span class="token keyword">for</span> ele <span class="token keyword">in</span> ret<span class="token punctuation">:</span>
+        <span class="token keyword">if</span> s_list<span class="token punctuation">[</span>ele<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">[</span>ele<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">]</span> <span class="token operator">==</span> <span class="token string">'*'</span><span class="token punctuation">:</span>
+            key <span class="token operator">=</span> f<span class="token string">'{ele[0]}-{ele[1]}'</span>
+            num <span class="token operator">=</span> int<span class="token punctuation">(</span>s_list<span class="token punctuation">[</span>index_i<span class="token punctuation">]</span><span class="token punctuation">[</span>index_j_start<span class="token punctuation">:</span> index_j_end<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+            res<span class="token punctuation">[</span>key<span class="token punctuation">]</span> <span class="token operator">=</span> num
+            <span class="token keyword">return</span> res
+    <span class="token keyword">return</span> res
+
+
+<span class="token keyword">def</span> <span class="token function">get_all_sum</span><span class="token punctuation">(</span>s_list<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">"""获取所有的数字"""</span>
+    cdef int length_row<span class="token punctuation">,</span> length_column<span class="token punctuation">,</span> i<span class="token punctuation">,</span> j<span class="token punctuation">,</span> all_sum
+
+    
+    length_row <span class="token operator">=</span> len<span class="token punctuation">(</span>s_list<span class="token punctuation">)</span>
+    length_column <span class="token operator">=</span> len<span class="token punctuation">(</span>s_list<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    star_dict <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+    all_sum <span class="token operator">=</span> <span class="token number">0</span>
+    <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span>length_row<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        start_j <span class="token operator">=</span> None
+        end_j <span class="token operator">=</span> None
+        <span class="token keyword">for</span> j <span class="token keyword">in</span> range<span class="token punctuation">(</span>length_column<span class="token punctuation">)</span><span class="token punctuation">:</span>
+            <span class="token keyword">if</span> s_list<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">[</span>j<span class="token punctuation">]</span> <span class="token keyword">in</span> <span class="token string">'0123456789'</span> <span class="token operator">and</span> start_j <span class="token keyword">is</span> None<span class="token punctuation">:</span>
+                start_j <span class="token operator">=</span> j
+                end_j <span class="token operator">=</span> j
+            <span class="token keyword">elif</span> s_list<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">[</span>j<span class="token punctuation">]</span> <span class="token keyword">in</span> <span class="token string">'0123456789'</span> <span class="token operator">and</span> start_j <span class="token keyword">is</span> <span class="token operator">not</span> None<span class="token punctuation">:</span>
+                end_j <span class="token operator">=</span> j
+            <span class="token keyword">elif</span> s_list<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">[</span>j<span class="token punctuation">]</span> <span class="token operator">not</span> <span class="token keyword">in</span> <span class="token string">'0123456789'</span> <span class="token operator">and</span> start_j <span class="token keyword">is</span> <span class="token operator">not</span> None <span class="token operator">and</span> end_j <span class="token keyword">is</span> <span class="token operator">not</span> None<span class="token punctuation">:</span>
+                star_index_num <span class="token operator">=</span> get_num_or_zero<span class="token punctuation">(</span>s_list<span class="token punctuation">,</span> length_row<span class="token punctuation">,</span> length_column<span class="token punctuation">,</span> i<span class="token punctuation">,</span> start_j<span class="token punctuation">,</span> end_j<span class="token punctuation">)</span>
+                <span class="token keyword">if</span> star_index_num<span class="token punctuation">:</span>
+                    key <span class="token operator">=</span> list<span class="token punctuation">(</span>star_index_num<span class="token punctuation">.</span>keys<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+                    <span class="token keyword">if</span> key <span class="token keyword">in</span> star_dict<span class="token punctuation">:</span>
+                        star_dict<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">.</span>append<span class="token punctuation">(</span>star_index_num<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">)</span>
+                    <span class="token keyword">else</span><span class="token punctuation">:</span>
+                        star_dict<span class="token punctuation">[</span>key<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">[</span>star_index_num<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">]</span>
+                start_j <span class="token operator">=</span> None
+                end_j <span class="token operator">=</span> None
+
+        <span class="token comment" spellcheck="true"># 最后一个数字也要处理</span>
+        <span class="token keyword">if</span> start_j <span class="token keyword">is</span> <span class="token operator">not</span> None <span class="token operator">and</span> end_j <span class="token keyword">is</span> <span class="token operator">not</span> None<span class="token punctuation">:</span>
+            star_index_num <span class="token operator">=</span> get_num_or_zero<span class="token punctuation">(</span>s_list<span class="token punctuation">,</span> length_row<span class="token punctuation">,</span> length_column<span class="token punctuation">,</span> i<span class="token punctuation">,</span> start_j<span class="token punctuation">,</span> end_j<span class="token punctuation">)</span>
+            <span class="token keyword">if</span> star_index_num<span class="token punctuation">:</span>
+                key <span class="token operator">=</span> list<span class="token punctuation">(</span>star_index_num<span class="token punctuation">.</span>keys<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+                <span class="token keyword">if</span> key <span class="token keyword">in</span> star_dict<span class="token punctuation">:</span>
+                    star_dict<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">.</span>append<span class="token punctuation">(</span>star_index_num<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">)</span>
+                <span class="token keyword">else</span><span class="token punctuation">:</span>
+                    star_dict<span class="token punctuation">[</span>key<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">[</span>star_index_num<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">]</span>
+
+    <span class="token keyword">for</span> key <span class="token keyword">in</span> star_dict<span class="token punctuation">:</span>
+        <span class="token keyword">if</span> len<span class="token punctuation">(</span>star_dict<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">2</span><span class="token punctuation">:</span>
+            all_sum <span class="token operator">+=</span> star_dict<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">*</span> star_dict<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span>
+
+    <span class="token keyword">return</span> all_sum
+
+
+<span class="token comment" spellcheck="true"># 使用给定的字符串</span>
+s <span class="token operator">=</span> <span class="token triple-quoted-string string">'''
+467..114..
+...*......
+..35..633.
+......#...
+617*......
+.....+.58.
+..592.....
+......755.
+...$.*....
+.664.598..
+'''</span>
+
+all_list <span class="token operator">=</span> read_data<span class="token punctuation">(</span>s<span class="token punctuation">)</span>
+s <span class="token operator">=</span> time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">10000</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    get_all_sum<span class="token punctuation">(</span>all_list<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">-</span> s<span class="token punctuation">)</span>
+
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行时间：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">1.9982001781463623
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>其他的优化方法，可能是把字符串的列表改为字符的二维数组，可能会更快一点。</p>
+
+</article>
+    
+    
+
+</div>
+<div class="trm-post-next-prev row">
+    <div class="col-lg-12">
+        <!-- title -->
+        <h5 class="trm-title-with-divider">
+            其他文章
+            <span data-number="02"></span>
+        </h5>
+    </div>
+    
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/06/10/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E7%AC%94%E8%AE%B0%E4%B8%89/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" #.">
+                    未分类
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/06/10/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E7%AC%94%E8%AE%B0%E4%B8%89/" class="trm-anima-link">
+                    Linux系统编程笔记三
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/06/10</li>
+                <li>12:28</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+</div>
+
+    
+
+
+
+                    <div class="trm-divider footer-divider"></div>
+
+                    <!-- footer -->
+                    <footer class="trm-scroll-animation">
+
+    
+
+    
+
+    
+        <div class="trm-footer-item">
+            <span>
+                由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v7.0.0
+            </span>
+            <span class="footer-separator" data-separator=" | "></span>
+            <span> 
+                主题 - 
+                <a rel="noopener" href='https://github.com/MaLuns/hexo-theme-async' target='_blank'>Async</a>
+                v2.1.8
+            </span>
+        </div>
+      
+
+     
+
+     
+</footer>
+ 
+                    <!-- footer end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- body end -->
+
+            
+
+            
+<div class="trm-fixed-container">
+    
+    
+        <div class="trm-fixed-btn" data-title="阅读模式" onclick="asyncFun.switchReadMode()">
+            <i class="iconfont fas fa-book-reader"></i>
+        </div>
+    
+    
+    <div id="trm-back-top" class="trm-fixed-btn" data-title="回到顶部">
+        <i class="iconfont fas fa-arrow-up"></i>
+    </div>
+</div>
+        </div>
+      </div>
+      <!-- scroll container end -->
+  </div>
+  <!-- app wrapper end -->
+
+  
+  <!-- Plugin -->
+
+
+
+
+    
+    
+<script src="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+
+    
+
+    
+
+    
+
+    <!-- 数学公式 -->
+    
+
+    <!-- 评论插件 -->
+    
+        
+
+        
+    
+
+
+
+<!-- CDN -->
+
+
+    
+
+    
+
+    
+
+
+
+
+    <!-- Service Worker -->
+    
+    <!-- baidu push -->
+    
+
+
+<script id="async-script" src="/js/main.js?v=2.1.8"></script>
+
+</body>
+
+</html>
