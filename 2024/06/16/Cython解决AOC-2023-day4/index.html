@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="x5-fullscreen" content="true">
+<meta name="full-screen" content="yes">
+<meta name="theme-color" content="#317EFB" />
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
+<meta name="description" content="背景本文主要记录解决AOC-2023-day3的问题过程，主要使用Python和Cython分别测试效果。 题目大意第一部分就精灵所能计算的而言，你必须计算出你在中奖号码列表中出现的号码。第一场比赛使这张牌值一分，第一场比赛后的每一场比赛使该牌的积分翻倍。 例如卡片1:41 48 83 86 17 | 83 86 6 31 17 9 48 53卡片2:13 32 20 16 61 | 61 30">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Cython解决AOC-2023-day4">
+<meta property="og:url" content="http://example.com/2024/06/16/Cython%E8%A7%A3%E5%86%B3AOC-2023-day4/index.html">
+<meta property="og:site_name" content="Cat YuanBao">
+<meta property="og:description" content="背景本文主要记录解决AOC-2023-day3的问题过程，主要使用Python和Cython分别测试效果。 题目大意第一部分就精灵所能计算的而言，你必须计算出你在中奖号码列表中出现的号码。第一场比赛使这张牌值一分，第一场比赛后的每一场比赛使该牌的积分翻倍。 例如卡片1:41 48 83 86 17 | 83 86 6 31 17 9 48 53卡片2:13 32 20 16 61 | 61 30">
+<meta property="og:locale">
+<meta property="article:published_time" content="2024-06-16T13:32:26.000Z">
+<meta property="article:modified_time" content="2024-06-16T13:32:44.544Z">
+<meta property="article:author" content="橘猫元宝">
+<meta property="article:tag" content="cat">
+<meta name="twitter:card" content="summary">
+
+    <meta name="keywords" content="cat">
+
+
+<title >Cython解决AOC-2023-day4</title>
+
+<!-- Favicon -->
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='16x16' ></link>
+
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='32x32' ></link>
+
+
+
+
+<!-- Plugin -->
+
+
+
+
+    
+<link rel="stylesheet" href="/css/plugins/bootstrap.row.css">
+
+    
+<link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.css">
+
+    
+    
+
+
+
+
+<!-- Icon -->
+
+    
+<link rel="stylesheet" href="/css/plugins/font-awesome.min.css">
+
+
+
+
+<!-- Variable -->
+<script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-06-16 21:32:44"};</script>
+
+<!-- Theme mode css -->
+<link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
+<script>
+    let defaultMode = ASYNC_CONFIG.theme.default !=='auto' ?  ASYNC_CONFIG.theme.default : (window.matchMedia("(prefers-color-scheme: light)").matches ? 'style-light' : 'style-dark')
+    let catchMode = localStorage.getItem('theme-mode') || defaultMode;
+    let type = catchMode === 'style-dark' ? 'add' : 'remove';
+    document.documentElement.classList[type]('dark')
+</script>
+
+<!-- CDN -->
+
+
+    
+    
+
+
+
+<!-- Site Analytics -->
+ 
+<meta name="generator" content="Hexo 7.0.0"><link rel="stylesheet" href="/css/prism.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+<body>
+
+  <!-- app wrapper -->
+  <div class="trm-app-frame">
+
+    <!-- page preloader -->
+    <div class="trm-preloader">
+    <div class="trm-holder">
+        <div class="preloader">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+    <!-- page preloader end -->
+
+    <!-- change mode preloader -->
+    <div class="trm-mode-swich-animation-frame">
+    <div class="trm-mode-swich-animation">
+        <i class="i-sun"><i class="iconfont far fa-sun"></i></i>
+        <div class="trm-horizon"></div>
+        <i class="i-moon"><i class="iconfont far fa-moon"></i></i>
+    </div>
+</div>
+    <!-- change mode preloader end -->
+
+      <!-- scroll container -->
+      <div id="trm-dynamic-content" class="trm-swup-animation">
+        <div id="trm-scroll-container" class="trm-scroll-container" style="opacity: 0">
+            <!-- top bar -->
+            <header class="trm-top-bar">
+	<div class="container">
+		<div class="trm-left-side">
+			<!-- logo -->
+<a href="/" class="trm-logo-frame trm-anima-link">
+    
+        <img alt="logo" src="/img/favicon.svg">
+    
+    
+        <div class="trm-logo-text">
+            元宝<span>橘猫</span>
+        </div>
+    
+</a>
+<!-- logo end -->
+		</div>
+		<div class="trm-right-side">
+			<!-- menu -->
+<div class="trm-menu">
+    <nav>
+        <ul>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/" target="">
+                    首页
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/archives/" target="">
+                    归档
+                </a>
+                
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+<!-- menu end -->
+			
+    <!-- mode switcher place -->
+    <div class="trm-mode-switcher-place">
+        <div class="trm-mode-switcher">
+            <i class="iconfont far fa-sun"></i>
+            <input class="tgl tgl-light" id="trm-swich" type="checkbox">
+            <label class="trm-swich" for="trm-swich"></label>
+            <i class="iconfont far fa-moon"></i>
+        </div>
+    </div>
+    <!-- mode switcher place end -->
+
+			
+		</div>
+		<div class="trm-menu-btn">
+			<span></span>
+		</div>
+	</div>
+</header>
+            <!-- top bar end -->
+
+            <!-- body -->
+            
+<div class="trm-content-start">
+    <!-- banner -->
+    <div class="trm-banner">
+    
+    <!-- banner cover -->
+    <img style="object-position:top;object-fit:cover;" alt="banner" class="trm-banner-cover" src="/img/banner.png">
+    <!-- banner cover end -->
+    
+
+    <!-- banner content -->
+    <div class="trm-banner-content trm-overlay">
+        <div class="container">
+            <div class="row">
+                
+                <div class="col-lg-4"></div>
+                
+                <div class="col-lg-8">
+
+                    <!-- banner title -->
+                    <div class="trm-banner-text ">
+                        <div class="trm-label trm-mb-20">
+                            NEWS LETTER
+                        </div>
+                        <h1 class="trm-mb-30 trm-hsmb-font">
+                            Cython解决AOC-2023-day4
+                        </h1>
+
+                        
+                            <ul class="trm-breadcrumbs trm-label">
+                                <li>
+                                    <a href="/" class="trm-anima-link">Home</a>
+                                </li>
+                                <li>
+                                    <span>
+                                        2024
+                                    </span>
+                                </li>
+                            </ul>
+                        
+                    </div>
+                    <!-- banner title end -->
+
+                    <!-- scroll hint -->
+                    <span id="scroll-triger" class="trm-scroll-hint-frame">
+                        <div class="trm-scroll-hint"></div>
+                        <span class="trm-label">Scroll down</span>
+                    </span>
+                    <!-- scroll hint end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- banner content end -->
+</div>
+    <!-- banner end -->
+    <div class="container">
+        <div class="row">
+            
+                <div class="trm-page-sidebar col-lg-4 hidden-sm">
+                    <!-- main card -->
+                    <div class="trm-main-card-frame trm-sidebar">
+    <div class="trm-main-card"> 
+        <!-- card header -->
+<div class="trm-mc-header">
+    <div class="trm-avatar-frame trm-mb-20">
+        <img alt="Avatar" class="trm-avatar" src="/img/cat.jpg">
+    </div>
+    <h5 class="trm-name trm-mb-15">
+        橘猫元宝
+    </h5>
+    
+</div>
+<!-- card header end -->
+        <!-- sidebar social -->
+
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<div class="trm-social">
+    
+        <a href="https://github.com" title="Github" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-github"></i>
+        </a>
+    
+</div>
+
+<!-- sidebar social end -->
+        <!-- info -->
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<ul class="trm-table trm-mb-20">
+    
+        <li>
+            <div class="trm-label">
+                Residence:
+            </div>
+            <div class="trm-label trm-label-light">
+                Mars
+            </div>
+        </li>
+    
+</ul>
+<!-- info end -->
+
+        
+    </div>
+</div>
+                    <!-- main card end -->
+                </div>
+            
+            <div class="trm-page-content col-lg-8">
+                <div id="trm-content" class="trm-content">
+                    <div class="trm-post-info row hidden-sm">
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-calendar-alt trm-icon"></i><br>
+            06/16
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-clock trm-icon"></i><br>
+            21:32
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div id="post-author" class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-user trm-icon"></i><br>
+            橘猫元宝
+        </div>
+    </div>
+</div>
+<div class="trm-card ">
+    <article id="article-container" class="trm-publication">
+    <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>本文主要记录解决AOC-2023-day3的问题过程，主要使用Python和Cython分别测试效果。</p>
+<h2 id="题目大意"><a href="#题目大意" class="headerlink" title="题目大意"></a>题目大意</h2><h4 id="第一部分"><a href="#第一部分" class="headerlink" title="第一部分"></a>第一部分</h4><p>就精灵所能计算的而言，你必须计算出你在中奖号码列表中出现的号码。第一场比赛使这张牌值一分，第一场比赛后的每一场比赛使该牌的积分翻倍。</p>
+<p>例如<br>卡片1:41 48 83 86 17 | 83 86 6 31 17 9 48 53<br>卡片2:13 32 20 16 61 | 61 30 68 82 17 32 24 19<br>卡片3:1 21 53 59 44 | 69 82 63 72 16 21 14 1<br>卡片4:41 92 73 84 69 | 59 84 76 51 58 5 54 83<br>卡片5:87 83 26 28 32 | 88 30 70 12 93 22 82 36<br>卡片6:31 18 13 56 72 |74 77 10 23 35 67 36 11</p>
+<p>在上面的例子中，卡1有五个中奖号码（41、48、83、86和17）和八个号码（83、86、6、31、17、9、48和53）。</p>
+<p>在你拥有的数字中，有四个（48、83、17和86）是中奖数字！</p>
+<p>这意味着卡1值8分（第一场比赛得1分，第一场比赛后三场比赛各得三分）。<br>卡2有两个中奖号码（32和61），所以它值2分。<br>卡3有两个中奖号码（1和21），所以它值2分。<br>第4张卡有一个中奖号码（84），所以它值1分。<br>第5张牌没有中奖号码，因此不值得积分。<br>第6张卡没有中奖号码，因此不值得积分。<br>所以，在这个例子中，精灵的一堆刮刮卡值13分。<br>在一大堆五颜六色的卡片中坐下。它们总共值多少分？</p>
+<p>这个问题就是有一个简单的查找问题，找到第二个数组中数字在第一个数组中出现的次数问题。</p>
+<h4 id="第二部分"><a href="#第二部分" class="headerlink" title="第二部分"></a>第二部分</h4><p>就在你准备向精灵报告你的发现时，你们中的一个人意识到这些规则实际上一直印在每张卡片的背面。</p>
+<p>没有所谓的“点”。相反，刮刮卡只会让你赢得更多的刮刮卡，等于你的中奖号码。</p>
+<p>具体来说，您赢得的刮刮卡副本位于中奖卡下方，与比赛次数相等。所以，如果卡10有5个匹配的数字，你将赢得11、12、13、14和15张卡中的每一张。</p>
+<p>刮刮卡的副本与普通刮刮卡一样记分，并且与复制的卡具有相同的卡号。</p>
+<p>因此，如果你赢得了一张10号牌的副本，并且它有5个匹配的数字，那么它将赢得一张与原始10号牌赢得的相同的牌的副本：11、12、13、14和15号牌。</p>
+<p>重复此过程，直到没有任何副本使您赢得更多的牌为止。（卡片永远不会让你把卡片复制到桌子的末尾。）</p>
+<p>这一次，上面的例子有所不同：<br>卡片1:41 48 83 86 17 | 83 86 6 31 17 9 48 53<br>卡片2:13 32 20 16 61 | 61 30 68 82 17 32 24 19<br>卡片3:1 21 53 59 44 | 69 82 63 72 16 21 14 1<br>卡片4:41 92 73 84 69 | 59 84 76 51 58 5 54 83<br>卡片5:87 83 26 28 32 | 88 30 70 12 93 22 82 36<br>卡片6:31 18 13 56 72 |74 77 10 23 35 67 36 11</p>
+<p>第1张牌有四个匹配的数字，因此您可以在接下来的四张牌中各赢一张：第2、3、4和5张牌。</p>
+<p>你原来的第2张牌有两个匹配的号码，所以你赢得了第3张和第4张牌各一份。</p>
+<p>你的第2张牌副本也会赢得第3张和第4张牌的副本。</p>
+<p>你的四张牌3（一张正本和三张副本）有两个匹配的号码，所以你赢得了四张牌4和5。</p>
+<p>你的八张牌4（一张正本和七张副本）有一个匹配的号码，所以你赢得了八张牌5的副本。</p>
+<p>你的14张牌5（1张正本和13张副本）没有匹配的号码，也没有赢得更多的牌。</p>
+<p>你的一张牌6（一张原件）没有匹配的号码，也没有赢得更多的牌。</p>
+<p>处理完所有原件和副本后，您最终会得到1个卡实例1、2个卡实例2、4个卡实例3、8个卡实例4、14个卡实例5和1个卡示例6。总共，这个例子中的一堆刮刮卡会导致你最终拥有30张刮刮卡！</p>
+<p>处理所有原始和复制的刮刮卡，直到不再赢得刮刮卡为止。包括原始的刮刮卡，你最终总共有多少张刮刮卡？</p>
+<p>主要思路是使用一个队列，对得到的数据进行处理。</p>
+<h3 id="Python版本解决"><a href="#Python版本解决" class="headerlink" title="Python版本解决"></a>Python版本解决</h3><pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> time
+<span class="token keyword">def</span> <span class="token function">read_data</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    data <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token keyword">with</span> open<span class="token punctuation">(</span><span class="token string">'in.txt'</span><span class="token punctuation">)</span> <span class="token keyword">as</span> fd<span class="token punctuation">:</span>
+        text_data <span class="token operator">=</span> <span class="token punctuation">[</span>line<span class="token punctuation">.</span>strip<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">for</span> line <span class="token keyword">in</span> fd<span class="token punctuation">]</span>
+        <span class="token keyword">for</span> line <span class="token keyword">in</span> text_data<span class="token punctuation">:</span>
+            nums<span class="token punctuation">,</span> your_nums <span class="token operator">=</span> line<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">'|'</span><span class="token punctuation">)</span>
+            data<span class="token punctuation">.</span>append<span class="token punctuation">(</span><span class="token punctuation">(</span>list<span class="token punctuation">(</span>map<span class="token punctuation">(</span>int<span class="token punctuation">,</span> <span class="token punctuation">(</span>i <span class="token keyword">for</span> i <span class="token keyword">in</span> nums<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">':'</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">.</span>strip<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">' '</span><span class="token punctuation">)</span> <span class="token keyword">if</span> i<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                list<span class="token punctuation">(</span>map<span class="token punctuation">(</span>int<span class="token punctuation">,</span>
+                <span class="token punctuation">(</span>i <span class="token keyword">for</span> i <span class="token keyword">in</span> your_nums<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">' '</span><span class="token punctuation">)</span> <span class="token keyword">if</span> i<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> data
+
+
+<span class="token keyword">def</span> <span class="token function">compute_sum</span><span class="token punctuation">(</span>line_data<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    total <span class="token operator">=</span> <span class="token number">0</span>
+    <span class="token keyword">for</span> line <span class="token keyword">in</span> line_data<span class="token punctuation">:</span>
+        your_score_times <span class="token operator">=</span> <span class="token number">0</span>
+        nums<span class="token punctuation">,</span> your_nums <span class="token operator">=</span> line<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> line<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span>
+        <span class="token keyword">for</span> i <span class="token keyword">in</span> your_nums<span class="token punctuation">:</span>
+            <span class="token keyword">if</span> i <span class="token keyword">in</span> nums<span class="token punctuation">:</span>
+                your_score_times <span class="token operator">+=</span> <span class="token number">1</span>
+        <span class="token keyword">if</span> your_score_times <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">:</span>
+            total <span class="token operator">+=</span> <span class="token number">0</span>
+        <span class="token keyword">else</span><span class="token punctuation">:</span>
+            total <span class="token operator">+=</span> pow<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span> your_score_times<span class="token number">-1</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> total
+
+data <span class="token operator">=</span> read_data<span class="token punctuation">(</span><span class="token punctuation">)</span>
+s <span class="token operator">=</span> time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">10000</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    compute_sum<span class="token punctuation">(</span>data<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">-</span>s<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行时间:</p>
+<pre class="line-numbers language-bash"><code class="language-bash">13.626471519470215
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>使用<code>set</code>优化，<code>set</code>的<code>in</code>操作符，比<code>list</code>快很多，<code>set</code>的时间复杂度为O(1)，而<code>list</code>为O(n)。</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> time
+
+<span class="token keyword">def</span> <span class="token function">read_data</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    data <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token keyword">with</span> open<span class="token punctuation">(</span><span class="token string">'in.txt'</span><span class="token punctuation">)</span> <span class="token keyword">as</span> fd<span class="token punctuation">:</span>
+        text_data <span class="token operator">=</span> <span class="token punctuation">[</span>line<span class="token punctuation">.</span>strip<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">for</span> line <span class="token keyword">in</span> fd<span class="token punctuation">]</span>
+        <span class="token keyword">for</span> line <span class="token keyword">in</span> text_data<span class="token punctuation">:</span>
+            nums<span class="token punctuation">,</span> your_nums <span class="token operator">=</span> line<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">'|'</span><span class="token punctuation">)</span>
+            data<span class="token punctuation">.</span>append<span class="token punctuation">(</span><span class="token punctuation">(</span>set<span class="token punctuation">(</span>map<span class="token punctuation">(</span>int<span class="token punctuation">,</span> <span class="token punctuation">(</span>i <span class="token keyword">for</span> i <span class="token keyword">in</span> nums<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">':'</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">.</span>strip<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">' '</span><span class="token punctuation">)</span> <span class="token keyword">if</span> i<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                set<span class="token punctuation">(</span>map<span class="token punctuation">(</span>int<span class="token punctuation">,</span>
+                <span class="token punctuation">(</span>i <span class="token keyword">for</span> i <span class="token keyword">in</span> your_nums<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">' '</span><span class="token punctuation">)</span> <span class="token keyword">if</span> i<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> data
+
+
+<span class="token keyword">def</span> <span class="token function">compute_sum</span><span class="token punctuation">(</span>line_data<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    total <span class="token operator">=</span> <span class="token number">0</span>
+    <span class="token keyword">for</span> line <span class="token keyword">in</span> line_data<span class="token punctuation">:</span>
+        your_score_times <span class="token operator">=</span> <span class="token number">0</span>
+        nums<span class="token punctuation">,</span> your_nums <span class="token operator">=</span> line<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> line<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span>
+        <span class="token keyword">for</span> i <span class="token keyword">in</span> your_nums<span class="token punctuation">:</span>
+            <span class="token keyword">if</span> i <span class="token keyword">in</span> nums<span class="token punctuation">:</span>
+                your_score_times <span class="token operator">+=</span> <span class="token number">1</span>
+        <span class="token keyword">if</span> your_score_times <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">:</span>
+            total <span class="token operator">+=</span> <span class="token number">0</span>
+        <span class="token keyword">else</span><span class="token punctuation">:</span>
+            total <span class="token operator">+=</span> pow<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span> your_score_times<span class="token number">-1</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> total
+
+data <span class="token operator">=</span> read_data<span class="token punctuation">(</span><span class="token punctuation">)</span>
+s <span class="token operator">=</span> time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">10000</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    compute_sum<span class="token punctuation">(</span>data<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">-</span>s<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">6.8636345863342285
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>简单改为<code>set</code>，性能就有一倍提升。</p>
+<p>第二部分:</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">from</span> collections <span class="token keyword">import</span> defaultdict<span class="token punctuation">,</span> deque
+<span class="token keyword">import</span> time
+
+<span class="token keyword">def</span> <span class="token function">read_data</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    data <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token keyword">with</span> open<span class="token punctuation">(</span><span class="token string">'in.txt'</span><span class="token punctuation">)</span> <span class="token keyword">as</span> fd<span class="token punctuation">:</span>
+        text_data <span class="token operator">=</span> <span class="token punctuation">[</span>line<span class="token punctuation">.</span>strip<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">for</span> line <span class="token keyword">in</span> fd<span class="token punctuation">]</span>
+        <span class="token keyword">for</span> line <span class="token keyword">in</span> text_data<span class="token punctuation">:</span>
+            nums<span class="token punctuation">,</span> your_nums <span class="token operator">=</span> line<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">'|'</span><span class="token punctuation">)</span>
+            data<span class="token punctuation">.</span>append<span class="token punctuation">(</span><span class="token punctuation">(</span>set<span class="token punctuation">(</span>map<span class="token punctuation">(</span>int<span class="token punctuation">,</span> <span class="token punctuation">(</span>i <span class="token keyword">for</span> i <span class="token keyword">in</span> nums<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">':'</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">.</span>strip<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">' '</span><span class="token punctuation">)</span> <span class="token keyword">if</span> i<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                         set<span class="token punctuation">(</span>map<span class="token punctuation">(</span>int<span class="token punctuation">,</span> <span class="token punctuation">(</span>i <span class="token keyword">for</span> i <span class="token keyword">in</span> your_nums<span class="token punctuation">.</span>strip<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">' '</span><span class="token punctuation">)</span> <span class="token keyword">if</span> i<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> data
+
+<span class="token keyword">def</span> <span class="token function">compute_same_count</span><span class="token punctuation">(</span>line<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> len<span class="token punctuation">(</span>line<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">&amp;</span> line<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+<span class="token keyword">def</span> <span class="token function">compute_sum</span><span class="token punctuation">(</span>line_data<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    cache <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>  <span class="token comment" spellcheck="true"># 缓存，用来记录每行相同数字的个数</span>
+    queue <span class="token operator">=</span> deque<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    total <span class="token operator">=</span> <span class="token number">0</span>
+    card_instances <span class="token operator">=</span> defaultdict<span class="token punctuation">(</span>int<span class="token punctuation">)</span>
+
+    <span class="token comment" spellcheck="true"># 初始化队列</span>
+    <span class="token keyword">for</span> index<span class="token punctuation">,</span> line <span class="token keyword">in</span> enumerate<span class="token punctuation">(</span>line_data<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        same_count <span class="token operator">=</span> compute_same_count<span class="token punctuation">(</span>line<span class="token punctuation">)</span>
+        cache<span class="token punctuation">[</span>index<span class="token punctuation">]</span> <span class="token operator">=</span> same_count
+        card_instances<span class="token punctuation">[</span>index<span class="token punctuation">]</span> <span class="token operator">+=</span> <span class="token number">1</span>
+        <span class="token keyword">if</span> same_count <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">:</span>
+            <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> same_count <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+                new_card_index <span class="token operator">=</span> index <span class="token operator">+</span> i
+                <span class="token keyword">if</span> new_card_index <span class="token operator">&lt;</span> len<span class="token punctuation">(</span>line_data<span class="token punctuation">)</span><span class="token punctuation">:</span>
+                    queue<span class="token punctuation">.</span>append<span class="token punctuation">(</span>new_card_index<span class="token punctuation">)</span>
+                    card_instances<span class="token punctuation">[</span>new_card_index<span class="token punctuation">]</span> <span class="token operator">+=</span> <span class="token number">1</span>
+
+    <span class="token comment" spellcheck="true"># 处理队列</span>
+    <span class="token keyword">while</span> queue<span class="token punctuation">:</span>
+        current_card <span class="token operator">=</span> queue<span class="token punctuation">.</span>popleft<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> current_card <span class="token keyword">in</span> cache<span class="token punctuation">:</span>
+            same_count <span class="token operator">=</span> cache<span class="token punctuation">[</span>current_card<span class="token punctuation">]</span>
+        <span class="token keyword">else</span><span class="token punctuation">:</span>
+            same_count <span class="token operator">=</span> compute_same_count<span class="token punctuation">(</span>line_data<span class="token punctuation">[</span>current_card<span class="token punctuation">]</span><span class="token punctuation">)</span>
+            cache<span class="token punctuation">[</span>current_card<span class="token punctuation">]</span> <span class="token operator">=</span> same_count
+
+        <span class="token keyword">if</span> same_count <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">:</span>
+            <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> same_count <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+                new_card_index <span class="token operator">=</span> current_card <span class="token operator">+</span> i
+                <span class="token keyword">if</span> new_card_index <span class="token operator">&lt;</span> len<span class="token punctuation">(</span>line_data<span class="token punctuation">)</span><span class="token punctuation">:</span>
+                    queue<span class="token punctuation">.</span>append<span class="token punctuation">(</span>new_card_index<span class="token punctuation">)</span>
+                    card_instances<span class="token punctuation">[</span>new_card_index<span class="token punctuation">]</span> <span class="token operator">+=</span> <span class="token number">1</span>
+
+    <span class="token comment" spellcheck="true"># 计算拥有的卡片数量</span>
+    total <span class="token operator">=</span> sum<span class="token punctuation">(</span>card_instances<span class="token punctuation">.</span>values<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> total
+
+data <span class="token operator">=</span> read_data<span class="token punctuation">(</span><span class="token punctuation">)</span>
+s <span class="token operator">=</span> time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    res <span class="token operator">=</span> compute_sum<span class="token punctuation">(</span>data<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">-</span>s<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行时间：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">97.96245265007019
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h3 id="Cython版本解决"><a href="#Cython版本解决" class="headerlink" title="Cython版本解决"></a>Cython版本解决</h3><pre class="line-numbers language-python"><code class="language-python"><span class="token operator">%</span><span class="token operator">%</span>cython <span class="token operator">-</span>a
+
+<span class="token keyword">import</span> time
+
+<span class="token keyword">def</span> <span class="token function">read_data</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    data <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token keyword">with</span> open<span class="token punctuation">(</span><span class="token string">'in.txt'</span><span class="token punctuation">)</span> <span class="token keyword">as</span> fd<span class="token punctuation">:</span>
+        text_data <span class="token operator">=</span> <span class="token punctuation">[</span>line<span class="token punctuation">.</span>strip<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">for</span> line <span class="token keyword">in</span> fd<span class="token punctuation">]</span>
+        <span class="token keyword">for</span> line <span class="token keyword">in</span> text_data<span class="token punctuation">:</span>
+            nums<span class="token punctuation">,</span> your_nums <span class="token operator">=</span> line<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">'|'</span><span class="token punctuation">)</span>
+            data<span class="token punctuation">.</span>append<span class="token punctuation">(</span><span class="token punctuation">(</span>set<span class="token punctuation">(</span>map<span class="token punctuation">(</span>int<span class="token punctuation">,</span> <span class="token punctuation">(</span>i <span class="token keyword">for</span> i <span class="token keyword">in</span> nums<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">':'</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">.</span>strip<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">' '</span><span class="token punctuation">)</span> <span class="token keyword">if</span> i<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                set<span class="token punctuation">(</span>map<span class="token punctuation">(</span>int<span class="token punctuation">,</span>
+                <span class="token punctuation">(</span>i <span class="token keyword">for</span> i <span class="token keyword">in</span> your_nums<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">' '</span><span class="token punctuation">)</span> <span class="token keyword">if</span> i<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> data
+
+
+<span class="token keyword">def</span> <span class="token function">compute_sum</span><span class="token punctuation">(</span>line_data<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    cdef int total
+    cdef int your_score_times
+    cdef int to_add
+    cdef int i
+
+    total <span class="token operator">=</span> <span class="token number">0</span>
+    <span class="token keyword">for</span> line <span class="token keyword">in</span> line_data<span class="token punctuation">:</span>
+        your_score_times <span class="token operator">=</span> <span class="token number">0</span>
+        nums<span class="token punctuation">,</span> your_nums <span class="token operator">=</span> line<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> line<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span>
+        <span class="token keyword">for</span> i <span class="token keyword">in</span> your_nums<span class="token punctuation">:</span>
+            <span class="token keyword">if</span> i <span class="token keyword">in</span> nums<span class="token punctuation">:</span>
+                your_score_times <span class="token operator">+=</span> <span class="token number">1</span>
+        <span class="token keyword">if</span> your_score_times <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">:</span>
+            total <span class="token operator">+=</span> <span class="token number">0</span>
+        <span class="token keyword">else</span><span class="token punctuation">:</span>
+            to_add <span class="token operator">=</span> pow<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span> your_score_times<span class="token number">-1</span><span class="token punctuation">)</span>
+            total <span class="token operator">+=</span> to_add
+    <span class="token keyword">return</span> total
+
+data <span class="token operator">=</span> read_data<span class="token punctuation">(</span><span class="token punctuation">)</span>
+s <span class="token operator">=</span> time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">10000</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    compute_sum<span class="token punctuation">(</span>data<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">-</span>s<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行时间：5.704247236251831</p>
+<p>第二部分：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token operator">%</span><span class="token operator">%</span>cython 
+
+<span class="token keyword">from</span> collections <span class="token keyword">import</span> defaultdict<span class="token punctuation">,</span> deque
+<span class="token keyword">import</span> time
+
+<span class="token keyword">def</span> <span class="token function">read_data</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    data <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token keyword">with</span> open<span class="token punctuation">(</span><span class="token string">'in.txt'</span><span class="token punctuation">)</span> <span class="token keyword">as</span> fd<span class="token punctuation">:</span>
+        text_data <span class="token operator">=</span> <span class="token punctuation">[</span>line<span class="token punctuation">.</span>strip<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">for</span> line <span class="token keyword">in</span> fd<span class="token punctuation">]</span>
+        <span class="token keyword">for</span> line <span class="token keyword">in</span> text_data<span class="token punctuation">:</span>
+            nums<span class="token punctuation">,</span> your_nums <span class="token operator">=</span> line<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">'|'</span><span class="token punctuation">)</span>
+            data<span class="token punctuation">.</span>append<span class="token punctuation">(</span><span class="token punctuation">(</span>set<span class="token punctuation">(</span>map<span class="token punctuation">(</span>int<span class="token punctuation">,</span> <span class="token punctuation">(</span>i <span class="token keyword">for</span> i <span class="token keyword">in</span> nums<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">':'</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">.</span>strip<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">' '</span><span class="token punctuation">)</span> <span class="token keyword">if</span> i<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                         set<span class="token punctuation">(</span>map<span class="token punctuation">(</span>int<span class="token punctuation">,</span> <span class="token punctuation">(</span>i <span class="token keyword">for</span> i <span class="token keyword">in</span> your_nums<span class="token punctuation">.</span>strip<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">' '</span><span class="token punctuation">)</span> <span class="token keyword">if</span> i<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> data
+
+<span class="token keyword">def</span> <span class="token function">compute_same_count</span><span class="token punctuation">(</span>line<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> len<span class="token punctuation">(</span>line<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">&amp;</span> line<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+<span class="token keyword">def</span> <span class="token function">compute_sum</span><span class="token punctuation">(</span>line_data<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    cdef int total
+    cdef int index
+    cdef int i
+    cdef int new_card_index
+    cdef int same_count
+    
+    cache <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>  <span class="token comment" spellcheck="true"># 缓存，用来记录每行相同数字的个数</span>
+    queue <span class="token operator">=</span> deque<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    total <span class="token operator">=</span> <span class="token number">0</span>
+    card_instances <span class="token operator">=</span> defaultdict<span class="token punctuation">(</span>int<span class="token punctuation">)</span>
+
+
+    <span class="token comment" spellcheck="true"># 初始化队列</span>
+    <span class="token keyword">for</span> index<span class="token punctuation">,</span> line <span class="token keyword">in</span> enumerate<span class="token punctuation">(</span>line_data<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        same_count <span class="token operator">=</span> compute_same_count<span class="token punctuation">(</span>line<span class="token punctuation">)</span>
+        cache<span class="token punctuation">[</span>index<span class="token punctuation">]</span> <span class="token operator">=</span> same_count
+        card_instances<span class="token punctuation">[</span>index<span class="token punctuation">]</span> <span class="token operator">+=</span> <span class="token number">1</span>
+        <span class="token keyword">if</span> same_count <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">:</span>
+            <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> same_count <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+                new_card_index <span class="token operator">=</span> index <span class="token operator">+</span> i
+                <span class="token keyword">if</span> new_card_index <span class="token operator">&lt;</span> len<span class="token punctuation">(</span>line_data<span class="token punctuation">)</span><span class="token punctuation">:</span>
+                    queue<span class="token punctuation">.</span>append<span class="token punctuation">(</span>new_card_index<span class="token punctuation">)</span>
+                    card_instances<span class="token punctuation">[</span>new_card_index<span class="token punctuation">]</span> <span class="token operator">+=</span> <span class="token number">1</span>
+
+    <span class="token comment" spellcheck="true"># 处理队列</span>
+    <span class="token keyword">while</span> queue<span class="token punctuation">:</span>
+        current_card <span class="token operator">=</span> queue<span class="token punctuation">.</span>popleft<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> current_card <span class="token keyword">in</span> cache<span class="token punctuation">:</span>
+            same_count <span class="token operator">=</span> cache<span class="token punctuation">[</span>current_card<span class="token punctuation">]</span>
+        <span class="token keyword">else</span><span class="token punctuation">:</span>
+            same_count <span class="token operator">=</span> compute_same_count<span class="token punctuation">(</span>line_data<span class="token punctuation">[</span>current_card<span class="token punctuation">]</span><span class="token punctuation">)</span>
+            cache<span class="token punctuation">[</span>current_card<span class="token punctuation">]</span> <span class="token operator">=</span> same_count
+
+        <span class="token keyword">if</span> same_count <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">:</span>
+            <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> same_count <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+                new_card_index <span class="token operator">=</span> current_card <span class="token operator">+</span> i
+                <span class="token keyword">if</span> new_card_index <span class="token operator">&lt;</span> len<span class="token punctuation">(</span>line_data<span class="token punctuation">)</span><span class="token punctuation">:</span>
+                    queue<span class="token punctuation">.</span>append<span class="token punctuation">(</span>new_card_index<span class="token punctuation">)</span>
+                    card_instances<span class="token punctuation">[</span>new_card_index<span class="token punctuation">]</span> <span class="token operator">+=</span> <span class="token number">1</span>
+
+    <span class="token comment" spellcheck="true"># 计算拥有的卡片数量</span>
+    total <span class="token operator">=</span> sum<span class="token punctuation">(</span>card_instances<span class="token punctuation">.</span>values<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> total
+
+data <span class="token operator">=</span> read_data<span class="token punctuation">(</span><span class="token punctuation">)</span>
+s <span class="token operator">=</span> time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    res <span class="token operator">=</span> compute_sum<span class="token punctuation">(</span>data<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">-</span>s<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行时间：38.00182032585144</p>
+<p>Cython优化效果还可以，通过简单的类型声明就提升了运行效率。</p>
+
+</article>
+    
+    
+
+</div>
+<div class="trm-post-next-prev row">
+    <div class="col-lg-12">
+        <!-- title -->
+        <h5 class="trm-title-with-divider">
+            其他文章
+            <span data-number="02"></span>
+        </h5>
+    </div>
+    
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/06/10/Cython%E8%A7%A3%E5%86%B3AOC-2023-day3/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" #.">
+                    未分类
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/06/10/Cython%E8%A7%A3%E5%86%B3AOC-2023-day3/" class="trm-anima-link">
+                    Cython解决AOC-2023-day3
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/06/10</li>
+                <li>22:19</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+</div>
+
+    
+
+
+
+                    <div class="trm-divider footer-divider"></div>
+
+                    <!-- footer -->
+                    <footer class="trm-scroll-animation">
+
+    
+
+    
+
+    
+        <div class="trm-footer-item">
+            <span>
+                由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v7.0.0
+            </span>
+            <span class="footer-separator" data-separator=" | "></span>
+            <span> 
+                主题 - 
+                <a rel="noopener" href='https://github.com/MaLuns/hexo-theme-async' target='_blank'>Async</a>
+                v2.1.8
+            </span>
+        </div>
+      
+
+     
+
+     
+</footer>
+ 
+                    <!-- footer end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- body end -->
+
+            
+
+            
+<div class="trm-fixed-container">
+    
+    
+        <div class="trm-fixed-btn" data-title="阅读模式" onclick="asyncFun.switchReadMode()">
+            <i class="iconfont fas fa-book-reader"></i>
+        </div>
+    
+    
+    <div id="trm-back-top" class="trm-fixed-btn" data-title="回到顶部">
+        <i class="iconfont fas fa-arrow-up"></i>
+    </div>
+</div>
+        </div>
+      </div>
+      <!-- scroll container end -->
+  </div>
+  <!-- app wrapper end -->
+
+  
+  <!-- Plugin -->
+
+
+
+
+    
+    
+<script src="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+
+    
+
+    
+
+    
+
+    <!-- 数学公式 -->
+    
+
+    <!-- 评论插件 -->
+    
+        
+
+        
+    
+
+
+
+<!-- CDN -->
+
+
+    
+
+    
+
+    
+
+
+
+
+    <!-- Service Worker -->
+    
+    <!-- baidu push -->
+    
+
+
+<script id="async-script" src="/js/main.js?v=2.1.8"></script>
+
+</body>
+
+</html>
