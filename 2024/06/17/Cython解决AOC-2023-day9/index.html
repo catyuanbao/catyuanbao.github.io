@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="x5-fullscreen" content="true">
+<meta name="full-screen" content="yes">
+<meta name="theme-color" content="#317EFB" />
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
+<meta name="description" content="背景本文主要记录解决AOC-2023-day9的问题过程，主要使用Python和Cython分别测试效果。 题目大意第一部分You pull out your handy Oasis And Sand Instability Sensor  and analyze your surroundings. The OASIS produces a report of many  values and">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Cython解决AOC-2023-day9">
+<meta property="og:url" content="http://example.com/2024/06/17/Cython%E8%A7%A3%E5%86%B3AOC-2023-day9/index.html">
+<meta property="og:site_name" content="Cat YuanBao">
+<meta property="og:description" content="背景本文主要记录解决AOC-2023-day9的问题过程，主要使用Python和Cython分别测试效果。 题目大意第一部分You pull out your handy Oasis And Sand Instability Sensor  and analyze your surroundings. The OASIS produces a report of many  values and">
+<meta property="og:locale">
+<meta property="article:published_time" content="2024-06-17T12:43:24.000Z">
+<meta property="article:modified_time" content="2024-06-17T12:43:41.327Z">
+<meta property="article:author" content="橘猫元宝">
+<meta property="article:tag" content="cat">
+<meta name="twitter:card" content="summary">
+
+    <meta name="keywords" content="cat">
+
+
+<title >Cython解决AOC-2023-day9</title>
+
+<!-- Favicon -->
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='16x16' ></link>
+
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='32x32' ></link>
+
+
+
+
+<!-- Plugin -->
+
+
+
+
+    
+<link rel="stylesheet" href="/css/plugins/bootstrap.row.css">
+
+    
+<link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.css">
+
+    
+    
+
+
+
+
+<!-- Icon -->
+
+    
+<link rel="stylesheet" href="/css/plugins/font-awesome.min.css">
+
+
+
+
+<!-- Variable -->
+<script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-06-17 20:43:41"};</script>
+
+<!-- Theme mode css -->
+<link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
+<script>
+    let defaultMode = ASYNC_CONFIG.theme.default !=='auto' ?  ASYNC_CONFIG.theme.default : (window.matchMedia("(prefers-color-scheme: light)").matches ? 'style-light' : 'style-dark')
+    let catchMode = localStorage.getItem('theme-mode') || defaultMode;
+    let type = catchMode === 'style-dark' ? 'add' : 'remove';
+    document.documentElement.classList[type]('dark')
+</script>
+
+<!-- CDN -->
+
+
+    
+    
+
+
+
+<!-- Site Analytics -->
+ 
+<meta name="generator" content="Hexo 7.0.0"><link rel="stylesheet" href="/css/prism.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+<body>
+
+  <!-- app wrapper -->
+  <div class="trm-app-frame">
+
+    <!-- page preloader -->
+    <div class="trm-preloader">
+    <div class="trm-holder">
+        <div class="preloader">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+    <!-- page preloader end -->
+
+    <!-- change mode preloader -->
+    <div class="trm-mode-swich-animation-frame">
+    <div class="trm-mode-swich-animation">
+        <i class="i-sun"><i class="iconfont far fa-sun"></i></i>
+        <div class="trm-horizon"></div>
+        <i class="i-moon"><i class="iconfont far fa-moon"></i></i>
+    </div>
+</div>
+    <!-- change mode preloader end -->
+
+      <!-- scroll container -->
+      <div id="trm-dynamic-content" class="trm-swup-animation">
+        <div id="trm-scroll-container" class="trm-scroll-container" style="opacity: 0">
+            <!-- top bar -->
+            <header class="trm-top-bar">
+	<div class="container">
+		<div class="trm-left-side">
+			<!-- logo -->
+<a href="/" class="trm-logo-frame trm-anima-link">
+    
+        <img alt="logo" src="/img/favicon.svg">
+    
+    
+        <div class="trm-logo-text">
+            元宝<span>橘猫</span>
+        </div>
+    
+</a>
+<!-- logo end -->
+		</div>
+		<div class="trm-right-side">
+			<!-- menu -->
+<div class="trm-menu">
+    <nav>
+        <ul>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/" target="">
+                    首页
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/archives/" target="">
+                    归档
+                </a>
+                
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+<!-- menu end -->
+			
+    <!-- mode switcher place -->
+    <div class="trm-mode-switcher-place">
+        <div class="trm-mode-switcher">
+            <i class="iconfont far fa-sun"></i>
+            <input class="tgl tgl-light" id="trm-swich" type="checkbox">
+            <label class="trm-swich" for="trm-swich"></label>
+            <i class="iconfont far fa-moon"></i>
+        </div>
+    </div>
+    <!-- mode switcher place end -->
+
+			
+		</div>
+		<div class="trm-menu-btn">
+			<span></span>
+		</div>
+	</div>
+</header>
+            <!-- top bar end -->
+
+            <!-- body -->
+            
+<div class="trm-content-start">
+    <!-- banner -->
+    <div class="trm-banner">
+    
+    <!-- banner cover -->
+    <img style="object-position:top;object-fit:cover;" alt="banner" class="trm-banner-cover" src="/img/banner.png">
+    <!-- banner cover end -->
+    
+
+    <!-- banner content -->
+    <div class="trm-banner-content trm-overlay">
+        <div class="container">
+            <div class="row">
+                
+                <div class="col-lg-4"></div>
+                
+                <div class="col-lg-8">
+
+                    <!-- banner title -->
+                    <div class="trm-banner-text ">
+                        <div class="trm-label trm-mb-20">
+                            NEWS LETTER
+                        </div>
+                        <h1 class="trm-mb-30 trm-hsmb-font">
+                            Cython解决AOC-2023-day9
+                        </h1>
+
+                        
+                            <ul class="trm-breadcrumbs trm-label">
+                                <li>
+                                    <a href="/" class="trm-anima-link">Home</a>
+                                </li>
+                                <li>
+                                    <span>
+                                        2024
+                                    </span>
+                                </li>
+                            </ul>
+                        
+                    </div>
+                    <!-- banner title end -->
+
+                    <!-- scroll hint -->
+                    <span id="scroll-triger" class="trm-scroll-hint-frame">
+                        <div class="trm-scroll-hint"></div>
+                        <span class="trm-label">Scroll down</span>
+                    </span>
+                    <!-- scroll hint end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- banner content end -->
+</div>
+    <!-- banner end -->
+    <div class="container">
+        <div class="row">
+            
+                <div class="trm-page-sidebar col-lg-4 hidden-sm">
+                    <!-- main card -->
+                    <div class="trm-main-card-frame trm-sidebar">
+    <div class="trm-main-card"> 
+        <!-- card header -->
+<div class="trm-mc-header">
+    <div class="trm-avatar-frame trm-mb-20">
+        <img alt="Avatar" class="trm-avatar" src="/img/cat.jpg">
+    </div>
+    <h5 class="trm-name trm-mb-15">
+        橘猫元宝
+    </h5>
+    
+</div>
+<!-- card header end -->
+        <!-- sidebar social -->
+
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<div class="trm-social">
+    
+        <a href="https://github.com" title="Github" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-github"></i>
+        </a>
+    
+</div>
+
+<!-- sidebar social end -->
+        <!-- info -->
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<ul class="trm-table trm-mb-20">
+    
+        <li>
+            <div class="trm-label">
+                Residence:
+            </div>
+            <div class="trm-label trm-label-light">
+                Mars
+            </div>
+        </li>
+    
+</ul>
+<!-- info end -->
+
+        
+    </div>
+</div>
+                    <!-- main card end -->
+                </div>
+            
+            <div class="trm-page-content col-lg-8">
+                <div id="trm-content" class="trm-content">
+                    <div class="trm-post-info row hidden-sm">
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-calendar-alt trm-icon"></i><br>
+            06/17
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-clock trm-icon"></i><br>
+            20:43
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div id="post-author" class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-user trm-icon"></i><br>
+            橘猫元宝
+        </div>
+    </div>
+</div>
+<div class="trm-card ">
+    <article id="article-container" class="trm-publication">
+    <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>本文主要记录解决AOC-2023-day9的问题过程，主要使用Python和Cython分别测试效果。</p>
+<h3 id="题目大意"><a href="#题目大意" class="headerlink" title="题目大意"></a>题目大意</h3><h4 id="第一部分"><a href="#第一部分" class="headerlink" title="第一部分"></a>第一部分</h4><p>You pull out your handy <em>Oasis And Sand Instability Sensor</em>  and analyze your surroundings. The OASIS produces a report of many  values and how they are changing over time (your puzzle input). Each  line in the report contains the <em>history</em> of a single value. For example:</p>
+<pre><code>0 3 6 9 12 15
+1 3 6 10 15 21
+10 13 16 21 30 45
+</code></pre>
+<p>To best protect the oasis, your environmental report should include a <em>prediction of the next value</em> in each history. To do this, start by making a new sequence from the <em>difference at each step</em> of your history. If that sequence is <em>not</em> all zeroes, repeat this process, using the sequence you just generated  as the input sequence. Once all of the values in your latest sequence  are zeroes, you can extrapolate what the next value of the original  history should be.</p>
+<p>In the above dataset, the first history is <code>0 3 6 9 12 15</code>. Because the values increase by <code>3</code> each step, the first sequence of differences that you generate will be <code>3 3 3 3 3</code>. Note that this sequence has one fewer value than the input sequence  because at each step it considers two numbers from the input. Since  these values aren’t <em>all zero</em>, repeat the process: the values differ by <code>0</code> at each step, so the next sequence is <code>0 0 0 0</code>. This means you have enough information to extrapolate the history! Visually, these sequences can be arranged like this:</p>
+<pre><code>0   3   6   9  12  15
+  3   3   3   3   3
+    0   0   0   0
+</code></pre>
+<p>To extrapolate, start by adding a new zero to the end of your list of zeroes; because the zeroes represent differences between the two values above them, this also means there is now a placeholder in every  sequence above it:</p>
+<pre><code>0   3   6   9  12  15   B
+  3   3   3   3   3   A
+    0   0   0   0   0
+</code></pre>
+<p>You can then start filling in placeholders from the bottom up. <code>A</code> needs to be the result of increasing <code>3</code> (the value to its left) by <code>0</code> (the value below it); this means <code>A</code> must be <code>*3*</code>:</p>
+<pre><code>0   3   6   9  12  15   B
+  3   3   3   3   3   3
+    0   0   0   0   0
+</code></pre>
+<p>Finally, you can fill in <code>B</code>, which needs to be the result of increasing <code>15</code> (the value to its left) by <code>3</code> (the value below it), or <code>*18*</code>:</p>
+<pre><code>0   3   6   9  12  15  18
+  3   3   3   3   3   3
+    0   0   0   0   0
+</code></pre>
+<p>So, the next value of the first history is <code>*18*</code>.</p>
+<p>Finding all-zero differences for the second history requires an additional sequence:</p>
+<pre><code>1   3   6  10  15  21
+  2   3   4   5   6
+    1   1   1   1
+      0   0   0
+</code></pre>
+<p>Then, following the same process as before, work out the next value in each sequence from the bottom up:</p>
+<pre><code>1   3   6  10  15  21  28
+  2   3   4   5   6   7
+    1   1   1   1   1
+      0   0   0   0
+</code></pre>
+<p>So, the next value of the second history is <code>*28*</code>.</p>
+<p>The third history requires even more sequences, but its next value can be found the same way:</p>
+<pre><code>10  13  16  21  30  45  68
+   3   3   5   9  15  23
+     0   2   4   6   8
+       2   2   2   2
+         0   0   0
+</code></pre>
+<p>So, the next value of the third history is <code>*68*</code>.</p>
+<p>If you find the next value for each history in this example and add them together, you get <code>*114*</code>.</p>
+<p>Analyze your OASIS report and extrapolate the next value for each history. <em>What is the sum of these extrapolated values?</em></p>
+<p>简单的思路，就是一个模拟两两相减过程。</p>
+<p>Python实现：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> time
+
+<span class="token keyword">def</span> <span class="token function">read_data</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    data <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token keyword">with</span> open<span class="token punctuation">(</span><span class="token string">'in.txt'</span><span class="token punctuation">)</span> <span class="token keyword">as</span> fd<span class="token punctuation">:</span>
+        line_list <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+        text_data <span class="token operator">=</span> <span class="token punctuation">[</span>line<span class="token punctuation">.</span>strip<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">for</span> line <span class="token keyword">in</span> fd<span class="token punctuation">]</span>
+        <span class="token keyword">for</span> line <span class="token keyword">in</span> text_data<span class="token punctuation">:</span>
+            lines_list <span class="token operator">=</span> list<span class="token punctuation">(</span>map<span class="token punctuation">(</span>int<span class="token punctuation">,</span> <span class="token punctuation">[</span>i <span class="token keyword">for</span> i <span class="token keyword">in</span> line<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">' '</span><span class="token punctuation">)</span> <span class="token keyword">if</span> i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+            data<span class="token punctuation">.</span>append<span class="token punctuation">(</span>lines_list<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> data
+
+
+<span class="token keyword">def</span> <span class="token function">calculate_next_value</span><span class="token punctuation">(</span>history<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    diffs <span class="token operator">=</span> <span class="token punctuation">[</span>history<span class="token punctuation">]</span>
+    endless <span class="token operator">=</span> <span class="token number">1</span>
+    cur_history <span class="token operator">=</span> history
+    <span class="token keyword">while</span> endless<span class="token punctuation">:</span>
+        cur_list <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+        cur_len <span class="token operator">=</span> len<span class="token punctuation">(</span>cur_history<span class="token punctuation">)</span>
+        <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> cur_len<span class="token punctuation">)</span><span class="token punctuation">:</span>
+            cur_list<span class="token punctuation">.</span>append<span class="token punctuation">(</span>cur_history<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">-</span> cur_history<span class="token punctuation">[</span>i <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+        diffs<span class="token punctuation">.</span>append<span class="token punctuation">(</span>cur_list<span class="token punctuation">)</span>
+        cur_history <span class="token operator">=</span> cur_list
+        <span class="token keyword">if</span> len<span class="token punctuation">(</span>set<span class="token punctuation">(</span>cur_list<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">1</span><span class="token punctuation">:</span>
+            <span class="token keyword">break</span>
+
+    <span class="token comment" spellcheck="true"># 最后一个列表新增一个元素</span>
+    diffs<span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">.</span>append<span class="token punctuation">(</span>diffs<span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    length <span class="token operator">=</span> len<span class="token punctuation">(</span>diffs<span class="token punctuation">)</span>
+    <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span>length <span class="token operator">-</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        diffs<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>append<span class="token punctuation">(</span>diffs<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">+</span> diffs<span class="token punctuation">[</span>i<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">return</span> diffs<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span>
+
+
+<span class="token keyword">def</span> <span class="token function">sum_of_next_values</span><span class="token punctuation">(</span>histories<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    total <span class="token operator">=</span> <span class="token number">0</span>
+    <span class="token keyword">for</span> h <span class="token keyword">in</span> histories<span class="token punctuation">:</span>
+        total <span class="token operator">+=</span> calculate_next_value<span class="token punctuation">(</span>h<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> total
+
+
+<span class="token comment" spellcheck="true"># Example input</span>
+histories <span class="token operator">=</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">6</span><span class="token punctuation">,</span><span class="token number">9</span><span class="token punctuation">,</span><span class="token number">12</span><span class="token punctuation">,</span><span class="token number">15</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">6</span><span class="token punctuation">,</span><span class="token number">10</span><span class="token punctuation">,</span><span class="token number">15</span><span class="token punctuation">,</span><span class="token number">21</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token punctuation">[</span><span class="token number">10</span><span class="token punctuation">,</span><span class="token number">13</span><span class="token punctuation">,</span><span class="token number">16</span><span class="token punctuation">,</span><span class="token number">21</span><span class="token punctuation">,</span><span class="token number">30</span><span class="token punctuation">,</span><span class="token number">45</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+<span class="token punctuation">]</span>
+
+histories <span class="token operator">=</span> read_data<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+s <span class="token operator">=</span> time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    result <span class="token operator">=</span> sum_of_next_values<span class="token punctuation">(</span>histories<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">-</span> s<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行时间：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">0.4404308795928955
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>Cython只做简单的类型声明优化：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token operator">%</span><span class="token operator">%</span>cython <span class="token operator">-</span>a 
+
+
+<span class="token keyword">import</span> time
+
+<span class="token keyword">def</span> <span class="token function">read_data</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    data <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token keyword">with</span> open<span class="token punctuation">(</span><span class="token string">'in.txt'</span><span class="token punctuation">)</span> <span class="token keyword">as</span> fd<span class="token punctuation">:</span>
+        line_list <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+        text_data <span class="token operator">=</span> <span class="token punctuation">[</span>line<span class="token punctuation">.</span>strip<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">for</span> line <span class="token keyword">in</span> fd<span class="token punctuation">]</span>
+        <span class="token keyword">for</span> line <span class="token keyword">in</span> text_data<span class="token punctuation">:</span>
+            lines_list <span class="token operator">=</span> list<span class="token punctuation">(</span>map<span class="token punctuation">(</span>int<span class="token punctuation">,</span> <span class="token punctuation">[</span>i <span class="token keyword">for</span> i <span class="token keyword">in</span> line<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">' '</span><span class="token punctuation">)</span> <span class="token keyword">if</span> i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+            data<span class="token punctuation">.</span>append<span class="token punctuation">(</span>lines_list<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> data
+
+
+<span class="token keyword">def</span> <span class="token function">calculate_next_value</span><span class="token punctuation">(</span>history<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    cdef int endless
+    cdef int i
+    cdef int cur_len<span class="token punctuation">,</span> cur_set_len
+    cdef int length
+    cdef long last_num
+
+    diffs <span class="token operator">=</span> <span class="token punctuation">[</span>history<span class="token punctuation">]</span>
+    endless <span class="token operator">=</span> <span class="token number">1</span>
+    
+    cur_history <span class="token operator">=</span> history
+    <span class="token keyword">while</span> endless<span class="token punctuation">:</span>
+        cur_list <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+        cur_len <span class="token operator">=</span> len<span class="token punctuation">(</span>cur_history<span class="token punctuation">)</span>
+        <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> cur_len<span class="token punctuation">)</span><span class="token punctuation">:</span>
+            cur_list<span class="token punctuation">.</span>append<span class="token punctuation">(</span>cur_history<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">-</span> cur_history<span class="token punctuation">[</span>i <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+        diffs<span class="token punctuation">.</span>append<span class="token punctuation">(</span>cur_list<span class="token punctuation">)</span>
+        cur_history <span class="token operator">=</span> cur_list
+        cur_set_len <span class="token operator">=</span> len<span class="token punctuation">(</span>set<span class="token punctuation">(</span>cur_list<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> cur_set_len <span class="token operator">==</span> <span class="token number">1</span><span class="token punctuation">:</span>
+            <span class="token keyword">break</span>
+
+    <span class="token comment" spellcheck="true"># 最后一个列表新增一个元素</span>
+    diffs<span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">.</span>append<span class="token punctuation">(</span>diffs<span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    length <span class="token operator">=</span> len<span class="token punctuation">(</span>diffs<span class="token punctuation">)</span>
+
+    <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span>length <span class="token operator">-</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        last_num <span class="token operator">=</span> diffs<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">+</span> diffs<span class="token punctuation">[</span>i<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span>
+        diffs<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>append<span class="token punctuation">(</span>last_num<span class="token punctuation">)</span>
+
+    <span class="token keyword">return</span> diffs<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span>
+
+
+<span class="token keyword">def</span> <span class="token function">sum_of_next_values</span><span class="token punctuation">(</span>histories<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    cdef long total<span class="token punctuation">,</span> next_value
+    total <span class="token operator">=</span> <span class="token number">0</span>
+    <span class="token keyword">for</span> h <span class="token keyword">in</span> histories<span class="token punctuation">:</span>
+        next_value <span class="token operator">=</span> calculate_next_value<span class="token punctuation">(</span>h<span class="token punctuation">)</span>
+        total <span class="token operator">+=</span> next_value
+    <span class="token keyword">return</span> total
+
+
+<span class="token comment" spellcheck="true"># Example input</span>
+histories <span class="token operator">=</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">6</span><span class="token punctuation">,</span><span class="token number">9</span><span class="token punctuation">,</span><span class="token number">12</span><span class="token punctuation">,</span><span class="token number">15</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">6</span><span class="token punctuation">,</span><span class="token number">10</span><span class="token punctuation">,</span><span class="token number">15</span><span class="token punctuation">,</span><span class="token number">21</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token punctuation">[</span><span class="token number">10</span><span class="token punctuation">,</span><span class="token number">13</span><span class="token punctuation">,</span><span class="token number">16</span><span class="token punctuation">,</span><span class="token number">21</span><span class="token punctuation">,</span><span class="token number">30</span><span class="token punctuation">,</span><span class="token number">45</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+<span class="token punctuation">]</span>
+
+histories <span class="token operator">=</span> read_data<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+s <span class="token operator">=</span> time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    result <span class="token operator">=</span> sum_of_next_values<span class="token punctuation">(</span>histories<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span> s<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">0.2040560245513916
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>只做类型声明就能够实现性能的翻倍。</p>
+<h4 id="第二部分"><a href="#第二部分" class="headerlink" title="第二部分"></a>第二部分</h4><p>In particular, here is what the third example history looks like when extrapolating back in time:</p>
+<pre><code>5  10  13  16  21  30  45
+  5   3   3   5   9  15
+   -2   0   2   4   6
+      2   2   2   2
+        0   0   0
+</code></pre>
+<p>Adding the new values on the left side of each sequence from bottom to top eventually reveals the new left-most history value: <code>*5*</code>.</p>
+<p>Doing this for the remaining example data above results in previous values of <code>*-3*</code> for the first history and <code>*0*</code> for the second history. Adding all three new values together produces <code>*2*</code>.</p>
+<p>Analyze your OASIS report again, this time extrapolating the <em>previous</em> value for each history. <em>What is the sum of these extrapolated values?</em></p>
+<p>Python实现如下：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> time
+
+<span class="token keyword">def</span> <span class="token function">read_data</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    data <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token keyword">with</span> open<span class="token punctuation">(</span><span class="token string">'in.txt'</span><span class="token punctuation">)</span> <span class="token keyword">as</span> fd<span class="token punctuation">:</span>
+        line_list <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+        text_data <span class="token operator">=</span> <span class="token punctuation">[</span>line<span class="token punctuation">.</span>strip<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">for</span> line <span class="token keyword">in</span> fd<span class="token punctuation">]</span>
+        <span class="token keyword">for</span> line <span class="token keyword">in</span> text_data<span class="token punctuation">:</span>
+            lines_list <span class="token operator">=</span> list<span class="token punctuation">(</span>map<span class="token punctuation">(</span>int<span class="token punctuation">,</span> <span class="token punctuation">[</span>i <span class="token keyword">for</span> i <span class="token keyword">in</span> line<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">' '</span><span class="token punctuation">)</span> <span class="token keyword">if</span> i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+            data<span class="token punctuation">.</span>append<span class="token punctuation">(</span>lines_list<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> data
+
+
+<span class="token keyword">def</span> <span class="token function">calculate_next_value</span><span class="token punctuation">(</span>history<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    diffs <span class="token operator">=</span> <span class="token punctuation">[</span>history<span class="token punctuation">]</span>
+    endless <span class="token operator">=</span> <span class="token number">1</span>
+    cur_history <span class="token operator">=</span> history
+    <span class="token keyword">while</span> endless<span class="token punctuation">:</span>
+        cur_list <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+        cur_len <span class="token operator">=</span> len<span class="token punctuation">(</span>cur_history<span class="token punctuation">)</span>
+        <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> cur_len<span class="token punctuation">)</span><span class="token punctuation">:</span>
+            cur_list<span class="token punctuation">.</span>append<span class="token punctuation">(</span>cur_history<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">-</span> cur_history<span class="token punctuation">[</span>i <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+        diffs<span class="token punctuation">.</span>append<span class="token punctuation">(</span>cur_list<span class="token punctuation">)</span>
+        cur_history <span class="token operator">=</span> cur_list
+        <span class="token keyword">if</span> len<span class="token punctuation">(</span>set<span class="token punctuation">(</span>cur_list<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">1</span><span class="token punctuation">:</span>
+            <span class="token keyword">break</span>
+
+    <span class="token comment" spellcheck="true"># 最后一个列表新增一个元素</span>
+    diffs<span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">.</span>insert<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> diffs<span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    length <span class="token operator">=</span> len<span class="token punctuation">(</span>diffs<span class="token punctuation">)</span>
+    <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span>length <span class="token operator">-</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        diffs<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>insert<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> diffs<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">-</span> diffs<span class="token punctuation">[</span>i<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">return</span> diffs<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+
+
+<span class="token keyword">def</span> <span class="token function">sum_of_next_values</span><span class="token punctuation">(</span>histories<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    total <span class="token operator">=</span> <span class="token number">0</span>
+    <span class="token keyword">for</span> h <span class="token keyword">in</span> histories<span class="token punctuation">:</span>
+        total <span class="token operator">+=</span> calculate_next_value<span class="token punctuation">(</span>h<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> total
+
+
+<span class="token comment" spellcheck="true"># Example input</span>
+histories <span class="token operator">=</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">6</span><span class="token punctuation">,</span><span class="token number">9</span><span class="token punctuation">,</span><span class="token number">12</span><span class="token punctuation">,</span><span class="token number">15</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">6</span><span class="token punctuation">,</span><span class="token number">10</span><span class="token punctuation">,</span><span class="token number">15</span><span class="token punctuation">,</span><span class="token number">21</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token punctuation">[</span><span class="token number">10</span><span class="token punctuation">,</span><span class="token number">13</span><span class="token punctuation">,</span><span class="token number">16</span><span class="token punctuation">,</span><span class="token number">21</span><span class="token punctuation">,</span><span class="token number">30</span><span class="token punctuation">,</span><span class="token number">45</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+<span class="token punctuation">]</span>
+
+histories <span class="token operator">=</span> read_data<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+s <span class="token operator">=</span> time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    result <span class="token operator">=</span> sum_of_next_values<span class="token punctuation">(</span>histories<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">-</span> s<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行时间：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">0.7181146144866943
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>Cython简单优化：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token operator">%</span><span class="token operator">%</span>cython <span class="token operator">-</span>a 
+
+
+<span class="token keyword">import</span> time
+
+<span class="token keyword">def</span> <span class="token function">read_data</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    data <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token keyword">with</span> open<span class="token punctuation">(</span><span class="token string">'in.txt'</span><span class="token punctuation">)</span> <span class="token keyword">as</span> fd<span class="token punctuation">:</span>
+        line_list <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+        text_data <span class="token operator">=</span> <span class="token punctuation">[</span>line<span class="token punctuation">.</span>strip<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">for</span> line <span class="token keyword">in</span> fd<span class="token punctuation">]</span>
+        <span class="token keyword">for</span> line <span class="token keyword">in</span> text_data<span class="token punctuation">:</span>
+            lines_list <span class="token operator">=</span> list<span class="token punctuation">(</span>map<span class="token punctuation">(</span>int<span class="token punctuation">,</span> <span class="token punctuation">[</span>i <span class="token keyword">for</span> i <span class="token keyword">in</span> line<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">' '</span><span class="token punctuation">)</span> <span class="token keyword">if</span> i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+            data<span class="token punctuation">.</span>append<span class="token punctuation">(</span>lines_list<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> data
+
+
+<span class="token keyword">def</span> <span class="token function">calculate_next_value</span><span class="token punctuation">(</span>history<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    cdef int endless
+    cdef int i
+    cdef int cur_len<span class="token punctuation">,</span> cur_set_len
+    cdef int length
+
+    diffs <span class="token operator">=</span> <span class="token punctuation">[</span>history<span class="token punctuation">]</span>
+    endless <span class="token operator">=</span> <span class="token number">1</span>
+    
+    cur_history <span class="token operator">=</span> history
+    <span class="token keyword">while</span> endless<span class="token punctuation">:</span>
+        cur_list <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+        cur_len <span class="token operator">=</span> len<span class="token punctuation">(</span>cur_history<span class="token punctuation">)</span>
+        <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> cur_len<span class="token punctuation">)</span><span class="token punctuation">:</span>
+            cur_list<span class="token punctuation">.</span>append<span class="token punctuation">(</span>cur_history<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">-</span> cur_history<span class="token punctuation">[</span>i <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+        diffs<span class="token punctuation">.</span>append<span class="token punctuation">(</span>cur_list<span class="token punctuation">)</span>
+        cur_history <span class="token operator">=</span> cur_list
+        cur_set_len <span class="token operator">=</span> len<span class="token punctuation">(</span>set<span class="token punctuation">(</span>cur_list<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> cur_set_len <span class="token operator">==</span> <span class="token number">1</span><span class="token punctuation">:</span>
+            <span class="token keyword">break</span>
+
+    <span class="token comment" spellcheck="true"># 最后一个列表新增一个元素</span>
+    diffs<span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">.</span>insert<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> diffs<span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    length <span class="token operator">=</span> len<span class="token punctuation">(</span>diffs<span class="token punctuation">)</span>
+    <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span>length <span class="token operator">-</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        diffs<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>insert<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> diffs<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">-</span> diffs<span class="token punctuation">[</span>i<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">return</span> diffs<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span>
+
+
+<span class="token keyword">def</span> <span class="token function">sum_of_next_values</span><span class="token punctuation">(</span>histories<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    cdef long total<span class="token punctuation">,</span> next_value
+    total <span class="token operator">=</span> <span class="token number">0</span>
+    <span class="token keyword">for</span> h <span class="token keyword">in</span> histories<span class="token punctuation">:</span>
+        next_value <span class="token operator">=</span> calculate_next_value<span class="token punctuation">(</span>h<span class="token punctuation">)</span>
+        total <span class="token operator">+=</span> next_value
+    <span class="token keyword">return</span> total
+
+
+<span class="token comment" spellcheck="true"># Example input</span>
+histories <span class="token operator">=</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">6</span><span class="token punctuation">,</span><span class="token number">9</span><span class="token punctuation">,</span><span class="token number">12</span><span class="token punctuation">,</span><span class="token number">15</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">6</span><span class="token punctuation">,</span><span class="token number">10</span><span class="token punctuation">,</span><span class="token number">15</span><span class="token punctuation">,</span><span class="token number">21</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token punctuation">[</span><span class="token number">10</span><span class="token punctuation">,</span><span class="token number">13</span><span class="token punctuation">,</span><span class="token number">16</span><span class="token punctuation">,</span><span class="token number">21</span><span class="token punctuation">,</span><span class="token number">30</span><span class="token punctuation">,</span><span class="token number">45</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+<span class="token punctuation">]</span>
+
+histories <span class="token operator">=</span> read_data<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+s <span class="token operator">=</span> time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    result <span class="token operator">=</span> sum_of_next_values<span class="token punctuation">(</span>histories<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span> s<span class="token punctuation">)</span>
+
+
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行时间：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">0.31702160835266113
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+</article>
+    
+    
+
+</div>
+<div class="trm-post-next-prev row">
+    <div class="col-lg-12">
+        <!-- title -->
+        <h5 class="trm-title-with-divider">
+            其他文章
+            <span data-number="02"></span>
+        </h5>
+    </div>
+    
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/06/17/PyCuda%E7%AC%94%E8%AE%B0%E4%BA%94/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" #.">
+                    未分类
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/06/17/PyCuda%E7%AC%94%E8%AE%B0%E4%BA%94/" class="trm-anima-link">
+                    PyCuda笔记五
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/06/17</li>
+                <li>17:19</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+</div>
+
+    
+
+
+
+                    <div class="trm-divider footer-divider"></div>
+
+                    <!-- footer -->
+                    <footer class="trm-scroll-animation">
+
+    
+
+    
+
+    
+        <div class="trm-footer-item">
+            <span>
+                由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v7.0.0
+            </span>
+            <span class="footer-separator" data-separator=" | "></span>
+            <span> 
+                主题 - 
+                <a rel="noopener" href='https://github.com/MaLuns/hexo-theme-async' target='_blank'>Async</a>
+                v2.1.8
+            </span>
+        </div>
+      
+
+     
+
+     
+</footer>
+ 
+                    <!-- footer end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- body end -->
+
+            
+
+            
+<div class="trm-fixed-container">
+    
+    
+        <div class="trm-fixed-btn" data-title="阅读模式" onclick="asyncFun.switchReadMode()">
+            <i class="iconfont fas fa-book-reader"></i>
+        </div>
+    
+    
+    <div id="trm-back-top" class="trm-fixed-btn" data-title="回到顶部">
+        <i class="iconfont fas fa-arrow-up"></i>
+    </div>
+</div>
+        </div>
+      </div>
+      <!-- scroll container end -->
+  </div>
+  <!-- app wrapper end -->
+
+  
+  <!-- Plugin -->
+
+
+
+
+    
+    
+<script src="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+
+    
+
+    
+
+    
+
+    <!-- 数学公式 -->
+    
+
+    <!-- 评论插件 -->
+    
+        
+
+        
+    
+
+
+
+<!-- CDN -->
+
+
+    
+
+    
+
+    
+
+
+
+
+    <!-- Service Worker -->
+    
+    <!-- baidu push -->
+    
+
+
+<script id="async-script" src="/js/main.js?v=2.1.8"></script>
+
+</body>
+
+</html>
