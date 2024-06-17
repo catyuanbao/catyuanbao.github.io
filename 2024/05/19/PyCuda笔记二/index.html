@@ -7,15 +7,15 @@
 <meta name="full-screen" content="yes">
 <meta name="theme-color" content="#317EFB" />
 <meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
-<meta name="description" content="背景本文主要记录《Hands-On GPU Programming with Python and CUDA》一书中，第四章的内容，主要是介绍kernel, thread, block和grid，以及线程同步的相关知识。 SourceModule 函数SourceModule函数通常出现在NVIDIA CUDA编程中，特别是PyCUDA或类似的Python库中，用于处理CUDA内核编译和执行。So">
+<meta name="description" content="背景本文主要记录《Hands-On GPU Programming with Python and CUDA》一书中，第四章的内容，主要是介绍kernel, thread, block和grid，以及线程同步的相关知识。 SourceModule 函数SourceModule函数通常出现在NVIDIA CUDA编程中，特别是PyCUDA或类似的Python库中，用于处理CUDA内核编译和执行。 S">
 <meta property="og:type" content="article">
 <meta property="og:title" content="PyCuda笔记二">
 <meta property="og:url" content="http://example.com/2024/05/19/PyCuda%E7%AC%94%E8%AE%B0%E4%BA%8C/index.html">
 <meta property="og:site_name" content="Cat YuanBao">
-<meta property="og:description" content="背景本文主要记录《Hands-On GPU Programming with Python and CUDA》一书中，第四章的内容，主要是介绍kernel, thread, block和grid，以及线程同步的相关知识。 SourceModule 函数SourceModule函数通常出现在NVIDIA CUDA编程中，特别是PyCUDA或类似的Python库中，用于处理CUDA内核编译和执行。So">
+<meta property="og:description" content="背景本文主要记录《Hands-On GPU Programming with Python and CUDA》一书中，第四章的内容，主要是介绍kernel, thread, block和grid，以及线程同步的相关知识。 SourceModule 函数SourceModule函数通常出现在NVIDIA CUDA编程中，特别是PyCUDA或类似的Python库中，用于处理CUDA内核编译和执行。 S">
 <meta property="og:locale">
 <meta property="article:published_time" content="2024-05-18T17:34:45.000Z">
-<meta property="article:modified_time" content="2024-05-18T17:35:50.706Z">
+<meta property="article:modified_time" content="2024-06-16T20:26:54.004Z">
 <meta property="article:author" content="橘猫元宝">
 <meta property="article:tag" content="cat">
 <meta name="twitter:card" content="summary">
@@ -62,7 +62,7 @@
 
 <!-- Variable -->
 <script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
-<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-05-19 01:35:50"};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-06-17 04:26:54"};</script>
 
 <!-- Theme mode css -->
 <link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
@@ -320,8 +320,9 @@
 <div class="trm-card ">
     <article id="article-container" class="trm-publication">
     <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>本文主要记录《Hands-On GPU Programming with Python and CUDA》一书中，第四章的内容，主要是介绍kernel, thread, block和grid，以及线程同步的相关知识。</p>
-<h3 id="SourceModule-函数"><a href="#SourceModule-函数" class="headerlink" title="SourceModule 函数"></a>SourceModule 函数</h3><pre class="line-numbers language-bash"><code class="language-bash">SourceModule函数通常出现在NVIDIA CUDA编程中，特别是PyCUDA或类似的Python库中，用于处理CUDA内核编译和执行。SourceModule从CUDA源代码中编译内核并准备其执行。它允许用户在Python中编写CUDA内核代码，并在运行时编译和调用这些内核。
-<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h3 id="SourceModule-函数"><a href="#SourceModule-函数" class="headerlink" title="SourceModule 函数"></a>SourceModule 函数</h3><pre class="line-numbers language-bash"><code class="language-bash">SourceModule函数通常出现在NVIDIA CUDA编程中，特别是PyCUDA或类似的Python库中，用于处理CUDA内核编译和执行。
+SourceModule从CUDA源代码中编译内核并准备其执行。它允许用户在Python中编写CUDA内核代码，并在运行时编译和调用这些内核。
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
 <p>简单实例，计算向量相加:</p>
 <pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>autoinit
 <span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>driver <span class="token keyword">as</span> cuda
@@ -445,7 +446,7 @@ scalar_multiply_gpu<span class="token punctuation">(</span> outvec_gpu<span clas
 <span class="token keyword">int</span> global_id_y <span class="token operator">=</span> blockIdx<span class="token punctuation">.</span>y <span class="token operator">*</span> blockDim<span class="token punctuation">.</span>y <span class="token operator">+</span> threadIdx<span class="token punctuation">.</span>y<span class="token punctuation">;</span>
 <span class="token keyword">int</span> global_id_z <span class="token operator">=</span> blockIdx<span class="token punctuation">.</span>z <span class="token operator">*</span> blockDim<span class="token punctuation">.</span>z <span class="token operator">+</span> threadIdx<span class="token punctuation">.</span>z<span class="token punctuation">;</span>
 <span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
-<h4 id="线程索引是什么意思，为啥需要3维，而不是更多？"><a href="#线程索引是什么意思，为啥需要3维，而不是更多？" class="headerlink" title="线程索引是什么意思，为啥需要3维，而不是更多？"></a>线程索引是什么意思，为啥需要3维，而不是更多？</h4><p>线程索引是指每个线程在其块内的唯一标识符。CUDA编程模型允许使用三维索引来组织线程和块，以便更直观地处理高维数据，如图像、体数据等。三维索引的使用是出于实际应用的需要和GPU硬件的设计。</p>
+<h4 id="线程索引是什么意思，为啥需要3维，而不是更多？"><a href="#线程索引是什么意思，为啥需要3维，而不是更多？" class="headerlink" title="线程索引是什么意思，为啥需要3维，而不是更多？"></a>线程索引是什么意思，为啥需要3维，而不是更多？</h4><p>线程索引是指每个线程在其块内的唯一标识符。<br>CUDA编程模型允许使用三维索引来组织线程和块，以便更直观地处理高维数据，如图像、体数据等。三维索引的使用是出于实际应用的需要和GPU硬件的设计。</p>
 <p>以下是一个处理三维数据的CUDA内核示例，有点类似于把C语言的多维数组给平铺开，找到平铺后的索引。</p>
 <pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>autoinit
 <span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>driver <span class="token keyword">as</span> cuda
@@ -569,7 +570,10 @@ cuda<span class="token punctuation">.</span>memcpy_dtoh<span class="token punctu
     多维划分：每个层次负责不同的图形处理任务，通过流水线方式高效生成图像。
 <span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 <p>大概往后面翻一下这本书，后面基本就是一个线程同步，stream和event了，对于cuda的API讲解，并没有特别多，于是又发出一个提问：</p>
-<h4 id="cuda从API的多样性而言，并没有太多复杂的东西，底层的架构设计和优化比较复杂，你是否认同？"><a href="#cuda从API的多样性而言，并没有太多复杂的东西，底层的架构设计和优化比较复杂，你是否认同？" class="headerlink" title="cuda从API的多样性而言，并没有太多复杂的东西，底层的架构设计和优化比较复杂，你是否认同？"></a>cuda从API的多样性而言，并没有太多复杂的东西，底层的架构设计和优化比较复杂，你是否认同？</h4><pre class="line-numbers language-bash"><code class="language-bash">是的，我认同这一点。CUDA从API的多样性而言，确实相对简洁，不会太复杂。开发者主要使用的API涵盖了基本的内存管理、核函数启动、线程同步等操作。然而，CUDA编程的复杂性更多体现在底层架构设计和性能优化上。这包括理解和利用GPU的硬件特性，以及针对特定应用进行优化。以下是一些具体方面：
+<h4 id="cuda从API的多样性而言，并没有太多复杂的东西，底层的架构设计和优化比较复杂，你是否认同？"><a href="#cuda从API的多样性而言，并没有太多复杂的东西，底层的架构设计和优化比较复杂，你是否认同？" class="headerlink" title="cuda从API的多样性而言，并没有太多复杂的东西，底层的架构设计和优化比较复杂，你是否认同？"></a>cuda从API的多样性而言，并没有太多复杂的东西，底层的架构设计和优化比较复杂，你是否认同？</h4><pre class="line-numbers language-bash"><code class="language-bash">是的，我认同这一点。CUDA从API的多样性而言，确实相对简洁，不会太复杂。
+开发者主要使用的API涵盖了基本的内存管理、核函数启动、线程同步等操作。
+然而，CUDA编程的复杂性更多体现在底层架构设计和性能优化上。
+这包括理解和利用GPU的硬件特性，以及针对特定应用进行优化。以下是一些具体方面：
 
 1. GPU架构理解
 
@@ -605,8 +609,10 @@ cuda<span class="token punctuation">.</span>memcpy_dtoh<span class="token punctu
     与MPI结合：在多节点环境中，结合MPI进行分布式并行计算。
     与OpenMP结合：在CPU和GPU协同计算中，结合OpenMP优化CPU端的并行计算。
 
-总的来说，CUDA的API相对简洁，提供了核心功能和基础操作。但实际应用中，复杂性主要来自于如何高效利用底层硬件资源、设计并行算法以及进行性能优化。这些方面需要深入理解GPU的工作原理和并行计算的基本原理，以及不断进行实验和调试来优化程序性能。
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+总的来说，CUDA的API相对简洁，提供了核心功能和基础操作。
+但实际应用中，复杂性主要来自于如何高效利用底层硬件资源、设计并行算法以及进行性能优化。
+这些方面需要深入理解GPU的工作原理和并行计算的基本原理，以及不断进行实验和调试来优化程序性能。
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 <h3 id="康威生命游戏"><a href="#康威生命游戏" class="headerlink" title="康威生命游戏"></a>康威生命游戏</h3><p>在一个二维的矩阵里面的简单算法，规则如下：</p>
 <pre class="line-numbers language-bash"><code class="language-bash">1.每个细胞有两种状态 - 存活或死亡，每个细胞与以自身为中心的周围八格细胞产生互动
 2.当前细胞为存活状态时，当周围的存活细胞低于2个时（不包含2个），该细胞变成死亡状态。（模拟生命数量稀少）
@@ -726,8 +732,9 @@ ice_gpu<span class="token punctuation">,</span> N<span class="token punctuation"
 <span class="token macro property">#<span class="token directive keyword">define</span> _INDEX(x,y)  ( _XM(x)  + _YM(y) * _WIDTH )</span>
 <span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 <p>二维坐标需要用threadIdx.x + blockIdx.x * blockDim.x 计算</p>
-<pre><code>在 CUDA 中，一个 block 最多可以包含 1024 个线程。这是由 CUDA 的硬件限制决定的，具体限制可能会因不同的 GPU 架构而有所不同，但在大多数现代 GPU 上，这个限制是 1024。
-</code></pre>
+<pre class="line-numbers language-bash"><code class="language-bash">在 CUDA 中，一个 block 最多可以包含 1024 个线程。
+这是由 CUDA 的硬件限制决定的，具体限制可能会因不同的 GPU 架构而有所不同，但在大多数现代 GPU 上，这个限制是 1024。
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
 <h4 id="参数计算问题"><a href="#参数计算问题" class="headerlink" title="参数计算问题"></a>参数计算问题</h4><p>conway_ker(  newLattice_gpu, lattice_gpu, grid&#x3D;(N&#x2F;&#x2F;32,N&#x2F;&#x2F;32,1), block&#x3D;(32,32,1))这个 grid和block个数是怎么计算出来的？有没有通用的计算原则？</p>
 <p>一些限制：</p>
 <ol>
@@ -973,7 +980,7 @@ __shared__ <span class="token keyword">int</span> lattice<span class="token punc
 lattice<span class="token punctuation">[</span><span class="token function">_INDEX</span><span class="token punctuation">(</span>x<span class="token punctuation">,</span>y<span class="token punctuation">)</span><span class="token punctuation">]</span> <span class="token operator">=</span> p_lattice<span class="token punctuation">[</span><span class="token function">_INDEX</span><span class="token punctuation">(</span>x<span class="token punctuation">,</span>y<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
 <span class="token function">__syncthreads</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 <span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p>这几行代码的主要目的是将全局内存中的数据复制到共享内存中，并确保复制操作完成后所有线程才继续执行接下来的操作。这样做的好处是，后续的计算可以利用共享内存中的数据，显著提高内存访问速度，从而提升整体计算性能。</p>
+<p>这几行代码的主要目的是将全局内存中的数据复制到共享内存中，并确保复制操作完成后所有线程才继续执行接下来的操作。<br>这样做的好处是，后续的计算可以利用共享内存中的数据，显著提高内存访问速度，从而提升整体计算性能。</p>
 <h3 id="前缀和算法"><a href="#前缀和算法" class="headerlink" title="前缀和算法"></a>前缀和算法</h3><p>本章最后给出一个问题，计算前缀和算法，前缀和算法的输入和输出是这样的</p>
 <pre class="line-numbers language-bash"><code class="language-bash">arr     <span class="token operator">=</span> <span class="token punctuation">[</span>1, 2, 3, 4, 5<span class="token punctuation">]</span>
 prefix  <span class="token operator">=</span> <span class="token punctuation">[</span>1, 3, 6, 10, 15<span class="token punctuation">]</span>

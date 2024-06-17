@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="x5-fullscreen" content="true">
+<meta name="full-screen" content="yes">
+<meta name="theme-color" content="#317EFB" />
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
+<meta name="description" content="背景本文主要记录《Hands-On GPU Programming with Python and CUDA 》第5章的内容，这里主要介绍了流、事件、上下文的并发的知识。 第五章Cuda设备同步在CUDA编程中，设备同步是指确保GPU上的操作在特定点上完成，以便确保计算结果的正确性和数据的一致性。 CUDA提供了多种同步机制，用于协调CPU（主机）和GPU（设备）之间，以及多个GPU线程之间的操作">
+<meta property="og:type" content="article">
+<meta property="og:title" content="PyCuda笔记三">
+<meta property="og:url" content="http://example.com/2024/06/17/PyCuda%E7%AC%94%E8%AE%B0%E4%B8%89/index.html">
+<meta property="og:site_name" content="Cat YuanBao">
+<meta property="og:description" content="背景本文主要记录《Hands-On GPU Programming with Python and CUDA 》第5章的内容，这里主要介绍了流、事件、上下文的并发的知识。 第五章Cuda设备同步在CUDA编程中，设备同步是指确保GPU上的操作在特定点上完成，以便确保计算结果的正确性和数据的一致性。 CUDA提供了多种同步机制，用于协调CPU（主机）和GPU（设备）之间，以及多个GPU线程之间的操作">
+<meta property="og:locale">
+<meta property="article:published_time" content="2024-06-16T23:44:50.000Z">
+<meta property="article:modified_time" content="2024-06-16T23:46:04.995Z">
+<meta property="article:author" content="橘猫元宝">
+<meta property="article:tag" content="cat">
+<meta name="twitter:card" content="summary">
+
+    <meta name="keywords" content="cat">
+
+
+<title >PyCuda笔记三</title>
+
+<!-- Favicon -->
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='16x16' ></link>
+
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='32x32' ></link>
+
+
+
+
+<!-- Plugin -->
+
+
+
+
+    
+<link rel="stylesheet" href="/css/plugins/bootstrap.row.css">
+
+    
+<link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.css">
+
+    
+    
+
+
+
+
+<!-- Icon -->
+
+    
+<link rel="stylesheet" href="/css/plugins/font-awesome.min.css">
+
+
+
+
+<!-- Variable -->
+<script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-06-17 07:46:04"};</script>
+
+<!-- Theme mode css -->
+<link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
+<script>
+    let defaultMode = ASYNC_CONFIG.theme.default !=='auto' ?  ASYNC_CONFIG.theme.default : (window.matchMedia("(prefers-color-scheme: light)").matches ? 'style-light' : 'style-dark')
+    let catchMode = localStorage.getItem('theme-mode') || defaultMode;
+    let type = catchMode === 'style-dark' ? 'add' : 'remove';
+    document.documentElement.classList[type]('dark')
+</script>
+
+<!-- CDN -->
+
+
+    
+    
+
+
+
+<!-- Site Analytics -->
+ 
+<meta name="generator" content="Hexo 7.0.0"><link rel="stylesheet" href="/css/prism.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+<body>
+
+  <!-- app wrapper -->
+  <div class="trm-app-frame">
+
+    <!-- page preloader -->
+    <div class="trm-preloader">
+    <div class="trm-holder">
+        <div class="preloader">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+    <!-- page preloader end -->
+
+    <!-- change mode preloader -->
+    <div class="trm-mode-swich-animation-frame">
+    <div class="trm-mode-swich-animation">
+        <i class="i-sun"><i class="iconfont far fa-sun"></i></i>
+        <div class="trm-horizon"></div>
+        <i class="i-moon"><i class="iconfont far fa-moon"></i></i>
+    </div>
+</div>
+    <!-- change mode preloader end -->
+
+      <!-- scroll container -->
+      <div id="trm-dynamic-content" class="trm-swup-animation">
+        <div id="trm-scroll-container" class="trm-scroll-container" style="opacity: 0">
+            <!-- top bar -->
+            <header class="trm-top-bar">
+	<div class="container">
+		<div class="trm-left-side">
+			<!-- logo -->
+<a href="/" class="trm-logo-frame trm-anima-link">
+    
+        <img alt="logo" src="/img/favicon.svg">
+    
+    
+        <div class="trm-logo-text">
+            元宝<span>橘猫</span>
+        </div>
+    
+</a>
+<!-- logo end -->
+		</div>
+		<div class="trm-right-side">
+			<!-- menu -->
+<div class="trm-menu">
+    <nav>
+        <ul>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/" target="">
+                    首页
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/archives/" target="">
+                    归档
+                </a>
+                
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+<!-- menu end -->
+			
+    <!-- mode switcher place -->
+    <div class="trm-mode-switcher-place">
+        <div class="trm-mode-switcher">
+            <i class="iconfont far fa-sun"></i>
+            <input class="tgl tgl-light" id="trm-swich" type="checkbox">
+            <label class="trm-swich" for="trm-swich"></label>
+            <i class="iconfont far fa-moon"></i>
+        </div>
+    </div>
+    <!-- mode switcher place end -->
+
+			
+		</div>
+		<div class="trm-menu-btn">
+			<span></span>
+		</div>
+	</div>
+</header>
+            <!-- top bar end -->
+
+            <!-- body -->
+            
+<div class="trm-content-start">
+    <!-- banner -->
+    <div class="trm-banner">
+    
+    <!-- banner cover -->
+    <img style="object-position:top;object-fit:cover;" alt="banner" class="trm-banner-cover" src="/img/banner.png">
+    <!-- banner cover end -->
+    
+
+    <!-- banner content -->
+    <div class="trm-banner-content trm-overlay">
+        <div class="container">
+            <div class="row">
+                
+                <div class="col-lg-4"></div>
+                
+                <div class="col-lg-8">
+
+                    <!-- banner title -->
+                    <div class="trm-banner-text ">
+                        <div class="trm-label trm-mb-20">
+                            NEWS LETTER
+                        </div>
+                        <h1 class="trm-mb-30 trm-hsmb-font">
+                            PyCuda笔记三
+                        </h1>
+
+                        
+                            <ul class="trm-breadcrumbs trm-label">
+                                <li>
+                                    <a href="/" class="trm-anima-link">Home</a>
+                                </li>
+                                <li>
+                                    <span>
+                                        2024
+                                    </span>
+                                </li>
+                            </ul>
+                        
+                    </div>
+                    <!-- banner title end -->
+
+                    <!-- scroll hint -->
+                    <span id="scroll-triger" class="trm-scroll-hint-frame">
+                        <div class="trm-scroll-hint"></div>
+                        <span class="trm-label">Scroll down</span>
+                    </span>
+                    <!-- scroll hint end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- banner content end -->
+</div>
+    <!-- banner end -->
+    <div class="container">
+        <div class="row">
+            
+                <div class="trm-page-sidebar col-lg-4 hidden-sm">
+                    <!-- main card -->
+                    <div class="trm-main-card-frame trm-sidebar">
+    <div class="trm-main-card"> 
+        <!-- card header -->
+<div class="trm-mc-header">
+    <div class="trm-avatar-frame trm-mb-20">
+        <img alt="Avatar" class="trm-avatar" src="/img/cat.jpg">
+    </div>
+    <h5 class="trm-name trm-mb-15">
+        橘猫元宝
+    </h5>
+    
+</div>
+<!-- card header end -->
+        <!-- sidebar social -->
+
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<div class="trm-social">
+    
+        <a href="https://github.com" title="Github" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-github"></i>
+        </a>
+    
+</div>
+
+<!-- sidebar social end -->
+        <!-- info -->
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<ul class="trm-table trm-mb-20">
+    
+        <li>
+            <div class="trm-label">
+                Residence:
+            </div>
+            <div class="trm-label trm-label-light">
+                Mars
+            </div>
+        </li>
+    
+</ul>
+<!-- info end -->
+
+        
+    </div>
+</div>
+                    <!-- main card end -->
+                </div>
+            
+            <div class="trm-page-content col-lg-8">
+                <div id="trm-content" class="trm-content">
+                    <div class="trm-post-info row hidden-sm">
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-calendar-alt trm-icon"></i><br>
+            06/17
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-clock trm-icon"></i><br>
+            07:44
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div id="post-author" class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-user trm-icon"></i><br>
+            橘猫元宝
+        </div>
+    </div>
+</div>
+<div class="trm-card ">
+    <article id="article-container" class="trm-publication">
+    <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>本文主要记录《Hands-On GPU Programming with Python and CUDA 》第5章的内容，这里主要介绍了流、事件、上下文的并发的知识。</p>
+<h3 id="第五章"><a href="#第五章" class="headerlink" title="第五章"></a>第五章</h3><h4 id="Cuda设备同步"><a href="#Cuda设备同步" class="headerlink" title="Cuda设备同步"></a>Cuda设备同步</h4><p>在CUDA编程中，设备同步是指确保GPU上的操作在特定点上完成，以便确保计算结果的正确性和数据的一致性。</p>
+<p>CUDA提供了多种同步机制，用于协调CPU（主机）和GPU（设备）之间，以及多个GPU线程之间的操作。</p>
+<p>在CPU和GPU设备同步数据场景下，设备是通过<code>cudaDeviceSynchronize</code>函数执行的。</p>
+<p>类似<code>pthread_join</code>该函数会阻塞主机代码的执行，直到所有先前启动的CUDA内核和所有内存拷贝操作在GPU上完成。</p>
+<p>使用实例如下：</p>
+<pre class="line-numbers language-c++"><code class="language-c++">#include <cuda_runtime.h>
+#include <iostream>
+
+__global__ void addKernel(int *c, const int *a, const int *b, int size) {
+    int i = threadIdx.x + blockDim.x * blockIdx.x;
+    if (i < size) {
+        c[i] = a[i] + b[i];
+    }
+}
+
+int main() {
+    const int arraySize = 5;
+    const int a[arraySize] = {1, 2, 3, 4, 5};
+    const int b[arraySize] = {10, 20, 30, 40, 50};
+    int c[arraySize] = {0};
+
+    int *d_a, *d_b, *d_c;
+    cudaMalloc((void**)&d_a, arraySize * sizeof(int));
+    cudaMalloc((void**)&d_b, arraySize * sizeof(int));
+    cudaMalloc((void**)&d_c, arraySize * sizeof(int));
+
+    cudaMemcpy(d_a, a, arraySize * sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_b, b, arraySize * sizeof(int), cudaMemcpyHostToDevice);
+
+    addKernel<<<1, arraySize>>>(d_c, d_a, d_b, arraySize);
+    // 阻塞主机代码的执行。
+    cudaDeviceSynchronize();
+        // 从GPU复制到CPU
+    cudaMemcpy(c, d_c, arraySize * sizeof(int), cudaMemcpyDeviceToHost);
+
+    std::cout << "Result: ";
+    for (int i = 0; i < arraySize; i++) {
+        std::cout << c[i] << " ";
+    }
+    std::cout << std::endl;
+
+    cudaFree(d_a);
+    cudaFree(d_b);
+    cudaFree(d_c);
+
+    return 0;
+}
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在这个示例中，<code>cudaDeviceSynchronize</code> 确保在从设备拷贝结果回主机之前，所有的CUDA内核执行都已经完成。</p>
+<h4 id="PyCuda流类-stream"><a href="#PyCuda流类-stream" class="headerlink" title="PyCuda流类(stream)"></a>PyCuda流类(stream)</h4><p>在CUDA编程中，流（Streams）是一种用于管理和并行化GPU操作的机制。</p>
+<p>使用流可以提升性能，尤其是在需要重叠计算和数据传输的场景下。PyCUDA是Python的CUDA接口，它也提供了对流的支持。</p>
+<p>CUDA流是按顺序执行的一系列命令队列。</p>
+<p>每个流中的操作按顺序执行，但不同流中的操作可以并行执行。</p>
+<p>流的使用可以帮助重叠数据传输和内核执行，从而提高GPU的利用率。</p>
+<h5 id="可以提升性能的原因"><a href="#可以提升性能的原因" class="headerlink" title="可以提升性能的原因"></a>可以提升性能的原因</h5><p><strong>重叠计算和数据传输</strong>：</p>
+<ul>
+<li>在默认情况下，数据传输和计算是在同一个流中顺序执行的，这意味着计算只能在数据传输完成后开始。</li>
+<li>使用流可以将数据传输和计算重叠。例如，可以在一个流中执行内核计算，同时在另一个流中进行数据传输，从而更高效地利用GPU资源。</li>
+</ul>
+<p><strong>多核并行执行</strong>：</p>
+<ul>
+<li>不同流中的内核可以并行执行，前提是这些内核之间没有数据依赖。这有助于更好地利用GPU的多核架构。</li>
+</ul>
+<p><strong>更好的资源利用</strong>：</p>
+<ul>
+<li>使用多个流可以更均匀地分配GPU的计算资源和内存带宽，减少资源空闲时间，从而提高整体性能。</li>
+</ul>
+<p>为了测试使用<code>stream</code>的性能，先给出一个无用的测试算法，把数组的每个元素乘以2，再除以2，最后还是原来的元素：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>autoinit
+<span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>driver <span class="token keyword">as</span> drv
+<span class="token keyword">from</span> pycuda <span class="token keyword">import</span> gpuarray
+<span class="token keyword">from</span> pycuda<span class="token punctuation">.</span>compiler <span class="token keyword">import</span> SourceModule
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">from</span> time <span class="token keyword">import</span> time
+
+num_arrays <span class="token operator">=</span> <span class="token number">200</span>
+array_len <span class="token operator">=</span> <span class="token number">1024</span><span class="token operator">**</span><span class="token number">2</span>
+
+ker <span class="token operator">=</span> SourceModule<span class="token punctuation">(</span><span class="token triple-quoted-string string">"""       
+__global__ void mult_ker(float * array, int array_len)
+{
+     int thd = blockIdx.x*blockDim.x + threadIdx.x;
+     int num_iters = array_len / blockDim.x;
+
+     for(int j=0; j &lt; num_iters; j++)
+     {
+         int i = j * blockDim.x + thd;
+
+         for(int k = 0; k &lt; 50; k++)
+         {
+              array[i] *= 2.0;
+              array[i] /= 2.0;
+         }
+     }
+
+}
+"""</span><span class="token punctuation">)</span>
+
+mult_ker <span class="token operator">=</span> ker<span class="token punctuation">.</span>get_function<span class="token punctuation">(</span><span class="token string">'mult_ker'</span><span class="token punctuation">)</span>
+
+data <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+data_gpu <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+gpu_out <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+
+<span class="token comment" spellcheck="true"># generate random arrays.</span>
+<span class="token keyword">for</span> _ <span class="token keyword">in</span> range<span class="token punctuation">(</span>num_arrays<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    data<span class="token punctuation">.</span>append<span class="token punctuation">(</span>np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span>array_len<span class="token punctuation">)</span><span class="token punctuation">.</span>astype<span class="token punctuation">(</span><span class="token string">'float32'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+t_start <span class="token operator">=</span> time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># copy arrays to GPU.</span>
+<span class="token keyword">for</span> k <span class="token keyword">in</span> range<span class="token punctuation">(</span>num_arrays<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    data_gpu<span class="token punctuation">.</span>append<span class="token punctuation">(</span>gpuarray<span class="token punctuation">.</span>to_gpu<span class="token punctuation">(</span>data<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># process arrays.</span>
+<span class="token keyword">for</span> k <span class="token keyword">in</span> range<span class="token punctuation">(</span>num_arrays<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    mult_ker<span class="token punctuation">(</span>data_gpu<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">,</span> np<span class="token punctuation">.</span>int32<span class="token punctuation">(</span>array_len<span class="token punctuation">)</span><span class="token punctuation">,</span> block<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">64</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span> grid<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># copy arrays from GPU.</span>
+<span class="token keyword">for</span> k <span class="token keyword">in</span> range<span class="token punctuation">(</span>num_arrays<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    gpu_out<span class="token punctuation">.</span>append<span class="token punctuation">(</span>data_gpu<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+t_end <span class="token operator">=</span> time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token keyword">for</span> k <span class="token keyword">in</span> range<span class="token punctuation">(</span>num_arrays<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">assert</span> <span class="token punctuation">(</span>np<span class="token punctuation">.</span>allclose<span class="token punctuation">(</span>gpu_out<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">,</span> data<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">'Total time: {t_end - t_start}'</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行时间：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">Total time: 1.9899470806121826
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>使用流优化性能：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>autoinit
+<span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>driver <span class="token keyword">as</span> drv
+<span class="token keyword">from</span> pycuda <span class="token keyword">import</span> gpuarray
+<span class="token keyword">from</span> pycuda<span class="token punctuation">.</span>compiler <span class="token keyword">import</span> SourceModule
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">from</span> time <span class="token keyword">import</span> time
+
+num_arrays <span class="token operator">=</span> <span class="token number">200</span>
+array_len <span class="token operator">=</span> <span class="token number">1024</span><span class="token operator">**</span><span class="token number">2</span>
+
+ker <span class="token operator">=</span> SourceModule<span class="token punctuation">(</span><span class="token triple-quoted-string string">"""       
+__global__ void mult_ker(float * array, int array_len)
+{
+     int thd = blockIdx.x*blockDim.x + threadIdx.x;
+     int num_iters = array_len / blockDim.x;
+
+     for(int j=0; j &lt; num_iters; j++)
+     {
+         int i = j * blockDim.x + thd;
+
+         for(int k = 0; k &lt; 50; k++)
+         {
+              array[i] *= 2.0;
+              array[i] /= 2.0;
+         }
+     }
+
+}
+"""</span><span class="token punctuation">)</span>
+
+mult_ker <span class="token operator">=</span> ker<span class="token punctuation">.</span>get_function<span class="token punctuation">(</span><span class="token string">'mult_ker'</span><span class="token punctuation">)</span>
+
+data <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+data_gpu <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+gpu_out <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+streams <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+
+<span class="token comment" spellcheck="true"># 初始化流列表</span>
+<span class="token keyword">for</span> _ <span class="token keyword">in</span> range<span class="token punctuation">(</span>num_arrays<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    streams<span class="token punctuation">.</span>append<span class="token punctuation">(</span>drv<span class="token punctuation">.</span>Stream<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># generate random arrays.</span>
+<span class="token keyword">for</span> _ <span class="token keyword">in</span> range<span class="token punctuation">(</span>num_arrays<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    data<span class="token punctuation">.</span>append<span class="token punctuation">(</span>np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span>array_len<span class="token punctuation">)</span><span class="token punctuation">.</span>astype<span class="token punctuation">(</span><span class="token string">'float32'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+t_start <span class="token operator">=</span> time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># copy arrays to GPU.</span>
+<span class="token keyword">for</span> k <span class="token keyword">in</span> range<span class="token punctuation">(</span>num_arrays<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    data_gpu<span class="token punctuation">.</span>append<span class="token punctuation">(</span>gpuarray<span class="token punctuation">.</span>to_gpu_async<span class="token punctuation">(</span>data<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">,</span> stream<span class="token operator">=</span>streams<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># process arrays.</span>
+<span class="token keyword">for</span> k <span class="token keyword">in</span> range<span class="token punctuation">(</span>num_arrays<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true"># 调用时绑定流列表</span>
+    mult_ker<span class="token punctuation">(</span>data_gpu<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">,</span> np<span class="token punctuation">.</span>int32<span class="token punctuation">(</span>array_len<span class="token punctuation">)</span><span class="token punctuation">,</span> block<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">64</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span> grid<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span> st
+ream<span class="token operator">=</span>streams<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># copy arrays from GPU.</span>
+<span class="token comment" spellcheck="true"># 从GPU复制回来时取异步结果</span>
+<span class="token keyword">for</span> k <span class="token keyword">in</span> range<span class="token punctuation">(</span>num_arrays<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    gpu_out<span class="token punctuation">.</span>append<span class="token punctuation">(</span>data_gpu<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">.</span>get_async<span class="token punctuation">(</span>stream<span class="token operator">=</span>streams<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+t_end <span class="token operator">=</span> time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token keyword">for</span> k <span class="token keyword">in</span> range<span class="token punctuation">(</span>num_arrays<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">assert</span> <span class="token punctuation">(</span>np<span class="token punctuation">.</span>allclose<span class="token punctuation">(</span>gpu_out<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">,</span> data<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'Total time: %f'</span> <span class="token operator">%</span> <span class="token punctuation">(</span>t_end <span class="token operator">-</span> t_start<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行时间：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">Total time: 0.311299
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>这里可以看出，提升了约6倍性能。</p>
+<p>没有使用流的代码流程，指令是串行执行的：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">时间轴 <span class="token punctuation">(</span>t<span class="token punctuation">)</span> -<span class="token operator">></span>
+<span class="token operator">|</span>----------------------------<span class="token operator">|</span>
+<span class="token operator">|</span>  数据传输 a -<span class="token operator">></span> 设备        <span class="token operator">|</span>
+<span class="token operator">|</span>----------------------------<span class="token operator">|</span>
+                          <span class="token operator">|</span>----------------------------<span class="token operator">|</span>
+                          <span class="token operator">|</span>  数据传输 b -<span class="token operator">></span> 设备        <span class="token operator">|</span>
+                          <span class="token operator">|</span>----------------------------<span class="token operator">|</span>
+                                                    <span class="token operator">|</span>----------------------------<span class="token operator">|</span>
+                                                    <span class="token operator">|</span>  内核执行 <span class="token punctuation">(</span>a + b<span class="token punctuation">)</span>           <span class="token operator">|</span>
+                                                    <span class="token operator">|</span>----------------------------<span class="token operator">|</span>
+                                                                               <span class="token operator">|</span>----------------------------<span class="token operator">|</span>
+                                                                               <span class="token operator">|</span>  结果传输 c -<span class="token operator">></span> 主机          <span class="token operator">|</span>
+                                                                               <span class="token operator">|</span>----------------------------<span class="token operator">|</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>使用流的代码流程，指令是并行的：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">时间轴 <span class="token punctuation">(</span>t<span class="token punctuation">)</span> -<span class="token operator">></span>
+<span class="token operator">|</span>----------------------------<span class="token operator">|</span> 
+<span class="token operator">|</span> 数据传输 a -<span class="token operator">></span> 设备 <span class="token punctuation">(</span>Stream1<span class="token punctuation">)</span><span class="token operator">|</span>
+<span class="token operator">|</span>----------------------------<span class="token operator">|</span> 
+                          <span class="token operator">|</span>----------------------------<span class="token operator">|</span>
+                          <span class="token operator">|</span> 数据传输 b -<span class="token operator">></span> 设备 <span class="token punctuation">(</span>Stream2<span class="token punctuation">)</span><span class="token operator">|</span>
+                          <span class="token operator">|</span>----------------------------<span class="token operator">|</span> 
+                          <span class="token operator">|</span>                            <span class="token operator">|</span>
+                          <span class="token operator">|</span>----------------------------<span class="token operator">|</span>
+                          <span class="token operator">|</span>  内核执行 <span class="token punctuation">(</span>a + b<span class="token punctuation">)</span> <span class="token punctuation">(</span>Stream1<span class="token punctuation">)</span> <span class="token operator">|</span>
+                          <span class="token operator">|</span>----------------------------<span class="token operator">|</span> 
+                          <span class="token operator">|</span>                            <span class="token operator">|</span> 
+                          <span class="token operator">|</span>----------------------------<span class="token operator">|</span>
+                          <span class="token operator">|</span>  结果传输 c -<span class="token operator">></span> 主机 <span class="token punctuation">(</span>Stream1<span class="token punctuation">)</span><span class="token operator">|</span>
+                          <span class="token operator">|</span>----------------------------<span class="token operator">|</span> 
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="通过流实现并发版本的life-game"><a href="#通过流实现并发版本的life-game" class="headerlink" title="通过流实现并发版本的life game"></a>通过流实现并发版本的life game</h4><p>使用<code>stream</code>做4个并发图片，显示不同的life game:</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token comment" spellcheck="true"># CUDA Stream-based Concurrent Conway's game of life in Python / CUDA C</span>
+<span class="token comment" spellcheck="true"># written by Brian Tuomanen for "Hands on GPU Programming with Python and CUDA"</span>
+
+<span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>autoinit
+<span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>driver <span class="token keyword">as</span> drv
+<span class="token keyword">from</span> pycuda <span class="token keyword">import</span> gpuarray
+<span class="token keyword">from</span> pycuda<span class="token punctuation">.</span>compiler <span class="token keyword">import</span> SourceModule
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">import</span> matplotlib<span class="token punctuation">.</span>pyplot <span class="token keyword">as</span> plt 
+<span class="token keyword">import</span> matplotlib<span class="token punctuation">.</span>animation <span class="token keyword">as</span> animation
+
+ker <span class="token operator">=</span> SourceModule<span class="token punctuation">(</span><span class="token triple-quoted-string string">"""
+#define _X  ( threadIdx.x + blockIdx.x * blockDim.x )
+#define _Y  ( threadIdx.y + blockIdx.y * blockDim.y )
+
+#define _WIDTH  ( blockDim.x * gridDim.x )
+#define _HEIGHT ( blockDim.y * gridDim.y  )
+
+#define _XM(x)  ( (x + _WIDTH) % _WIDTH )
+#define _YM(y)  ( (y + _HEIGHT) % _HEIGHT )
+
+#define _INDEX(x,y)  ( _XM(x)  + _YM(y) * _WIDTH )
+
+// return the number of living neighbors for a given cell                
+__device__ int nbrs(int x, int y, int * in)
+{
+     return ( in[ _INDEX(x -1, y+1) ] + in[ _INDEX(x-1, y) ] + in[ _INDEX(x-1, 
+y-1) ] \
+                   + in[ _INDEX(x, y+1)] + in[_INDEX(x, y - 1)] \
+                   + in[ _INDEX(x+1, y+1) ] + in[ _INDEX(x+1, y) ] + in[ _INDEX
+(x+1, y-1) ] );
+}
+
+__global__ void conway_ker(int * lattice_out, int * lattice  )
+{
+   // x, y are the appropriate values for the cell covered by this thread
+   int x = _X, y = _Y;
+   
+   // count the number of neighbors around the current cell
+   int n = nbrs(x, y, lattice);
+                   
+    
+    // if the current cell is alive, then determine if it lives or dies for the
+ next generation.
+    if ( lattice[_INDEX(x,y)] == 1)
+       switch(n)
+       {
+          // if the cell is alive: it remains alive only if it has 2 or 3 neigh
+bors.
+          case 2:
+          case 3: lattice_out[_INDEX(x,y)] = 1;
+                  break;
+          default: lattice_out[_INDEX(x,y)] = 0;                   
+       }
+    else if( lattice[_INDEX(x,y)] == 0 )
+         switch(n)
+         {
+            // a dead cell comes to life only if it has 3 neighbors that are al
+ive.
+            case 3: lattice_out[_INDEX(x,y)] = 1;
+                    break;
+            default: lattice_out[_INDEX(x,y)] = 0;         
+         }
+         
+}
+"""</span><span class="token punctuation">)</span>
+
+
+conway_ker <span class="token operator">=</span> ker<span class="token punctuation">.</span>get_function<span class="token punctuation">(</span><span class="token string">"conway_ker"</span><span class="token punctuation">)</span>
+    
+
+<span class="token keyword">def</span> <span class="token function">update_gpu</span><span class="token punctuation">(</span>frameNum<span class="token punctuation">,</span> imgs<span class="token punctuation">,</span> newLattices_gpu<span class="token punctuation">,</span> lattices_gpu<span class="token punctuation">,</span> N<span class="token punctuation">,</span> streams<span class="token punctuation">,</span> num_c
+oncurrent<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    
+    <span class="token keyword">for</span> k <span class="token keyword">in</span> range<span class="token punctuation">(</span>num_concurrent<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        conway_ker<span class="token punctuation">(</span>  newLattices_gpu<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">,</span> lattices_gpu<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">,</span> grid<span class="token operator">=</span><span class="token punctuation">(</span>N<span class="token operator">//</span><span class="token number">32</span><span class="token punctuation">,</span>N<span class="token operator">//</span><span class="token number">32</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+ block<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">32</span><span class="token punctuation">,</span><span class="token number">32</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span> stream<span class="token operator">=</span>streams<span class="token punctuation">[</span>k<span class="token punctuation">]</span>   <span class="token punctuation">)</span>
+        imgs<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">.</span>set_data<span class="token punctuation">(</span>newLattices_gpu<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">.</span>get_async<span class="token punctuation">(</span>stream<span class="token operator">=</span>streams<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">)</span>
+        lattices_gpu<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">.</span>set_async<span class="token punctuation">(</span>newLattices_gpu<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">,</span> stream<span class="token operator">=</span>streams<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">)</span>
+        
+    <span class="token keyword">return</span> imgs
+    
+
+<span class="token keyword">if</span> __name__ <span class="token operator">==</span> <span class="token string">'__main__'</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true"># set lattice size</span>
+    N <span class="token operator">=</span> <span class="token number">128</span>
+    
+    num_concurrent <span class="token operator">=</span> <span class="token number">4</span>
+    
+    streams <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    lattices_gpu <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    newLattices_gpu <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    
+    <span class="token keyword">for</span> k <span class="token keyword">in</span> range<span class="token punctuation">(</span>num_concurrent<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        streams<span class="token punctuation">.</span>append<span class="token punctuation">(</span>drv<span class="token punctuation">.</span>Stream<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        lattice <span class="token operator">=</span> np<span class="token punctuation">.</span>int32<span class="token punctuation">(</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>choice<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> N<span class="token operator">*</span>N<span class="token punctuation">,</span> p<span class="token operator">=</span><span class="token punctuation">[</span><span class="token number">0.25</span><span class="token punctuation">,</span> <span class="token number">0.75</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">.</span>reshap
+e<span class="token punctuation">(</span>N<span class="token punctuation">,</span> N<span class="token punctuation">)</span> <span class="token punctuation">)</span>
+        lattices_gpu<span class="token punctuation">.</span>append<span class="token punctuation">(</span>gpuarray<span class="token punctuation">.</span>to_gpu<span class="token punctuation">(</span>lattice<span class="token punctuation">)</span><span class="token punctuation">)</span> 
+        newLattices_gpu<span class="token punctuation">.</span>append<span class="token punctuation">(</span>gpuarray<span class="token punctuation">.</span>empty_like<span class="token punctuation">(</span>lattices_gpu<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>      
+
+    fig<span class="token punctuation">,</span> ax <span class="token operator">=</span> plt<span class="token punctuation">.</span>subplots<span class="token punctuation">(</span>nrows<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">,</span> ncols<span class="token operator">=</span>num_concurrent<span class="token punctuation">)</span>
+    imgs <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    
+    <span class="token keyword">for</span> k <span class="token keyword">in</span> range<span class="token punctuation">(</span>num_concurrent<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        imgs<span class="token punctuation">.</span>append<span class="token punctuation">(</span> ax<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">.</span>imshow<span class="token punctuation">(</span>lattices_gpu<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">.</span>get_async<span class="token punctuation">(</span>stream<span class="token operator">=</span>streams<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+ interpolation<span class="token operator">=</span><span class="token string">'nearest'</span><span class="token punctuation">)</span> <span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true"># 这里修改interval的值为1，不然无法显示</span>
+    ani <span class="token operator">=</span> animation<span class="token punctuation">.</span>FuncAnimation<span class="token punctuation">(</span>fig<span class="token punctuation">,</span> update_gpu<span class="token punctuation">,</span> fargs<span class="token operator">=</span><span class="token punctuation">(</span>imgs<span class="token punctuation">,</span> newLattices_gpu
+<span class="token punctuation">,</span> lattices_gpu<span class="token punctuation">,</span> N<span class="token punctuation">,</span> streams<span class="token punctuation">,</span> num_concurrent<span class="token punctuation">)</span> <span class="token punctuation">,</span> interval<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">,</span> frames<span class="token operator">=</span><span class="token number">1000</span><span class="token punctuation">,</span> save_cou
+nt<span class="token operator">=</span><span class="token number">1000</span><span class="token punctuation">)</span>    
+     
+    plt<span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里主要关注下异步操作<code>get_async</code>和<code>set_async</code>,它们是 PyCUDA 提供的用于异步数据传输的函数。</p>
+<p>它们允许在不阻塞主机 CPU 的情况下从设备到主机（或反之）传输数据，从而更好地利用 GPU 和 CPU 资源。</p>
+<p><code>get_async</code>: 异步从 GPU 内存获取数据到主机内存。</p>
+<p><code>set_async</code>: 异步将数据从主机内存传输到 GPU 内存。</p>
+<h4 id="事件-Event"><a href="#事件-Event" class="headerlink" title="事件(Event)"></a>事件(Event)</h4><p>在 CUDA 编程中，事件（Event）是一种用于在 GPU 上进行时间测量和同步的机制。</p>
+<p>它们可以用来记录 GPU 上的某个时刻，测量一段代码的执行时间，或者强制执行不同 CUDA 流之间的同步。</p>
+<p>在 PyCUDA 中，事件（Event）对象提供了类似的功能。</p>
+<p>主要功能：</p>
+<p><strong>时间测量</strong>：用于测量 GPU 上代码片段的执行时间。</p>
+<p><strong>同步</strong>：用于在不同的 CUDA 流之间进行同步。</p>
+<p>实例如下：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>driver <span class="token keyword">as</span> drv
+<span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>autoinit
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">from</span> pycuda<span class="token punctuation">.</span>compiler <span class="token keyword">import</span> SourceModule
+
+<span class="token comment" spellcheck="true"># 示例内核代码</span>
+mod <span class="token operator">=</span> SourceModule<span class="token punctuation">(</span><span class="token triple-quoted-string string">"""
+__global__ void my_kernel(float *a)
+{
+    int idx = threadIdx.x + blockDim.x * blockIdx.x;
+    a[idx] *= 2;
+}
+"""</span><span class="token punctuation">)</span>
+
+my_kernel <span class="token operator">=</span> mod<span class="token punctuation">.</span>get_function<span class="token punctuation">(</span><span class="token string">"my_kernel"</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 初始化数据</span>
+N <span class="token operator">=</span> <span class="token number">1024</span>
+a <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span>N<span class="token punctuation">)</span><span class="token punctuation">.</span>astype<span class="token punctuation">(</span>np<span class="token punctuation">.</span>float32<span class="token punctuation">)</span>
+a_gpu <span class="token operator">=</span> drv<span class="token punctuation">.</span>mem_alloc<span class="token punctuation">(</span>a<span class="token punctuation">.</span>nbytes<span class="token punctuation">)</span>
+drv<span class="token punctuation">.</span>memcpy_htod<span class="token punctuation">(</span>a_gpu<span class="token punctuation">,</span> a<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 创建事件</span>
+start <span class="token operator">=</span> drv<span class="token punctuation">.</span>Event<span class="token punctuation">(</span><span class="token punctuation">)</span>
+end <span class="token operator">=</span> drv<span class="token punctuation">.</span>Event<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 记录开始事件</span>
+start<span class="token punctuation">.</span>record<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 执行内核</span>
+my_kernel<span class="token punctuation">(</span>a_gpu<span class="token punctuation">,</span> block<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">256</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span> grid<span class="token operator">=</span><span class="token punctuation">(</span>N <span class="token operator">//</span> <span class="token number">256</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 记录结束事件</span>
+end<span class="token punctuation">.</span>record<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 同步事件</span>
+end<span class="token punctuation">.</span>synchronize<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 计算执行时间（以毫秒为单位）</span>
+exec_time <span class="token operator">=</span> start<span class="token punctuation">.</span>time_till<span class="token punctuation">(</span>end<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">"Kernel execution time: {exec_time} ms"</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 从 GPU 获取结果</span>
+drv<span class="token punctuation">.</span>memcpy_dtoh<span class="token punctuation">(</span>a<span class="token punctuation">,</span> a_gpu<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 使用事件进行流间同步</span>
+stream1 <span class="token operator">=</span> drv<span class="token punctuation">.</span>Stream<span class="token punctuation">(</span><span class="token punctuation">)</span>
+stream2 <span class="token operator">=</span> drv<span class="token punctuation">.</span>Stream<span class="token punctuation">(</span><span class="token punctuation">)</span>
+sync_event <span class="token operator">=</span> drv<span class="token punctuation">.</span>Event<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 在 stream1 中记录事件</span>
+sync_event<span class="token punctuation">.</span>record<span class="token punctuation">(</span>stream1<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 在 stream2 中等待事件完成</span>
+stream2<span class="token punctuation">.</span>wait_for_event<span class="token punctuation">(</span>sync_event<span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Stream synchronization complete."</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>运行结果：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">Kernel execution time: 0.2112320065498352 ms
+Stream synchronization complete.
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<h4 id="2个线程交替打印奇数偶数的实例"><a href="#2个线程交替打印奇数偶数的实例" class="headerlink" title="2个线程交替打印奇数偶数的实例"></a>2个线程交替打印奇数偶数的实例</h4><pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>driver <span class="token keyword">as</span> drv
+<span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>autoinit
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">from</span> pycuda<span class="token punctuation">.</span>compiler <span class="token keyword">import</span> SourceModule
+
+<span class="token comment" spellcheck="true"># CUDA 内核代码</span>
+mod <span class="token operator">=</span> SourceModule<span class="token punctuation">(</span><span class="token triple-quoted-string string">"""
+__global__ void odd_kernel(int *output, int n) {
+    int idx = threadIdx.x + blockDim.x * blockIdx.x;
+    if (idx &lt; n &amp;&amp; (idx % 2) == 1) {
+        output[idx] = idx;
+    }
+}
+
+__global__ void even_kernel(int *output, int n) {
+    int idx = threadIdx.x + blockDim.x * blockIdx.x;
+    if (idx &lt; n &amp;&amp; (idx % 2) == 0) {
+        output[idx] = idx;
+    }
+}
+"""</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 获取内核函数</span>
+odd_kernel <span class="token operator">=</span> mod<span class="token punctuation">.</span>get_function<span class="token punctuation">(</span><span class="token string">"odd_kernel"</span><span class="token punctuation">)</span>
+even_kernel <span class="token operator">=</span> mod<span class="token punctuation">.</span>get_function<span class="token punctuation">(</span><span class="token string">"even_kernel"</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 数组大小</span>
+N <span class="token operator">=</span> <span class="token number">100</span>
+output <span class="token operator">=</span> np<span class="token punctuation">.</span>zeros<span class="token punctuation">(</span>N<span class="token punctuation">,</span> dtype<span class="token operator">=</span>np<span class="token punctuation">.</span>int32<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 分配 GPU 内存</span>
+output_gpu <span class="token operator">=</span> drv<span class="token punctuation">.</span>mem_alloc<span class="token punctuation">(</span>output<span class="token punctuation">.</span>nbytes<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 创建事件和流</span>
+stream1 <span class="token operator">=</span> drv<span class="token punctuation">.</span>Stream<span class="token punctuation">(</span><span class="token punctuation">)</span>
+stream2 <span class="token operator">=</span> drv<span class="token punctuation">.</span>Stream<span class="token punctuation">(</span><span class="token punctuation">)</span>
+event <span class="token operator">=</span> drv<span class="token punctuation">.</span>Event<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 在流1中执行奇数内核</span>
+odd_kernel<span class="token punctuation">(</span>output_gpu<span class="token punctuation">,</span> np<span class="token punctuation">.</span>int32<span class="token punctuation">(</span>N<span class="token punctuation">)</span><span class="token punctuation">,</span> block<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">32</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span> grid<span class="token operator">=</span><span class="token punctuation">(</span>N <span class="token operator">//</span> <span class="token number">32</span> <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span> st
+ream<span class="token operator">=</span>stream1<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># 在流1中记录事件</span>
+event<span class="token punctuation">.</span>record<span class="token punctuation">(</span>stream1<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 在流2中等待事件完成，然后执行偶数内核</span>
+stream2<span class="token punctuation">.</span>wait_for_event<span class="token punctuation">(</span>event<span class="token punctuation">)</span>
+even_kernel<span class="token punctuation">(</span>output_gpu<span class="token punctuation">,</span> np<span class="token punctuation">.</span>int32<span class="token punctuation">(</span>N<span class="token punctuation">)</span><span class="token punctuation">,</span> block<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">32</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span> grid<span class="token operator">=</span><span class="token punctuation">(</span>N <span class="token operator">//</span> <span class="token number">32</span> <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span> s
+tream<span class="token operator">=</span>stream2<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 同步流2，确保计算完成</span>
+stream2<span class="token punctuation">.</span>synchronize<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 从 GPU 获取结果</span>
+drv<span class="token punctuation">.</span>memcpy_dtoh<span class="token punctuation">(</span>output<span class="token punctuation">,</span> output_gpu<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 打印结果</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Odd numbers:"</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>output<span class="token punctuation">[</span>output <span class="token operator">%</span> <span class="token number">2</span> <span class="token operator">==</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Even numbers:"</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>output<span class="token punctuation">[</span>output <span class="token operator">%</span> <span class="token number">2</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>书中实例：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>autoinit
+<span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>driver <span class="token keyword">as</span> drv
+<span class="token keyword">from</span> pycuda <span class="token keyword">import</span> gpuarray
+<span class="token keyword">from</span> pycuda<span class="token punctuation">.</span>compiler <span class="token keyword">import</span> SourceModule
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">from</span> time <span class="token keyword">import</span> time
+
+num_arrays <span class="token operator">=</span> <span class="token number">200</span>
+array_len <span class="token operator">=</span> <span class="token number">1024</span><span class="token operator">**</span><span class="token number">2</span>
+
+ker <span class="token operator">=</span> SourceModule<span class="token punctuation">(</span><span class="token triple-quoted-string string">"""       
+__global__ void mult_ker(float * array, int array_len)
+{
+     int thd = blockIdx.x*blockDim.x + threadIdx.x;
+     int num_iters = array_len / blockDim.x;
+     for(int j=0; j &lt; num_iters; j++)
+     {
+         int i = j * blockDim.x + thd;
+         for(int k = 0; k &lt; 50; k++)
+         {
+              array[i] *= 2.0;
+              array[i] /= 2.0;
+         }
+     }
+}
+"""</span><span class="token punctuation">)</span>
+
+mult_ker <span class="token operator">=</span> ker<span class="token punctuation">.</span>get_function<span class="token punctuation">(</span><span class="token string">'mult_ker'</span><span class="token punctuation">)</span>
+
+data <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+data_gpu <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+gpu_out <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+streams <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+start_events <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+end_events <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+
+<span class="token keyword">for</span> _ <span class="token keyword">in</span> range<span class="token punctuation">(</span>num_arrays<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    streams<span class="token punctuation">.</span>append<span class="token punctuation">(</span>drv<span class="token punctuation">.</span>Stream<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    start_events<span class="token punctuation">.</span>append<span class="token punctuation">(</span>drv<span class="token punctuation">.</span>Event<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    end_events<span class="token punctuation">.</span>append<span class="token punctuation">(</span>drv<span class="token punctuation">.</span>Event<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># generate random arrays.</span>
+<span class="token keyword">for</span> _ <span class="token keyword">in</span> range<span class="token punctuation">(</span>num_arrays<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    data<span class="token punctuation">.</span>append<span class="token punctuation">(</span>np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span>array_len<span class="token punctuation">)</span><span class="token punctuation">.</span>astype<span class="token punctuation">(</span><span class="token string">'float32'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+t_start <span class="token operator">=</span> time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># copy arrays to GPU.</span>
+<span class="token keyword">for</span> k <span class="token keyword">in</span> range<span class="token punctuation">(</span>num_arrays<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    data_gpu<span class="token punctuation">.</span>append<span class="token punctuation">(</span>gpuarray<span class="token punctuation">.</span>to_gpu_async<span class="token punctuation">(</span>data<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">,</span> stream<span class="token operator">=</span>streams<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># process arrays.</span>
+<span class="token keyword">for</span> k <span class="token keyword">in</span> range<span class="token punctuation">(</span>num_arrays<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    start_events<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">.</span>record<span class="token punctuation">(</span>streams<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">)</span>
+    mult_ker<span class="token punctuation">(</span>data_gpu<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">,</span> np<span class="token punctuation">.</span>int32<span class="token punctuation">(</span>array_len<span class="token punctuation">)</span><span class="token punctuation">,</span> block<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">64</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span> grid<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span> st
+ream<span class="token operator">=</span>streams<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token keyword">for</span> k <span class="token keyword">in</span> range<span class="token punctuation">(</span>num_arrays<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    end_events<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">.</span>record<span class="token punctuation">(</span>streams<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">)</span>
+    
+<span class="token comment" spellcheck="true"># copy arrays from GPU.</span>
+<span class="token keyword">for</span> k <span class="token keyword">in</span> range<span class="token punctuation">(</span>num_arrays<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    gpu_out<span class="token punctuation">.</span>append<span class="token punctuation">(</span>data_gpu<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">.</span>get_async<span class="token punctuation">(</span>stream<span class="token operator">=</span>streams<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+t_end <span class="token operator">=</span> time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token keyword">for</span> k <span class="token keyword">in</span> range<span class="token punctuation">(</span>num_arrays<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">assert</span> <span class="token punctuation">(</span>np<span class="token punctuation">.</span>allclose<span class="token punctuation">(</span>gpu_out<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">,</span> data<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+kernel_times <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+
+<span class="token keyword">for</span> k <span class="token keyword">in</span> range<span class="token punctuation">(</span>num_arrays<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    kernel_times<span class="token punctuation">.</span>append<span class="token punctuation">(</span>start_events<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">.</span>time_till<span class="token punctuation">(</span>end_events<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'Total time: %f'</span> <span class="token operator">%</span> <span class="token punctuation">(</span>t_end <span class="token operator">-</span> t_start<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'Mean kernel duration (milliseconds): %f'</span> <span class="token operator">%</span> np<span class="token punctuation">.</span>mean<span class="token punctuation">(</span>kernel_times<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'Mean kernel standard deviation (milliseconds): %f'</span> <span class="token operator">%</span> np<span class="token punctuation">.</span>std<span class="token punctuation">(</span>kernel_times
+<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="上下文（Context）"><a href="#上下文（Context）" class="headerlink" title="上下文（Context）"></a>上下文（Context）</h4><p>CUDA 上下文（context）是 CUDA 编程模型中的一个重要概念。</p>
+<p>它代表了一个在特定设备上执行 CUDA 操作的执行环境。上下文包含了设备内存、内核函数、流、事件、纹理、缓存等资源，并且确保这些资源在同一上下文中是相互可见的。</p>
+<p>每个线程只能在一个 CUDA 上下文中运行，一个设备可以有多个上下文，但这些上下文之间是隔离的。</p>
+<p>一般用于多个GPU设备的场景。</p>
+<p>关键点：</p>
+<p><strong>上下文管理</strong>：CUDA 上下文是通过驱动 API（例如 PyCUDA）或运行时 API 自动管理的。在 PyCUDA 中，可以通过 <code>pycuda.autoinit</code> 模块自动初始化上下文。</p>
+<p><strong>设备内存管理</strong>：在一个上下文中分配的设备内存只能在该上下文中访问和操作。</p>
+<p><strong>内核执行</strong>：在一个上下文中加载和执行的内核函数只能在该上下文中访问其内存和资源。</p>
+<p><strong>多上下文</strong>：一个设备可以支持多个上下文，但它们是独立的。这意味着在一个上下文中分配的资源（如内存）在另一个上下文中不可见。</p>
+<p>手动管理上下文：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>driver <span class="token keyword">as</span> drv
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">from</span> pycuda<span class="token punctuation">.</span>compiler <span class="token keyword">import</span> SourceModule
+
+<span class="token comment" spellcheck="true"># 初始化CUDA驱动</span>
+drv<span class="token punctuation">.</span>init<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 选择设备并创建上下文</span>
+device <span class="token operator">=</span> drv<span class="token punctuation">.</span>Device<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 假设我们选择第一个设备</span>
+context <span class="token operator">=</span> device<span class="token punctuation">.</span>make_context<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token keyword">try</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true"># 编写一个简单的CUDA内核</span>
+    mod <span class="token operator">=</span> SourceModule<span class="token punctuation">(</span><span class="token triple-quoted-string string">"""
+    __global__ void double_array(float *a)
+    {
+        int idx = threadIdx.x + blockDim.x * blockIdx.x;
+        a[idx] *= 2;
+    }
+    """</span><span class="token punctuation">)</span>
+
+    <span class="token comment" spellcheck="true"># 获取内核函数</span>
+    double_array <span class="token operator">=</span> mod<span class="token punctuation">.</span>get_function<span class="token punctuation">(</span><span class="token string">"double_array"</span><span class="token punctuation">)</span>
+
+    <span class="token comment" spellcheck="true"># 初始化数据</span>
+    N <span class="token operator">=</span> <span class="token number">10</span>
+    a <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span>N<span class="token punctuation">)</span><span class="token punctuation">.</span>astype<span class="token punctuation">(</span>np<span class="token punctuation">.</span>float32<span class="token punctuation">)</span>
+    a_gpu <span class="token operator">=</span> drv<span class="token punctuation">.</span>mem_alloc<span class="token punctuation">(</span>a<span class="token punctuation">.</span>nbytes<span class="token punctuation">)</span>
+    drv<span class="token punctuation">.</span>memcpy_htod<span class="token punctuation">(</span>a_gpu<span class="token punctuation">,</span> a<span class="token punctuation">)</span>
+
+    <span class="token comment" spellcheck="true"># 执行内核</span>
+    double_array<span class="token punctuation">(</span>a_gpu<span class="token punctuation">,</span> block<span class="token operator">=</span><span class="token punctuation">(</span>N<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span> grid<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+    <span class="token comment" spellcheck="true"># 从GPU获取结果</span>
+    a_doubled <span class="token operator">=</span> np<span class="token punctuation">.</span>empty_like<span class="token punctuation">(</span>a<span class="token punctuation">)</span>
+    drv<span class="token punctuation">.</span>memcpy_dtoh<span class="token punctuation">(</span>a_doubled<span class="token punctuation">,</span> a_gpu<span class="token punctuation">)</span>
+
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Original array:"</span><span class="token punctuation">,</span> a<span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Doubled array:"</span><span class="token punctuation">,</span> a_doubled<span class="token punctuation">)</span>
+
+<span class="token keyword">finally</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true"># 清理上下文</span>
+    context<span class="token punctuation">.</span>pop<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    context<span class="token punctuation">.</span>detach<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>书中实例：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">from</span> time <span class="token keyword">import</span> time
+<span class="token keyword">import</span> matplotlib
+<span class="token comment" spellcheck="true">#this will prevent the figure from popping up</span>
+matplotlib<span class="token punctuation">.</span>use<span class="token punctuation">(</span><span class="token string">'Agg'</span><span class="token punctuation">)</span>
+<span class="token keyword">from</span> matplotlib <span class="token keyword">import</span> pyplot <span class="token keyword">as</span> plt
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>autoinit
+<span class="token keyword">from</span> pycuda <span class="token keyword">import</span> gpuarray
+<span class="token keyword">from</span> pycuda<span class="token punctuation">.</span>elementwise <span class="token keyword">import</span> ElementwiseKernel
+
+mandel_ker <span class="token operator">=</span> ElementwiseKernel<span class="token punctuation">(</span>
+"pycuda<span class="token punctuation">:</span><span class="token punctuation">:</span>complex<span class="token operator">&lt;</span>float<span class="token operator">></span> <span class="token operator">*</span>lattice<span class="token punctuation">,</span> float <span class="token operator">*</span>mandelbrot_graph<span class="token punctuation">,</span> int max_iters<span class="token punctuation">,</span> float
+ upper_bound"<span class="token punctuation">,</span>
+<span class="token triple-quoted-string string">"""
+mandelbrot_graph[i] = 1;
+
+pycuda::complex&lt;float> c = lattice[i]; 
+pycuda::complex&lt;float> z(0,0);
+
+for (int j = 0; j &lt; max_iters; j++)
+    {
+    
+     z = z*z + c;
+     
+     if(abs(z) > upper_bound)
+         {
+          mandelbrot_graph[i] = 0;
+          break;
+         }
+
+    }
+         
+"""</span><span class="token punctuation">,</span>
+<span class="token string">"mandel_ker"</span><span class="token punctuation">)</span>
+
+<span class="token keyword">def</span> <span class="token function">gpu_mandelbrot</span><span class="token punctuation">(</span>width<span class="token punctuation">,</span> height<span class="token punctuation">,</span> real_low<span class="token punctuation">,</span> real_high<span class="token punctuation">,</span> imag_low<span class="token punctuation">,</span> imag_high<span class="token punctuation">,</span> max
+_iters<span class="token punctuation">,</span> upper_bound<span class="token punctuation">)</span><span class="token punctuation">:</span>
+
+    <span class="token comment" spellcheck="true"># we set up our complex lattice as such</span>
+    real_vals <span class="token operator">=</span> np<span class="token punctuation">.</span>matrix<span class="token punctuation">(</span>np<span class="token punctuation">.</span>linspace<span class="token punctuation">(</span>real_low<span class="token punctuation">,</span> real_high<span class="token punctuation">,</span> width<span class="token punctuation">)</span><span class="token punctuation">,</span> dtype<span class="token operator">=</span>np<span class="token punctuation">.</span>com
+plex64<span class="token punctuation">)</span>
+    imag_vals <span class="token operator">=</span> np<span class="token punctuation">.</span>matrix<span class="token punctuation">(</span>np<span class="token punctuation">.</span>linspace<span class="token punctuation">(</span> imag_high<span class="token punctuation">,</span> imag_low<span class="token punctuation">,</span> height<span class="token punctuation">)</span><span class="token punctuation">,</span> dtype<span class="token operator">=</span>np<span class="token punctuation">.</span>c
+omplex64<span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token number">1j</span>
+    mandelbrot_lattice <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span>real_vals <span class="token operator">+</span> imag_vals<span class="token punctuation">.</span>transpose<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> dtype<span class="token operator">=</span>np<span class="token punctuation">.</span>c
+omplex64<span class="token punctuation">)</span>    
+    
+    <span class="token comment" spellcheck="true"># copy complex lattice to the GPU</span>
+    mandelbrot_lattice_gpu <span class="token operator">=</span> gpuarray<span class="token punctuation">.</span>to_gpu_async<span class="token punctuation">(</span>mandelbrot_lattice<span class="token punctuation">)</span>
+
+    <span class="token comment" spellcheck="true"># synchronize in current context</span>
+    pycuda<span class="token punctuation">.</span>autoinit<span class="token punctuation">.</span>context<span class="token punctuation">.</span>synchronize<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    <span class="token comment" spellcheck="true"># allocate an empty array on the GPU</span>
+    mandelbrot_graph_gpu <span class="token operator">=</span> gpuarray<span class="token punctuation">.</span>empty<span class="token punctuation">(</span>shape<span class="token operator">=</span>mandelbrot_lattice<span class="token punctuation">.</span>shape<span class="token punctuation">,</span> dtype
+<span class="token operator">=</span>np<span class="token punctuation">.</span>float32<span class="token punctuation">)</span>
+
+    mandel_ker<span class="token punctuation">(</span> mandelbrot_lattice_gpu<span class="token punctuation">,</span> mandelbrot_graph_gpu<span class="token punctuation">,</span> np<span class="token punctuation">.</span>int32<span class="token punctuation">(</span>max_iter
+s<span class="token punctuation">)</span><span class="token punctuation">,</span> np<span class="token punctuation">.</span>float32<span class="token punctuation">(</span>upper_bound<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+    pycuda<span class="token punctuation">.</span>autoinit<span class="token punctuation">.</span>context<span class="token punctuation">.</span>synchronize<span class="token punctuation">(</span><span class="token punctuation">)</span>
+              
+    mandelbrot_graph <span class="token operator">=</span> mandelbrot_graph_gpu<span class="token punctuation">.</span>get_async<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    
+    pycuda<span class="token punctuation">.</span>autoinit<span class="token punctuation">.</span>context<span class="token punctuation">.</span>synchronize<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">return</span> mandelbrot_graph
+
+
+<span class="token keyword">if</span> __name__ <span class="token operator">==</span> <span class="token string">'__main__'</span><span class="token punctuation">:</span>
+
+    t1 <span class="token operator">=</span> time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    mandel <span class="token operator">=</span> gpu_mandelbrot<span class="token punctuation">(</span><span class="token number">512</span><span class="token punctuation">,</span><span class="token number">512</span><span class="token punctuation">,</span><span class="token operator">-</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token operator">-</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">256</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span>
+    t2 <span class="token operator">=</span> time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    mandel_time <span class="token operator">=</span> t2 <span class="token operator">-</span> t1
+
+    t1 <span class="token operator">=</span> time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    fig <span class="token operator">=</span> plt<span class="token punctuation">.</span>figure<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>imshow<span class="token punctuation">(</span>mandel<span class="token punctuation">,</span> extent<span class="token operator">=</span><span class="token punctuation">(</span><span class="token operator">-</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>savefig<span class="token punctuation">(</span><span class="token string">'mandelbrot.png'</span><span class="token punctuation">,</span> dpi<span class="token operator">=</span>fig<span class="token punctuation">.</span>dpi<span class="token punctuation">)</span>
+    t2 <span class="token operator">=</span> time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    dump_time <span class="token operator">=</span> t2 <span class="token operator">-</span> t1
+
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'It took {} seconds to calculate the Mandelbrot graph.'</span><span class="token punctuation">.</span>format<span class="token punctuation">(</span>mandel
+_time<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'It took {} seconds to dump the image.'</span><span class="token punctuation">.</span>format<span class="token punctuation">(</span>dump_time<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="实现主机端并发的多上下文"><a href="#实现主机端并发的多上下文" class="headerlink" title="实现主机端并发的多上下文"></a>实现主机端并发的多上下文</h4><p>在 CUDA 编程中，使用多个上下文来管理主机端并发操作可以实现对不同设备或同一设备的并行操作。</p>
+<p>这在多设备环境或需要在同一设备上进行隔离操作的情况下非常有用。</p>
+<p>多上下文应用场景</p>
+<ol>
+<li><strong>多设备并行操作</strong>：在不同的设备上并行执行不同的任务。</li>
+<li><strong>同一设备多任务</strong>：在同一设备上创建多个上下文以执行不同的任务，每个上下文是相互独立的。</li>
+<li><strong>资源隔离</strong>：确保不同任务之间的资源隔离和独立性。</li>
+</ol>
+<p>使用多线程实现的实例：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> pycuda
+<span class="token keyword">import</span> pycuda<span class="token punctuation">.</span>driver <span class="token keyword">as</span> drv
+<span class="token keyword">from</span> pycuda <span class="token keyword">import</span> gpuarray
+<span class="token keyword">from</span> pycuda<span class="token punctuation">.</span>compiler <span class="token keyword">import</span> SourceModule
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">import</span> threading
+
+num_arrays <span class="token operator">=</span> <span class="token number">10</span>
+array_len <span class="token operator">=</span> <span class="token number">1024</span><span class="token operator">**</span><span class="token number">2</span>
+
+kernel_code <span class="token operator">=</span> <span class="token triple-quoted-string string">"""       
+__global__ void mult_ker(float * array, int array_len)
+{
+     int thd = blockIdx.x*blockDim.x + threadIdx.x;
+     int num_iters = array_len / blockDim.x;
+
+     for(int j=0; j &lt; num_iters; j++)
+     {
+         int i = j * blockDim.x + thd;
+
+         for(int k = 0; k &lt; 50; k++)
+         {
+              array[i] *= 2.0;
+              array[i] /= 2.0;
+         }
+     }
+}
+"""</span>
+
+<span class="token keyword">class</span> <span class="token class-name">KernelLauncherThread</span><span class="token punctuation">(</span>threading<span class="token punctuation">.</span>Thread<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> input_array<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        threading<span class="token punctuation">.</span>Thread<span class="token punctuation">.</span>__init__<span class="token punctuation">(</span>self<span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>input_array <span class="token operator">=</span> input_array
+        self<span class="token punctuation">.</span>output_array <span class="token operator">=</span> None
+  
+    <span class="token keyword">def</span> <span class="token function">run</span><span class="token punctuation">(</span>self<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>dev <span class="token operator">=</span> drv<span class="token punctuation">.</span>Device<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>context <span class="token operator">=</span> self<span class="token punctuation">.</span>dev<span class="token punctuation">.</span>make_context<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>ker <span class="token operator">=</span> SourceModule<span class="token punctuation">(</span>kernel_code<span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>mult_ker <span class="token operator">=</span> self<span class="token punctuation">.</span>ker<span class="token punctuation">.</span>get_function<span class="token punctuation">(</span><span class="token string">'mult_ker'</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>array_gpu <span class="token operator">=</span> gpuarray<span class="token punctuation">.</span>to_gpu<span class="token punctuation">(</span>self<span class="token punctuation">.</span>input_array<span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>mult_ker<span class="token punctuation">(</span>self<span class="token punctuation">.</span>array_gpu<span class="token punctuation">,</span> np<span class="token punctuation">.</span>int32<span class="token punctuation">(</span>array_len<span class="token punctuation">)</span><span class="token punctuation">,</span> block<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">64</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span> grid
+<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>output_array <span class="token operator">=</span> self<span class="token punctuation">.</span>array_gpu<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>cleanup<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        
+    <span class="token keyword">def</span> <span class="token function">cleanup</span><span class="token punctuation">(</span>self<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>context<span class="token punctuation">.</span>pop<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>context<span class="token punctuation">.</span>detach<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        
+    <span class="token keyword">def</span> <span class="token function">join</span><span class="token punctuation">(</span>self<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        threading<span class="token punctuation">.</span>Thread<span class="token punctuation">.</span>join<span class="token punctuation">(</span>self<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> self<span class="token punctuation">.</span>output_array
+
+drv<span class="token punctuation">.</span>init<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+data <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+gpu_out <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+threads <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+
+<span class="token comment" spellcheck="true"># generate random arrays and thread objects.</span>
+<span class="token keyword">for</span> _ <span class="token keyword">in</span> range<span class="token punctuation">(</span>num_arrays<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    data<span class="token punctuation">.</span>append<span class="token punctuation">(</span>np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span>array_len<span class="token punctuation">)</span><span class="token punctuation">.</span>astype<span class="token punctuation">(</span><span class="token string">'float32'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token keyword">for</span> k <span class="token keyword">in</span> range<span class="token punctuation">(</span>num_arrays<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true"># create a thread that uses data we just generated</span>
+    threads<span class="token punctuation">.</span>append<span class="token punctuation">(</span>KernelLauncherThread<span class="token punctuation">(</span>data<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># launch threads to process arrays.</span>
+<span class="token keyword">for</span> k <span class="token keyword">in</span> range<span class="token punctuation">(</span>num_arrays<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    threads<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">.</span>start<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    
+<span class="token comment" spellcheck="true"># get data from launched threads.</span>
+<span class="token keyword">for</span> k <span class="token keyword">in</span> range<span class="token punctuation">(</span>num_arrays<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    gpu_out<span class="token punctuation">.</span>append<span class="token punctuation">(</span>threads<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">.</span>join<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token keyword">for</span> k <span class="token keyword">in</span> range<span class="token punctuation">(</span>num_arrays<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">assert</span> <span class="token punctuation">(</span>np<span class="token punctuation">.</span>allclose<span class="token punctuation">(</span>gpu_out<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">,</span> data<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'ok'</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里演示了多个线程和GPU的并发处理流程，如果有多个GPU设备，还可以对多个线程和GPU做分组，提高并行计算的效率。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>这部分学习主要包括：</p>
+<p>1 . 了解了Pycuda的流概念，主要是用于并发，提高性能。</p>
+<ol start="2">
+<li>学习如何使用事件，可以用于时间统计，同步流。</li>
+<li>Cuda上下文概念，主要是可以用于主机设备和多GPU联动分组，提高性能，不过没有此环境，无法测试。</li>
+</ol>
+<p>下一部分是Cuda的代码调试与性能分析。</p>
+
+</article>
+    
+    
+
+</div>
+<div class="trm-post-next-prev row">
+    <div class="col-lg-12">
+        <!-- title -->
+        <h5 class="trm-title-with-divider">
+            其他文章
+            <span data-number="02"></span>
+        </h5>
+    </div>
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/06/17/PyCuda%E7%AC%94%E8%AE%B0%E5%9B%9B/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" #.">
+                    未分类
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/06/17/PyCuda%E7%AC%94%E8%AE%B0%E5%9B%9B/" class="trm-anima-link">
+                    PyCuda笔记四
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/06/17</li>
+                <li>09:34</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/06/16/Cython%E8%A7%A3%E5%86%B3AOC-2023-day4/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" #.">
+                    未分类
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/06/16/Cython%E8%A7%A3%E5%86%B3AOC-2023-day4/" class="trm-anima-link">
+                    Cython解决AOC-2023-day4
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/06/16</li>
+                <li>21:32</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+</div>
+
+    
+
+
+
+                    <div class="trm-divider footer-divider"></div>
+
+                    <!-- footer -->
+                    <footer class="trm-scroll-animation">
+
+    
+
+    
+
+    
+        <div class="trm-footer-item">
+            <span>
+                由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v7.0.0
+            </span>
+            <span class="footer-separator" data-separator=" | "></span>
+            <span> 
+                主题 - 
+                <a rel="noopener" href='https://github.com/MaLuns/hexo-theme-async' target='_blank'>Async</a>
+                v2.1.8
+            </span>
+        </div>
+      
+
+     
+
+     
+</footer>
+ 
+                    <!-- footer end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- body end -->
+
+            
+
+            
+<div class="trm-fixed-container">
+    
+    
+        <div class="trm-fixed-btn" data-title="阅读模式" onclick="asyncFun.switchReadMode()">
+            <i class="iconfont fas fa-book-reader"></i>
+        </div>
+    
+    
+    <div id="trm-back-top" class="trm-fixed-btn" data-title="回到顶部">
+        <i class="iconfont fas fa-arrow-up"></i>
+    </div>
+</div>
+        </div>
+      </div>
+      <!-- scroll container end -->
+  </div>
+  <!-- app wrapper end -->
+
+  
+  <!-- Plugin -->
+
+
+
+
+    
+    
+<script src="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+
+    
+
+    
+
+    
+
+    <!-- 数学公式 -->
+    
+
+    <!-- 评论插件 -->
+    
+        
+
+        
+    
+
+
+
+<!-- CDN -->
+
+
+    
+
+    
+
+    
+
+
+
+
+    <!-- Service Worker -->
+    
+    <!-- baidu push -->
+    
+
+
+<script id="async-script" src="/js/main.js?v=2.1.8"></script>
+
+</body>
+
+</html>
