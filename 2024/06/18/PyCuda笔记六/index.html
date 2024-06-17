@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="x5-fullscreen" content="true">
+<meta name="full-screen" content="yes">
+<meta name="theme-color" content="#317EFB" />
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
+<meta name="description" content="背景本文主要记录《Hands-On GPU Programming with Python and CUDA 》第8章的内容，这里主要介绍了Cuda的设备库函数（以cu开头的函数），简单的数学库函数以及C++的thrust库。 第八章cuRAND库cuRAND 是 CUDA Random Number Generation library，是 NVIDIA 提供的一个专用于 CUDA 的库，用于在">
+<meta property="og:type" content="article">
+<meta property="og:title" content="PyCuda笔记六">
+<meta property="og:url" content="http://example.com/2024/06/18/PyCuda%E7%AC%94%E8%AE%B0%E5%85%AD/index.html">
+<meta property="og:site_name" content="Cat YuanBao">
+<meta property="og:description" content="背景本文主要记录《Hands-On GPU Programming with Python and CUDA 》第8章的内容，这里主要介绍了Cuda的设备库函数（以cu开头的函数），简单的数学库函数以及C++的thrust库。 第八章cuRAND库cuRAND 是 CUDA Random Number Generation library，是 NVIDIA 提供的一个专用于 CUDA 的库，用于在">
+<meta property="og:locale">
+<meta property="article:published_time" content="2024-06-17T21:36:14.000Z">
+<meta property="article:modified_time" content="2024-06-17T21:37:36.790Z">
+<meta property="article:author" content="橘猫元宝">
+<meta property="article:tag" content="cat">
+<meta name="twitter:card" content="summary">
+
+    <meta name="keywords" content="cat">
+
+
+<title >PyCuda笔记六</title>
+
+<!-- Favicon -->
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='16x16' ></link>
+
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='32x32' ></link>
+
+
+
+
+<!-- Plugin -->
+
+
+
+
+    
+<link rel="stylesheet" href="/css/plugins/bootstrap.row.css">
+
+    
+<link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.css">
+
+    
+    
+
+
+
+
+<!-- Icon -->
+
+    
+<link rel="stylesheet" href="/css/plugins/font-awesome.min.css">
+
+
+
+
+<!-- Variable -->
+<script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-06-18 05:37:36"};</script>
+
+<!-- Theme mode css -->
+<link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
+<script>
+    let defaultMode = ASYNC_CONFIG.theme.default !=='auto' ?  ASYNC_CONFIG.theme.default : (window.matchMedia("(prefers-color-scheme: light)").matches ? 'style-light' : 'style-dark')
+    let catchMode = localStorage.getItem('theme-mode') || defaultMode;
+    let type = catchMode === 'style-dark' ? 'add' : 'remove';
+    document.documentElement.classList[type]('dark')
+</script>
+
+<!-- CDN -->
+
+
+    
+    
+
+
+
+<!-- Site Analytics -->
+ 
+<meta name="generator" content="Hexo 7.0.0"><link rel="stylesheet" href="/css/prism.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+<body>
+
+  <!-- app wrapper -->
+  <div class="trm-app-frame">
+
+    <!-- page preloader -->
+    <div class="trm-preloader">
+    <div class="trm-holder">
+        <div class="preloader">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+    <!-- page preloader end -->
+
+    <!-- change mode preloader -->
+    <div class="trm-mode-swich-animation-frame">
+    <div class="trm-mode-swich-animation">
+        <i class="i-sun"><i class="iconfont far fa-sun"></i></i>
+        <div class="trm-horizon"></div>
+        <i class="i-moon"><i class="iconfont far fa-moon"></i></i>
+    </div>
+</div>
+    <!-- change mode preloader end -->
+
+      <!-- scroll container -->
+      <div id="trm-dynamic-content" class="trm-swup-animation">
+        <div id="trm-scroll-container" class="trm-scroll-container" style="opacity: 0">
+            <!-- top bar -->
+            <header class="trm-top-bar">
+	<div class="container">
+		<div class="trm-left-side">
+			<!-- logo -->
+<a href="/" class="trm-logo-frame trm-anima-link">
+    
+        <img alt="logo" src="/img/favicon.svg">
+    
+    
+        <div class="trm-logo-text">
+            元宝<span>橘猫</span>
+        </div>
+    
+</a>
+<!-- logo end -->
+		</div>
+		<div class="trm-right-side">
+			<!-- menu -->
+<div class="trm-menu">
+    <nav>
+        <ul>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/" target="">
+                    首页
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/archives/" target="">
+                    归档
+                </a>
+                
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+<!-- menu end -->
+			
+    <!-- mode switcher place -->
+    <div class="trm-mode-switcher-place">
+        <div class="trm-mode-switcher">
+            <i class="iconfont far fa-sun"></i>
+            <input class="tgl tgl-light" id="trm-swich" type="checkbox">
+            <label class="trm-swich" for="trm-swich"></label>
+            <i class="iconfont far fa-moon"></i>
+        </div>
+    </div>
+    <!-- mode switcher place end -->
+
+			
+		</div>
+		<div class="trm-menu-btn">
+			<span></span>
+		</div>
+	</div>
+</header>
+            <!-- top bar end -->
+
+            <!-- body -->
+            
+<div class="trm-content-start">
+    <!-- banner -->
+    <div class="trm-banner">
+    
+    <!-- banner cover -->
+    <img style="object-position:top;object-fit:cover;" alt="banner" class="trm-banner-cover" src="/img/banner.png">
+    <!-- banner cover end -->
+    
+
+    <!-- banner content -->
+    <div class="trm-banner-content trm-overlay">
+        <div class="container">
+            <div class="row">
+                
+                <div class="col-lg-4"></div>
+                
+                <div class="col-lg-8">
+
+                    <!-- banner title -->
+                    <div class="trm-banner-text ">
+                        <div class="trm-label trm-mb-20">
+                            NEWS LETTER
+                        </div>
+                        <h1 class="trm-mb-30 trm-hsmb-font">
+                            PyCuda笔记六
+                        </h1>
+
+                        
+                            <ul class="trm-breadcrumbs trm-label">
+                                <li>
+                                    <a href="/" class="trm-anima-link">Home</a>
+                                </li>
+                                <li>
+                                    <span>
+                                        2024
+                                    </span>
+                                </li>
+                            </ul>
+                        
+                    </div>
+                    <!-- banner title end -->
+
+                    <!-- scroll hint -->
+                    <span id="scroll-triger" class="trm-scroll-hint-frame">
+                        <div class="trm-scroll-hint"></div>
+                        <span class="trm-label">Scroll down</span>
+                    </span>
+                    <!-- scroll hint end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- banner content end -->
+</div>
+    <!-- banner end -->
+    <div class="container">
+        <div class="row">
+            
+                <div class="trm-page-sidebar col-lg-4 hidden-sm">
+                    <!-- main card -->
+                    <div class="trm-main-card-frame trm-sidebar">
+    <div class="trm-main-card"> 
+        <!-- card header -->
+<div class="trm-mc-header">
+    <div class="trm-avatar-frame trm-mb-20">
+        <img alt="Avatar" class="trm-avatar" src="/img/cat.jpg">
+    </div>
+    <h5 class="trm-name trm-mb-15">
+        橘猫元宝
+    </h5>
+    
+</div>
+<!-- card header end -->
+        <!-- sidebar social -->
+
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<div class="trm-social">
+    
+        <a href="https://github.com" title="Github" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-github"></i>
+        </a>
+    
+</div>
+
+<!-- sidebar social end -->
+        <!-- info -->
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<ul class="trm-table trm-mb-20">
+    
+        <li>
+            <div class="trm-label">
+                Residence:
+            </div>
+            <div class="trm-label trm-label-light">
+                Mars
+            </div>
+        </li>
+    
+</ul>
+<!-- info end -->
+
+        
+    </div>
+</div>
+                    <!-- main card end -->
+                </div>
+            
+            <div class="trm-page-content col-lg-8">
+                <div id="trm-content" class="trm-content">
+                    <div class="trm-post-info row hidden-sm">
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-calendar-alt trm-icon"></i><br>
+            06/18
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-clock trm-icon"></i><br>
+            05:36
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div id="post-author" class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-user trm-icon"></i><br>
+            橘猫元宝
+        </div>
+    </div>
+</div>
+<div class="trm-card ">
+    <article id="article-container" class="trm-publication">
+    <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>本文主要记录《Hands-On GPU Programming with Python and CUDA 》第8章的内容，这里主要介绍了Cuda的设备库函数（以cu开头的函数），简单的数学库函数以及C++的thrust库。</p>
+<h3 id="第八章"><a href="#第八章" class="headerlink" title="第八章"></a>第八章</h3><h4 id="cuRAND库"><a href="#cuRAND库" class="headerlink" title="cuRAND库"></a>cuRAND库</h4><p><code>cuRAND</code> 是 CUDA Random Number Generation library，是 NVIDIA 提供的一个专用于 CUDA 的库，用于在 GPU 上生成高性能的伪随机数和准随机数。</p>
+<p><code>cuRAND</code> 提供了多种随机数生成器，适用于各种应用场景，从蒙特卡罗模拟到机器学习等领域。</p>
+<p>使用实例：</p>
+<pre class="line-numbers language-c++"><code class="language-c++">#include <curand_kernel.h>
+#include <stdio.h>
+#include <stdlib.h>  // For qsort
+
+__global__ void generate_random_numbers(curandState *state, float *result, int n) {
+    int idx = threadIdx.x + blockIdx.x * blockDim.x;
+    if (idx < n) {
+        // Initialize the cuRAND state
+        curand_init(1234, idx, 0, &state[idx]);
+
+        // Generate a random number
+        result[idx] = curand_uniform(&state[idx]);
+    }
+}
+
+int compare_floats(const void *a, const void *b) {
+    float fa = *(const float*) a;
+    float fb = *(const float*) b;
+    return (fa > fb) - (fa < fb);
+}
+
+int main() {
+    int n = 100;
+    float *d_result;
+    curandState *d_state;
+
+    // Allocate memory on device
+    cudaMalloc(&d_result, n * sizeof(float));
+    cudaMalloc(&d_state, n * sizeof(curandState));
+
+    // Launch kernel to generate random numbers
+    generate_random_numbers<<<(n + 255) / 256, 256>>>(d_state, d_result, n);
+    cudaDeviceSynchronize();
+
+    // Copy result back to host
+    float h_result[n];
+    cudaMemcpy(h_result, d_result, n * sizeof(float), cudaMemcpyDeviceToHost);
+
+    // Sort the result
+    qsort(h_result, n, sizeof(float), compare_floats);
+
+    // Print the sorted result
+    for (int i = 0; i < n; i++) {
+        printf("%f\n", h_result[i]);
+    }
+
+    // Free device memory
+    cudaFree(d_result);
+    cudaFree(d_state);
+
+    return 0;
+}
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>应用场景</p>
+<ol>
+<li><strong>蒙特卡罗模拟</strong>: 用于计算积分、金融模拟等。</li>
+<li><strong>机器学习</strong>: 用于生成训练数据、初始化权重等。</li>
+<li><strong>图形学</strong>: 用于生成噪声、模拟物理现象等。</li>
+<li><strong>科学计算</strong>: 用于随机抽样、数值模拟等。</li>
+</ol>
+<h4 id="curand-init函数介绍"><a href="#curand-init函数介绍" class="headerlink" title="curand_init函数介绍"></a>curand_init函数介绍</h4><p><code>curand_init</code> 是 cuRAND 库中的一个函数，用于初始化随机数生成器的状态。</p>
+<p>这个函数通常在 CUDA kernel 中调用，以便每个线程都有自己独立的随机数生成器状态，可以生成独立的随机数序列。</p>
+<pre class="line-numbers language-c"><code class="language-c">__device__ <span class="token keyword">void</span> <span class="token function">curand_init</span><span class="token punctuation">(</span>
+    <span class="token keyword">unsigned</span> <span class="token keyword">long</span> <span class="token keyword">long</span> seed<span class="token punctuation">,</span> <span class="token comment" spellcheck="true">// 种子值</span>
+    <span class="token keyword">unsigned</span> <span class="token keyword">long</span> <span class="token keyword">long</span> subsequence<span class="token punctuation">,</span> <span class="token comment" spellcheck="true">// 子序列索引</span>
+    <span class="token keyword">unsigned</span> <span class="token keyword">long</span> <span class="token keyword">long</span> offset<span class="token punctuation">,</span> <span class="token comment" spellcheck="true">// 子序列内的偏移</span>
+    curandState <span class="token operator">*</span>state <span class="token comment" spellcheck="true">// 随机数生成器状态</span>
+<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这个随机数的产生符合一定的分布规律。</p>
+<h4 id="使用蒙特卡洛方法估算圆周率"><a href="#使用蒙特卡洛方法估算圆周率" class="headerlink" title="使用蒙特卡洛方法估算圆周率"></a>使用蒙特卡洛方法估算圆周率</h4><p>蒙特卡罗方法是一种统计模拟方法，用于估算复杂问题的解。在估算圆周率（π）时，可以通过随机点的分布来实现。</p>
+<p>具体过程如下：</p>
+<p><strong>在单位正方形内生成随机点</strong>：生成一系列点，这些点的坐标分别在0,10, 10,1区间内。</p>
+<p><strong>计算这些点中有多少点落在单位圆内</strong>：单位圆的圆心在0,00, 00,0，半径为1。检测每个点是否满足x2+y2≤1x^2 + y^2 \leq 1x2+y2≤1。</p>
+<p><strong>估算π的值</strong>：由于单位圆的面积为π，而单位正方形的面积为1，因此在理论上，圆内点的比例近似为π&#x2F;4。因此，π可以估算为圆内点的数量乘以4再除以总点数。</p>
+<p>Python描述如下：</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> random
+<span class="token keyword">import</span> matplotlib<span class="token punctuation">.</span>pyplot <span class="token keyword">as</span> plt
+
+<span class="token keyword">def</span> <span class="token function">estimate_pi</span><span class="token punctuation">(</span>num_points<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    inside_circle <span class="token operator">=</span> <span class="token number">0</span>
+    
+    x_inside <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    y_inside <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    x_outside <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    y_outside <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    
+    <span class="token keyword">for</span> _ <span class="token keyword">in</span> range<span class="token punctuation">(</span>num_points<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        x <span class="token operator">=</span> random<span class="token punctuation">.</span>uniform<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
+        y <span class="token operator">=</span> random<span class="token punctuation">.</span>uniform<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
+        
+        <span class="token keyword">if</span> x<span class="token operator">**</span><span class="token number">2</span> <span class="token operator">+</span> y<span class="token operator">**</span><span class="token number">2</span> <span class="token operator">&lt;=</span> <span class="token number">1</span><span class="token punctuation">:</span>
+            inside_circle <span class="token operator">+=</span> <span class="token number">1</span>
+            x_inside<span class="token punctuation">.</span>append<span class="token punctuation">(</span>x<span class="token punctuation">)</span>
+            y_inside<span class="token punctuation">.</span>append<span class="token punctuation">(</span>y<span class="token punctuation">)</span>
+        <span class="token keyword">else</span><span class="token punctuation">:</span>
+            x_outside<span class="token punctuation">.</span>append<span class="token punctuation">(</span>x<span class="token punctuation">)</span>
+            y_outside<span class="token punctuation">.</span>append<span class="token punctuation">(</span>y<span class="token punctuation">)</span>
+    
+    pi_estimate <span class="token operator">=</span> <span class="token number">4</span> <span class="token operator">*</span> inside_circle <span class="token operator">/</span> num_points
+    
+    <span class="token comment" spellcheck="true"># Plotting</span>
+    plt<span class="token punctuation">.</span>figure<span class="token punctuation">(</span>figsize<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>scatter<span class="token punctuation">(</span>x_inside<span class="token punctuation">,</span> y_inside<span class="token punctuation">,</span> color<span class="token operator">=</span><span class="token string">'blue'</span><span class="token punctuation">,</span> s<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>scatter<span class="token punctuation">(</span>x_outside<span class="token punctuation">,</span> y_outside<span class="token punctuation">,</span> color<span class="token operator">=</span><span class="token string">'red'</span><span class="token punctuation">,</span> s<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>title<span class="token punctuation">(</span>f<span class="token string">"Monte Carlo Estimation of Pi\nEstimated Pi = {pi_estimate}"</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>xlabel<span class="token punctuation">(</span><span class="token string">"X-axis"</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>ylabel<span class="token punctuation">(</span><span class="token string">"Y-axis"</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>gca<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>set_aspect<span class="token punctuation">(</span><span class="token string">'equal'</span><span class="token punctuation">,</span> adjustable<span class="token operator">=</span><span class="token string">'box'</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    
+    <span class="token keyword">return</span> pi_estimate
+
+<span class="token comment" spellcheck="true"># Estimate Pi using 10,000 points</span>
+pi_estimate <span class="token operator">=</span> estimate_pi<span class="token punctuation">(</span><span class="token number">10000</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">"Estimated Pi: {pi_estimate}"</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>Cuda实现：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;curand_kernel.h></span></span>
+
+__global__ <span class="token keyword">void</span> <span class="token function">setup_kernel</span><span class="token punctuation">(</span>curandState <span class="token operator">*</span>state<span class="token punctuation">,</span> <span class="token keyword">unsigned</span> <span class="token keyword">long</span> seed<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> idx <span class="token operator">=</span> threadIdx<span class="token punctuation">.</span>x <span class="token operator">+</span> blockIdx<span class="token punctuation">.</span>x <span class="token operator">*</span> blockDim<span class="token punctuation">.</span>x<span class="token punctuation">;</span>
+    <span class="token function">curand_init</span><span class="token punctuation">(</span>seed<span class="token punctuation">,</span> idx<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>state<span class="token punctuation">[</span>idx<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+__global__ <span class="token keyword">void</span> <span class="token function">count_points_in_circle</span><span class="token punctuation">(</span>curandState <span class="token operator">*</span>state<span class="token punctuation">,</span> <span class="token keyword">int</span> <span class="token operator">*</span>results<span class="token punctuation">,</span> <span class="token keyword">int</span> n<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> idx <span class="token operator">=</span> threadIdx<span class="token punctuation">.</span>x <span class="token operator">+</span> blockIdx<span class="token punctuation">.</span>x <span class="token operator">*</span> blockDim<span class="token punctuation">.</span>x<span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>idx <span class="token operator">&lt;</span> n<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">float</span> x <span class="token operator">=</span> <span class="token function">curand_uniform</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>state<span class="token punctuation">[</span>idx<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">float</span> y <span class="token operator">=</span> <span class="token function">curand_uniform</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>state<span class="token punctuation">[</span>idx<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>x <span class="token operator">*</span> x <span class="token operator">+</span> y <span class="token operator">*</span> y <span class="token operator">&lt;=</span> <span class="token number">1.0f</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token function">atomicAdd</span><span class="token punctuation">(</span>results<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> num_points <span class="token operator">=</span> <span class="token number">1000000</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> threads_per_block <span class="token operator">=</span> <span class="token number">256</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> blocks <span class="token operator">=</span> <span class="token punctuation">(</span>num_points <span class="token operator">+</span> threads_per_block <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">/</span> threads_per_block<span class="token punctuation">;</span>
+    
+    curandState <span class="token operator">*</span>d_state<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> <span class="token operator">*</span>d_results<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> h_results <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// Allocate memory on the device</span>
+    <span class="token function">cudaMalloc</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>d_state<span class="token punctuation">,</span> num_points <span class="token operator">*</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>curandState<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">cudaMalloc</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>d_results<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// Initialize the results array on the device</span>
+    <span class="token function">cudaMemset</span><span class="token punctuation">(</span>d_results<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// Setup cuRAND states</span>
+    setup_kernel<span class="token operator">&lt;&lt;</span><span class="token operator">&lt;</span>blocks<span class="token punctuation">,</span> threads_per_block<span class="token operator">>></span><span class="token operator">></span><span class="token punctuation">(</span>d_state<span class="token punctuation">,</span> <span class="token function">time</span><span class="token punctuation">(</span><span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// Count points in the circle</span>
+    count_points_in_circle<span class="token operator">&lt;&lt;</span><span class="token operator">&lt;</span>blocks<span class="token punctuation">,</span> threads_per_block<span class="token operator">>></span><span class="token operator">></span><span class="token punctuation">(</span>d_state<span class="token punctuation">,</span> d_results<span class="token punctuation">,</span> num_points<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// Copy result back to host</span>
+    <span class="token function">cudaMemcpy</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>h_results<span class="token punctuation">,</span> d_results<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">)</span><span class="token punctuation">,</span> cudaMemcpyDeviceToHost<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// Calculate Pi</span>
+    <span class="token keyword">float</span> pi_estimate <span class="token operator">=</span> <span class="token number">4.0f</span> <span class="token operator">*</span> h_results <span class="token operator">/</span> num_points<span class="token punctuation">;</span>
+
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Estimated Pi: %f\n"</span><span class="token punctuation">,</span> pi_estimate<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// Free device memory</span>
+    <span class="token function">cudaFree</span><span class="token punctuation">(</span>d_state<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">cudaFree</span><span class="token punctuation">(</span>d_results<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-bash"><code class="language-bash">运行结果：
+Estimated Pi: 3.140156
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>这里有个<code>atomicAdd</code>方法</p>
+<p><code>atomicAdd</code> 是 CUDA 中的一种原子操作，用于在多线程环境下进行安全的加法操作。</p>
+<p>在并行计算中，当多个线程需要同时读写同一个变量时，可能会出现数据竞争（race condition），导致结果不准确。</p>
+<p>原子操作通过确保在同一时间内只有一个线程可以进行变量更新，从而避免数据竞争问题。</p>
+<p>原型如下：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">int</span> <span class="token function">atomicAdd</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token operator">*</span> address<span class="token punctuation">,</span> <span class="token keyword">int</span> val<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">unsigned</span> <span class="token keyword">int</span> <span class="token function">atomicAdd</span><span class="token punctuation">(</span><span class="token keyword">unsigned</span> <span class="token keyword">int</span><span class="token operator">*</span> address<span class="token punctuation">,</span> <span class="token keyword">unsigned</span> <span class="token keyword">int</span> val<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">unsigned</span> <span class="token keyword">long</span> <span class="token keyword">long</span> <span class="token keyword">int</span> <span class="token function">atomicAdd</span><span class="token punctuation">(</span><span class="token keyword">unsigned</span> <span class="token keyword">long</span> <span class="token keyword">long</span> <span class="token keyword">int</span><span class="token operator">*</span> address<span class="token punctuation">,</span> <span class="token keyword">unsigned</span> <span class="token keyword">long</span> <span class="token keyword">long</span> <span class="token keyword">int</span> val<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">float</span> <span class="token function">atomicAdd</span><span class="token punctuation">(</span><span class="token keyword">float</span><span class="token operator">*</span> address<span class="token punctuation">,</span> <span class="token keyword">float</span> val<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">double</span> <span class="token function">atomicAdd</span><span class="token punctuation">(</span><span class="token keyword">double</span><span class="token operator">*</span> address<span class="token punctuation">,</span> <span class="token keyword">double</span> val<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// Note: double-precision atomicAdd is supported only on devices of compute capability 6.0 and higher</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="使用蒙特卡洛方法计算定积分"><a href="#使用蒙特卡洛方法计算定积分" class="headerlink" title="使用蒙特卡洛方法计算定积分"></a>使用蒙特卡洛方法计算定积分</h4><p>使用蒙特卡洛方法计算定积分是一种利用随机抽样来估算积分值的数值方法。</p>
+<p>蒙特卡洛方法计算定积分的基本思路如下：</p>
+<p><a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E8%92%99%E5%9C%B0%E5%8D%A1%E7%BE%85%E7%A9%8D%E5%88%86">https://zh.wikipedia.org/wiki/%E8%92%99%E5%9C%B0%E5%8D%A1%E7%BE%85%E7%A9%8D%E5%88%86</a></p>
+<p>使用实例：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;curand_kernel.h></span></span>
+
+<span class="token comment" spellcheck="true">// 定义要积分的函数 f(x)</span>
+__device__ <span class="token keyword">float</span> <span class="token function">f</span><span class="token punctuation">(</span><span class="token keyword">float</span> x<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> x <span class="token operator">*</span> x<span class="token punctuation">;</span>  <span class="token comment" spellcheck="true">// 示例函数 x^2</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// CUDA 核函数：设置 cuRAND 状态</span>
+__global__ <span class="token keyword">void</span> <span class="token function">setup_kernel</span><span class="token punctuation">(</span>curandState <span class="token operator">*</span>state<span class="token punctuation">,</span> <span class="token keyword">unsigned</span> <span class="token keyword">long</span> seed<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> idx <span class="token operator">=</span> threadIdx<span class="token punctuation">.</span>x <span class="token operator">+</span> blockIdx<span class="token punctuation">.</span>x <span class="token operator">*</span> blockDim<span class="token punctuation">.</span>x<span class="token punctuation">;</span>
+    <span class="token function">curand_init</span><span class="token punctuation">(</span>seed<span class="token punctuation">,</span> idx<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>state<span class="token punctuation">[</span>idx<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// CUDA 核函数：计算积分</span>
+__global__ <span class="token keyword">void</span> <span class="token function">monte_carlo_integration</span><span class="token punctuation">(</span>curandState <span class="token operator">*</span>state<span class="token punctuation">,</span> <span class="token keyword">float</span> <span class="token operator">*</span>results<span class="token punctuation">,</span> <span class="token keyword">int</span> n<span class="token punctuation">,</span> <span class="token keyword">float</span> a<span class="token punctuation">,</span> flo
+at b<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> idx <span class="token operator">=</span> threadIdx<span class="token punctuation">.</span>x <span class="token operator">+</span> blockIdx<span class="token punctuation">.</span>x <span class="token operator">*</span> blockDim<span class="token punctuation">.</span>x<span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>idx <span class="token operator">&lt;</span> n<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">float</span> x <span class="token operator">=</span> a <span class="token operator">+</span> <span class="token punctuation">(</span>b <span class="token operator">-</span> a<span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token function">curand_uniform</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>state<span class="token punctuation">[</span>idx<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment" spellcheck="true">// 在区间 [a, b] 内生成随机数</span>
+        results<span class="token punctuation">[</span>idx<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">f</span><span class="token punctuation">(</span>x<span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment" spellcheck="true">// 计算函数值</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> num_samples <span class="token operator">=</span> <span class="token number">1000000</span><span class="token punctuation">;</span>  <span class="token comment" spellcheck="true">// 样本数</span>
+    <span class="token keyword">float</span> a <span class="token operator">=</span> <span class="token number">0.0f</span><span class="token punctuation">,</span> b <span class="token operator">=</span> <span class="token number">1.0f</span><span class="token punctuation">;</span>   <span class="token comment" spellcheck="true">// 积分区间 [a, b]</span>
+    <span class="token keyword">float</span> h_result <span class="token operator">=</span> <span class="token number">0.0f</span><span class="token punctuation">;</span>
+    <span class="token keyword">float</span> <span class="token operator">*</span>d_results<span class="token punctuation">;</span>
+    curandState <span class="token operator">*</span>d_state<span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// 分配设备内存</span>
+    <span class="token function">cudaMalloc</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>d_results<span class="token punctuation">,</span> num_samples <span class="token operator">*</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">float</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">cudaMalloc</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>d_state<span class="token punctuation">,</span> num_samples <span class="token operator">*</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>curandState<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// 设置 cuRAND 状态</span>
+    setup_kernel<span class="token operator">&lt;&lt;</span><span class="token operator">&lt;</span><span class="token punctuation">(</span>num_samples <span class="token operator">+</span> <span class="token number">255</span><span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token number">256</span><span class="token punctuation">,</span> <span class="token number">256</span><span class="token operator">>></span><span class="token operator">></span><span class="token punctuation">(</span>d_state<span class="token punctuation">,</span> <span class="token function">time</span><span class="token punctuation">(</span><span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// 计算积分</span>
+    monte_carlo_integration<span class="token operator">&lt;&lt;</span><span class="token operator">&lt;</span><span class="token punctuation">(</span>num_samples <span class="token operator">+</span> <span class="token number">255</span><span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token number">256</span><span class="token punctuation">,</span> <span class="token number">256</span><span class="token operator">>></span><span class="token operator">></span><span class="token punctuation">(</span>d_state<span class="token punctuation">,</span> d_results<span class="token punctuation">,</span> num_samples
+<span class="token punctuation">,</span> a<span class="token punctuation">,</span> b<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// 将结果从设备复制到主机</span>
+    <span class="token keyword">float</span> <span class="token operator">*</span>h_results <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">float</span><span class="token operator">*</span><span class="token punctuation">)</span> <span class="token function">malloc</span><span class="token punctuation">(</span>num_samples <span class="token operator">*</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">float</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">cudaMemcpy</span><span class="token punctuation">(</span>h_results<span class="token punctuation">,</span> d_results<span class="token punctuation">,</span> num_samples <span class="token operator">*</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">float</span><span class="token punctuation">)</span><span class="token punctuation">,</span> cudaMemcpyDeviceToHost<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// 计算函数值的平均值</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> num_samples<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        h_result <span class="token operator">+</span><span class="token operator">=</span> h_results<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    h_result <span class="token operator">/</span><span class="token operator">=</span> num_samples<span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// 计算积分的估计值</span>
+    <span class="token keyword">float</span> integral <span class="token operator">=</span> <span class="token punctuation">(</span>b <span class="token operator">-</span> a<span class="token punctuation">)</span> <span class="token operator">*</span> h_result<span class="token punctuation">;</span>
+
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Estimated integral: %f\n"</span><span class="token punctuation">,</span> integral<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// 释放内存</span>
+    <span class="token function">free</span><span class="token punctuation">(</span>h_results<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">cudaFree</span><span class="token punctuation">(</span>d_results<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">cudaFree</span><span class="token punctuation">(</span>d_state<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="C-thrust库"><a href="#C-thrust库" class="headerlink" title="C++ thrust库"></a>C++ thrust库</h4><p>Thrust 是一个 CUDA C++ 模板库，旨在为 GPU 编程提供高效且易于使用的接口。</p>
+<p>它类似于 C++ 的标准模板库 (STL)，提供了许多常见的并行算法和数据结构，使得在 GPU 上编写并行代码变得更加简单和直观。</p>
+<p>Thrust 库的主要特点</p>
+<ol>
+<li><strong>高层次的并行算法</strong>：Thrust 提供了一组高层次的并行算法，例如 sort、reduce、scan 和 transform 等，这些算法可以在 CPU 和 GPU 上无缝运行。</li>
+<li><strong>数据结构</strong>：Thrust 提供了一些常用的数据结构，如向量 (vector) 和元组 (tuple)，这些数据结构支持在主机和设备之间高效地传输数据。</li>
+<li><strong>与 CUDA 集成</strong>：Thrust 与 CUDA 深度集成，允许用户在 CUDA 程序中直接使用 Thrust 的功能，并能与 CUDA 核函数配合使用。</li>
+<li><strong>跨平台支持</strong>：Thrust 支持在多种平台上运行，包括 CUDA、OpenMP 和 TBB (Threading Building Blocks)，使得代码具有更好的可移植性。</li>
+</ol>
+<p>实例如下：</p>
+<pre class="line-numbers language-c++"><code class="language-c++">#include <thrust/host_vector.h>
+#include <thrust/device_vector.h>
+#include <thrust/sort.h>
+#include <iostream>
+
+int main() {
+    // 创建主机上的向量（host_vector）
+    thrust::host_vector<int> h_vec(5);
+    h_vec[0] = 3;
+    h_vec[1] = 1;
+    h_vec[2] = 4;
+    h_vec[3] = 1;
+    h_vec[4] = 5;
+
+    // 将数据从主机复制到设备（device_vector）
+    thrust::device_vector<int> d_vec = h_vec;
+
+    // 对设备上的向量进行排序
+    thrust::sort(d_vec.begin(), d_vec.end());
+
+    // 将排序后的数据从设备复制回主机
+    thrust::copy(d_vec.begin(), d_vec.end(), h_vec.begin());
+
+    // 输出排序后的结果
+    for (int i = 0; i < h_vec.size(); i++) {
+        std::cout << h_vec[i] << " ";
+    }
+    std::cout << std::endl;
+
+    return 0;
+}
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>使用<code>nvcc</code>编译后运行：</p>
+<pre><code>$ ./a.out 
+1 1 3 4 5 
+</code></pre>
+<p>Thrust 库为 CUDA 编程提供了类似于 C++ STL 的接口，使得在 GPU 上实现并行算法变得更加简单和直观。</p>
+<p>通过使用 Thrust，开发者可以快速编写高效的并行代码，同时保持代码的可读性和可维护性。</p>
+<h4 id="Thrust仿函数"><a href="#Thrust仿函数" class="headerlink" title="Thrust仿函数"></a>Thrust仿函数</h4><p>Thrust 仿函数（functor）是一个行为类似于函数的对象，通常通过重载 <code>operator()</code> 实现。</p>
+<p>这种技术允许对象像函数一样被调用。</p>
+<p>仿函数在 Thrust 中非常有用，尤其是在需要定义自定义操作时。Thrust 的许多算法，如 <code>transform</code>、<code>sort</code> 和 <code>reduce</code> 等，都可以使用仿函数来指定要应用的操作。</p>
+<p>仿函数本质上是一个类，该类重载了 <code>operator()</code>，使得类的实例可以像函数一样被调用。</p>
+<p>使用仿函数的主要优势是可以在类中保存状态和数据，而普通函数无法做到这一点。</p>
+<p>实例：</p>
+<pre class="line-numbers language-c++"><code class="language-c++">#include <thrust/host_vector.h>
+#include <thrust/device_vector.h>
+#include <thrust/transform.h>
+#include <iostream>
+
+// 定义一个仿函数，用于计算平方
+struct SquareFunctor
+{
+    __host__ __device__
+    float operator()(const float &x) const
+    {
+        return x * x;
+    }
+};
+
+int main()
+{
+    // 初始化主机上的输入向量
+    thrust::host_vector<float> h_A(5, 2.0f); // [2, 2, 2, 2, 2]
+
+    // 将输入数据从主机复制到设备
+    thrust::device_vector<float> d_A = h_A;
+    thrust::device_vector<float> d_B(5);
+
+    // 使用 transform 函数和仿函数 SquareFunctor 计算每个元素的平方
+    thrust::transform(d_A.begin(), d_A.end(), d_B.begin(), SquareFunctor());
+
+    // 将结果从设备复制回主机
+    thrust::copy(d_B.begin(), d_B.end(), h_A.begin());
+
+    // 打印结果
+    for (int i = 0; i < h_A.size(); i++)
+    {
+        std::cout << h_A[i] << " ";
+    }
+    std::cout << std::endl;
+
+    return 0;
+}
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>仿函数在 Thrust 中非常强大且灵活，允许用户定义自定义的操作，并在并行算法中使用。</p>
+<p>通过重载 <code>operator()</code>，仿函数可以像普通函数一样使用，但它们可以保存状态，并且在 GPU 编程中具有更高的效率和可读性。Thrust 提供的这种机制极大地简化了 CUDA 编程中的自定义操作实现。</p>
+<p>Thrust 是一个专为 CUDA 开发的 C++ 模板库，旨在简化 GPU 编程。由于 Thrust 利用 C++ 模板和类的特性，因此 Thrust 不直接支持 C 语言。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>这部分学习主要包括：</p>
+<p>1 . 了解了<code>cuRAND</code>用于高性能生成随机数，蒙特卡洛方法计算π和定积分的计算。</p>
+<ol start="2">
+<li>学习C++ thrust库的基本使用，用于GPU的STL容器算法，只支持C++语言，不支持C语言。</li>
+</ol>
+<p>书籍下部分是实现深度神经网络，这部分需要的前置知识较多，暂时跳过，学习如何使用编译好的GPU代码。</p>
+
+</article>
+    
+    
+
+</div>
+<div class="trm-post-next-prev row">
+    <div class="col-lg-12">
+        <!-- title -->
+        <h5 class="trm-title-with-divider">
+            其他文章
+            <span data-number="02"></span>
+        </h5>
+    </div>
+    
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/06/18/traceroute%E5%91%BD%E4%BB%A4%E8%AF%A6%E8%A7%A3/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" #.">
+                    未分类
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/06/18/traceroute%E5%91%BD%E4%BB%A4%E8%AF%A6%E8%A7%A3/" class="trm-anima-link">
+                    traceroute命令详解
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/06/18</li>
+                <li>02:22</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+</div>
+
+    
+
+
+
+                    <div class="trm-divider footer-divider"></div>
+
+                    <!-- footer -->
+                    <footer class="trm-scroll-animation">
+
+    
+
+    
+
+    
+        <div class="trm-footer-item">
+            <span>
+                由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v7.0.0
+            </span>
+            <span class="footer-separator" data-separator=" | "></span>
+            <span> 
+                主题 - 
+                <a rel="noopener" href='https://github.com/MaLuns/hexo-theme-async' target='_blank'>Async</a>
+                v2.1.8
+            </span>
+        </div>
+      
+
+     
+
+     
+</footer>
+ 
+                    <!-- footer end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- body end -->
+
+            
+
+            
+<div class="trm-fixed-container">
+    
+    
+        <div class="trm-fixed-btn" data-title="阅读模式" onclick="asyncFun.switchReadMode()">
+            <i class="iconfont fas fa-book-reader"></i>
+        </div>
+    
+    
+    <div id="trm-back-top" class="trm-fixed-btn" data-title="回到顶部">
+        <i class="iconfont fas fa-arrow-up"></i>
+    </div>
+</div>
+        </div>
+      </div>
+      <!-- scroll container end -->
+  </div>
+  <!-- app wrapper end -->
+
+  
+  <!-- Plugin -->
+
+
+
+
+    
+    
+<script src="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+
+    
+
+    
+
+    
+
+    <!-- 数学公式 -->
+    
+
+    <!-- 评论插件 -->
+    
+        
+
+        
+    
+
+
+
+<!-- CDN -->
+
+
+    
+
+    
+
+    
+
+
+
+
+    <!-- Service Worker -->
+    
+    <!-- baidu push -->
+    
+
+
+<script id="async-script" src="/js/main.js?v=2.1.8"></script>
+
+</body>
+
+</html>
