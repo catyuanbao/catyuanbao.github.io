@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="x5-fullscreen" content="true">
+<meta name="full-screen" content="yes">
+<meta name="theme-color" content="#317EFB" />
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
+<meta name="description" content="背景本文主要讨论CPU和GPU适合的任务类型以及对应的实例代码，从而了解GPU和CPU的不同之处。 延迟和吐吞量延迟（Latency）和吞吐量（Throughput）是性能衡量中的两个关键概念，尤其在计算机系统、网络、数据库和其他技术领域中。 延迟 定义：延迟是指完成某个操作或任务所需的时间，从开始到完成的时间间隔。它通常表示系统或网络的响应时间。 单位：延迟通常以时间单位表示，如毫秒（ms）、微">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CPU与GPU的最佳任务类型">
+<meta property="og:url" content="http://example.com/2024/07/31/CPU%E4%B8%8EGPU%E7%9A%84%E6%9C%80%E4%BD%B3%E4%BB%BB%E5%8A%A1%E7%B1%BB%E5%9E%8B/index.html">
+<meta property="og:site_name" content="Cat YuanBao">
+<meta property="og:description" content="背景本文主要讨论CPU和GPU适合的任务类型以及对应的实例代码，从而了解GPU和CPU的不同之处。 延迟和吐吞量延迟（Latency）和吞吐量（Throughput）是性能衡量中的两个关键概念，尤其在计算机系统、网络、数据库和其他技术领域中。 延迟 定义：延迟是指完成某个操作或任务所需的时间，从开始到完成的时间间隔。它通常表示系统或网络的响应时间。 单位：延迟通常以时间单位表示，如毫秒（ms）、微">
+<meta property="og:locale">
+<meta property="article:published_time" content="2024-07-31T12:44:25.000Z">
+<meta property="article:modified_time" content="2024-07-31T12:44:40.511Z">
+<meta property="article:author" content="橘猫元宝">
+<meta property="article:tag" content="cat">
+<meta name="twitter:card" content="summary">
+
+    <meta name="keywords" content="cat">
+
+
+<title >CPU与GPU的最佳任务类型</title>
+
+<!-- Favicon -->
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='16x16' ></link>
+
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='32x32' ></link>
+
+
+
+
+<!-- Plugin -->
+
+
+
+
+    
+<link rel="stylesheet" href="/css/plugins/bootstrap.row.css">
+
+    
+<link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.css">
+
+    
+    
+
+
+
+
+<!-- Icon -->
+
+    
+<link rel="stylesheet" href="/css/plugins/font-awesome.min.css">
+
+
+
+
+<!-- Variable -->
+<script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-07-31 20:44:40"};</script>
+
+<!-- Theme mode css -->
+<link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
+<script>
+    let defaultMode = ASYNC_CONFIG.theme.default !=='auto' ?  ASYNC_CONFIG.theme.default : (window.matchMedia("(prefers-color-scheme: light)").matches ? 'style-light' : 'style-dark')
+    let catchMode = localStorage.getItem('theme-mode') || defaultMode;
+    let type = catchMode === 'style-dark' ? 'add' : 'remove';
+    document.documentElement.classList[type]('dark')
+</script>
+
+<!-- CDN -->
+
+
+    
+    
+
+
+
+<!-- Site Analytics -->
+ 
+<meta name="generator" content="Hexo 7.0.0"><link rel="stylesheet" href="/css/prism.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+<body>
+
+  <!-- app wrapper -->
+  <div class="trm-app-frame">
+
+    <!-- page preloader -->
+    <div class="trm-preloader">
+    <div class="trm-holder">
+        <div class="preloader">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+    <!-- page preloader end -->
+
+    <!-- change mode preloader -->
+    <div class="trm-mode-swich-animation-frame">
+    <div class="trm-mode-swich-animation">
+        <i class="i-sun"><i class="iconfont far fa-sun"></i></i>
+        <div class="trm-horizon"></div>
+        <i class="i-moon"><i class="iconfont far fa-moon"></i></i>
+    </div>
+</div>
+    <!-- change mode preloader end -->
+
+      <!-- scroll container -->
+      <div id="trm-dynamic-content" class="trm-swup-animation">
+        <div id="trm-scroll-container" class="trm-scroll-container" style="opacity: 0">
+            <!-- top bar -->
+            <header class="trm-top-bar">
+	<div class="container">
+		<div class="trm-left-side">
+			<!-- logo -->
+<a href="/" class="trm-logo-frame trm-anima-link">
+    
+        <img alt="logo" src="/img/favicon.svg">
+    
+    
+        <div class="trm-logo-text">
+            元宝<span>橘猫</span>
+        </div>
+    
+</a>
+<!-- logo end -->
+		</div>
+		<div class="trm-right-side">
+			<!-- menu -->
+<div class="trm-menu">
+    <nav>
+        <ul>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/" target="">
+                    首页
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/archives/" target="">
+                    归档
+                </a>
+                
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+<!-- menu end -->
+			
+    <!-- mode switcher place -->
+    <div class="trm-mode-switcher-place">
+        <div class="trm-mode-switcher">
+            <i class="iconfont far fa-sun"></i>
+            <input class="tgl tgl-light" id="trm-swich" type="checkbox">
+            <label class="trm-swich" for="trm-swich"></label>
+            <i class="iconfont far fa-moon"></i>
+        </div>
+    </div>
+    <!-- mode switcher place end -->
+
+			
+		</div>
+		<div class="trm-menu-btn">
+			<span></span>
+		</div>
+	</div>
+</header>
+            <!-- top bar end -->
+
+            <!-- body -->
+            
+<div class="trm-content-start">
+    <!-- banner -->
+    <div class="trm-banner">
+    
+    <!-- banner cover -->
+    <img style="object-position:top;object-fit:cover;" alt="banner" class="trm-banner-cover" src="/img/banner.png">
+    <!-- banner cover end -->
+    
+
+    <!-- banner content -->
+    <div class="trm-banner-content trm-overlay">
+        <div class="container">
+            <div class="row">
+                
+                <div class="col-lg-4"></div>
+                
+                <div class="col-lg-8">
+
+                    <!-- banner title -->
+                    <div class="trm-banner-text ">
+                        <div class="trm-label trm-mb-20">
+                            NEWS LETTER
+                        </div>
+                        <h1 class="trm-mb-30 trm-hsmb-font">
+                            CPU与GPU的最佳任务类型
+                        </h1>
+
+                        
+                            <ul class="trm-breadcrumbs trm-label">
+                                <li>
+                                    <a href="/" class="trm-anima-link">Home</a>
+                                </li>
+                                <li>
+                                    <span>
+                                        2024
+                                    </span>
+                                </li>
+                            </ul>
+                        
+                    </div>
+                    <!-- banner title end -->
+
+                    <!-- scroll hint -->
+                    <span id="scroll-triger" class="trm-scroll-hint-frame">
+                        <div class="trm-scroll-hint"></div>
+                        <span class="trm-label">Scroll down</span>
+                    </span>
+                    <!-- scroll hint end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- banner content end -->
+</div>
+    <!-- banner end -->
+    <div class="container">
+        <div class="row">
+            
+                <div class="trm-page-sidebar col-lg-4 hidden-sm">
+                    <!-- main card -->
+                    <div class="trm-main-card-frame trm-sidebar">
+    <div class="trm-main-card"> 
+        <!-- card header -->
+<div class="trm-mc-header">
+    <div class="trm-avatar-frame trm-mb-20">
+        <img alt="Avatar" class="trm-avatar" src="/img/cat.jpg">
+    </div>
+    <h5 class="trm-name trm-mb-15">
+        橘猫元宝
+    </h5>
+    
+</div>
+<!-- card header end -->
+        <!-- sidebar social -->
+
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<div class="trm-social">
+    
+        <a href="https://github.com" title="Github" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-github"></i>
+        </a>
+    
+</div>
+
+<!-- sidebar social end -->
+        <!-- info -->
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<ul class="trm-table trm-mb-20">
+    
+        <li>
+            <div class="trm-label">
+                Residence:
+            </div>
+            <div class="trm-label trm-label-light">
+                Mars
+            </div>
+        </li>
+    
+</ul>
+<!-- info end -->
+
+        
+    </div>
+</div>
+                    <!-- main card end -->
+                </div>
+            
+            <div class="trm-page-content col-lg-8">
+                <div id="trm-content" class="trm-content">
+                    <div class="trm-post-info row hidden-sm">
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-calendar-alt trm-icon"></i><br>
+            07/31
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-clock trm-icon"></i><br>
+            20:44
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div id="post-author" class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-user trm-icon"></i><br>
+            橘猫元宝
+        </div>
+    </div>
+</div>
+<div class="trm-card ">
+    <article id="article-container" class="trm-publication">
+    <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>本文主要讨论CPU和GPU适合的任务类型以及对应的实例代码，从而了解GPU和CPU的不同之处。</p>
+<h3 id="延迟和吐吞量"><a href="#延迟和吐吞量" class="headerlink" title="延迟和吐吞量"></a>延迟和吐吞量</h3><p>延迟（Latency）和吞吐量（Throughput）是性能衡量中的两个关键概念，尤其在计算机系统、网络、数据库和其他技术领域中。</p>
+<h3 id=""><a href="#" class="headerlink" title=""></a></h3><h4 id="延迟"><a href="#延迟" class="headerlink" title="延迟"></a>延迟</h4><ul>
+<li><strong>定义</strong>：延迟是指完成某个操作或任务所需的时间，从开始到完成的时间间隔。它通常表示系统或网络的响应时间。</li>
+<li><strong>单位</strong>：延迟通常以时间单位表示，如毫秒（ms）、微秒（µs）或纳秒（ns）。</li>
+<li><strong>影响因素</strong>：<ul>
+<li><strong>网络延迟</strong>：在网络传输中，延迟包括数据传输时间、路由和处理时间。</li>
+<li><strong>计算延迟</strong>：在计算过程中，延迟包括处理时间、计算任务排队时间等。</li>
+<li><strong>存储延迟</strong>：在存取存储设备时，延迟包括访问时间、数据检索时间等。</li>
+</ul>
+</li>
+<li><strong>示例</strong>：<ul>
+<li><strong>网页加载时间</strong>：用户从请求网页到网页完全显示的时间。</li>
+<li><strong>数据库查询响应时间</strong>：用户发起查询到数据库返回结果的时间。</li>
+<li><strong>实时通信</strong>：在视频通话中，从说话到对方听到的时间。</li>
+</ul>
+</li>
+</ul>
+<h3 id="-1"><a href="#-1" class="headerlink" title=""></a></h3><h4 id="吞吐量"><a href="#吞吐量" class="headerlink" title="吞吐量"></a>吞吐量</h4><ul>
+<li><strong>定义</strong>：吞吐量是指系统在单位时间内能够处理的任务或数据量。它衡量了系统的处理能力或数据传输能力。</li>
+<li><strong>单位</strong>：吞吐量通常以数据量或任务数的单位表示，如每秒处理的事务数（TPS）、每秒传输的数据量（如MB&#x2F;s或GB&#x2F;s）。</li>
+<li><strong>影响因素</strong>：<ul>
+<li><strong>带宽</strong>：网络或存储系统的带宽决定了数据传输的最大吞吐量。</li>
+<li><strong>并发处理能力</strong>：系统能够同时处理的任务或数据流的数量。</li>
+<li><strong>资源利用率</strong>：CPU、内存、磁盘和网络资源的使用情况。</li>
+</ul>
+</li>
+<li><strong>示例</strong>：<ul>
+<li><strong>网络吞吐量</strong>：网络在单位时间内能够传输的数据量，例如每秒下载的文件大小。</li>
+<li><strong>数据库处理能力</strong>：数据库每秒能够处理的查询数或事务数。</li>
+<li><strong>数据处理流水线</strong>：在数据处理流水线中，每秒处理的数据块数量。</li>
+</ul>
+</li>
+</ul>
+<h4 id="延迟与吞吐量的关系"><a href="#延迟与吞吐量的关系" class="headerlink" title="延迟与吞吐量的关系"></a><strong>延迟与吞吐量的关系</strong></h4><p><strong>权衡</strong>：通常，系统的延迟和吞吐量是相互权衡的。在某些情况下，提高吞吐量可能会增加延迟，反之亦然。例如，增加系统的并发处理能力可能会导致单个任务的处理延迟增加。</p>
+<p><strong>优化</strong>：</p>
+<ul>
+<li><strong>低延迟</strong>：适用于需要快速响应的应用，如实时通信、在线游戏和高频交易。</li>
+<li><strong>高吞吐量</strong>：适用于需要处理大量数据或任务的应用，如数据分析、视频流传输和大规模数据处理。</li>
+</ul>
+<h3 id="不同计算设备的任务匹配"><a href="#不同计算设备的任务匹配" class="headerlink" title="不同计算设备的任务匹配"></a>不同计算设备的任务匹配</h3><p><strong>延时优先任务</strong>：需要快速响应的实时处理任务。类似在线计算。</p>
+<p><strong>吞吐量优先任务</strong>：需要处理大量数据的任务。类似离线计算。</p>
+<h3 id="CPU适合低延迟任务"><a href="#CPU适合低延迟任务" class="headerlink" title="CPU适合低延迟任务"></a><strong>CPU适合低延迟任务</strong></h3><p><strong>原因</strong>：</p>
+<ol>
+<li><strong>高单线程性能</strong>：<ul>
+<li><strong>CPU</strong>通常具有少量但高性能的核心，每个核心可以处理复杂的任务并且运行速度较快。这使得CPU在处理单线程任务时具有低延迟，即从开始到完成任务的时间非常短。</li>
+<li><strong>示例</strong>：实时计算、交互式应用（如桌面应用和某些在线游戏）、快速响应的控制逻辑。</li>
+</ul>
+</li>
+<li><strong>复杂控制逻辑</strong>：<ul>
+<li>CPU设计用于执行复杂的控制指令和条件分支，这对于需要精确计算和快速反馈的任务至关重要。</li>
+<li><strong>示例</strong>：实时操作系统、低延迟金融交易系统、需要复杂决策的应用。</li>
+</ul>
+</li>
+<li><strong>较低的上下文切换开销</strong>：<ul>
+<li>CPU能够快速切换任务，并且在处理需要频繁上下文切换的任务时表现较好。</li>
+<li><strong>示例</strong>：多任务处理中的高响应性需求。</li>
+</ul>
+</li>
+</ol>
+<h3 id="GPU适合高吞吐量任务"><a href="#GPU适合高吞吐量任务" class="headerlink" title="GPU适合高吞吐量任务"></a><strong>GPU适合高吞吐量任务</strong></h3><p><strong>原因</strong>：</p>
+<ol>
+<li><strong>高并行计算能力</strong>：<ul>
+<li><strong>GPU</strong>设计为具有成百上千个小的处理核心，这使它能够同时处理大量的并行计算任务。这种结构非常适合执行大规模、重复的计算任务。</li>
+<li><strong>示例</strong>：大规模数据处理、矩阵运算、深度学习训练和推理。</li>
+</ul>
+</li>
+<li><strong>高数据吞吐量</strong>：<ul>
+<li>GPU的架构使得它能够在单位时间内处理大量的数据。其高带宽的内存系统和并行处理能力使它在处理大量数据时表现优异。</li>
+<li><strong>示例</strong>：图像和视频处理、科学计算中的数值模拟、大数据分析。</li>
+</ul>
+</li>
+<li><strong>适应大规模并行任务</strong>：<ul>
+<li>GPU能够处理许多相同类型的任务，并且它们能够在多个线程中同时进行。这使得它特别适合那些可以被分解为大量独立、并行任务的计算工作。</li>
+<li><strong>示例</strong>：图像渲染、加密货币挖矿、大规模矩阵运算。</li>
+</ul>
+</li>
+</ol>
+<h3 id="示例代码"><a href="#示例代码" class="headerlink" title="示例代码"></a>示例代码</h3><h4 id="适合CPU的计算任务："><a href="#适合CPU的计算任务：" class="headerlink" title="适合CPU的计算任务："></a>适合CPU的计算任务：</h4><ol>
+<li>排序</li>
+</ol>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> time
+
+<span class="token keyword">def</span> <span class="token function">cpu_task</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    start_time <span class="token operator">=</span> time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    sorted_data <span class="token operator">=</span> sorted<span class="token punctuation">(</span>data<span class="token punctuation">)</span>
+    end_time <span class="token operator">=</span> time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"CPU Sorting Time:"</span><span class="token punctuation">,</span> end_time <span class="token operator">-</span> start_time<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> sorted_data
+
+<span class="token comment" spellcheck="true"># 示例数据</span>
+data <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token number">5</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">9</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">,</span> <span class="token number">6</span><span class="token punctuation">]</span>
+sorted_data <span class="token operator">=</span> cpu_task<span class="token punctuation">(</span>data<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Sorted Data:"</span><span class="token punctuation">,</span> sorted_data<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>排序任务通常适合CPU，因为它涉及复杂的逻辑和条件判断。</p>
+<ol start="2">
+<li>数据库查询</li>
+</ol>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> sqlite3
+<span class="token keyword">import</span> time
+
+<span class="token keyword">def</span> <span class="token function">cpu_task_query</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    conn <span class="token operator">=</span> sqlite3<span class="token punctuation">.</span>connect<span class="token punctuation">(</span><span class="token string">':memory:'</span><span class="token punctuation">)</span>
+    cursor <span class="token operator">=</span> conn<span class="token punctuation">.</span>cursor<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    cursor<span class="token punctuation">.</span>execute<span class="token punctuation">(</span><span class="token string">'CREATE TABLE numbers (value INTEGER)'</span><span class="token punctuation">)</span>
+    <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">1000</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        cursor<span class="token punctuation">.</span>execute<span class="token punctuation">(</span><span class="token string">'INSERT INTO numbers (value) VALUES (?)'</span><span class="token punctuation">,</span> <span class="token punctuation">(</span>i<span class="token punctuation">,</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    conn<span class="token punctuation">.</span>commit<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    start_time <span class="token operator">=</span> time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    cursor<span class="token punctuation">.</span>execute<span class="token punctuation">(</span><span class="token string">'SELECT * FROM numbers WHERE value % 2 = 0'</span><span class="token punctuation">)</span>
+    result <span class="token operator">=</span> cursor<span class="token punctuation">.</span>fetchall<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    end_time <span class="token operator">=</span> time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"CPU Query Time:"</span><span class="token punctuation">,</span> end_time <span class="token operator">-</span> start_time<span class="token punctuation">)</span>
+    conn<span class="token punctuation">.</span>close<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> result
+
+result <span class="token operator">=</span> cpu_task_query<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Query Result Length:"</span><span class="token punctuation">,</span> len<span class="token punctuation">(</span>result<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="适合GPU的任务"><a href="#适合GPU的任务" class="headerlink" title="适合GPU的任务:"></a>适合GPU的任务:</h4><ol>
+<li>矩阵计算</li>
+</ol>
+<p>矩阵乘法是一个高度并行的计算任务，适合使用GPU。</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> cupy <span class="token keyword">as</span> cp
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">import</span> time
+
+<span class="token keyword">def</span> <span class="token function">gpu_task</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true"># 生成随机矩阵</span>
+    A <span class="token operator">=</span> cp<span class="token punctuation">.</span>random<span class="token punctuation">.</span>rand<span class="token punctuation">(</span><span class="token number">1000</span><span class="token punctuation">,</span> <span class="token number">1000</span><span class="token punctuation">)</span>
+    B <span class="token operator">=</span> cp<span class="token punctuation">.</span>random<span class="token punctuation">.</span>rand<span class="token punctuation">(</span><span class="token number">1000</span><span class="token punctuation">,</span> <span class="token number">1000</span><span class="token punctuation">)</span>
+
+    start_time <span class="token operator">=</span> time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    C <span class="token operator">=</span> cp<span class="token punctuation">.</span>dot<span class="token punctuation">(</span>A<span class="token punctuation">,</span> B<span class="token punctuation">)</span>
+    cp<span class="token punctuation">.</span>cuda<span class="token punctuation">.</span>Device<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>streams<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span>synchronize<span class="token punctuation">(</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 等待所有计算完成</span>
+    end_time <span class="token operator">=</span> time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"GPU Matrix Multiplication Time:"</span><span class="token punctuation">,</span> end_time <span class="token operator">-</span> start_time<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> C
+
+<span class="token comment" spellcheck="true"># 执行GPU任务</span>
+gpu_task<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ol start="2">
+<li>深度学习训练</li>
+</ol>
+<p>深度学习任务通常需要大量的矩阵运算，适合GPU进行训练。</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> torch
+<span class="token keyword">import</span> torch<span class="token punctuation">.</span>nn <span class="token keyword">as</span> nn
+<span class="token keyword">import</span> torch<span class="token punctuation">.</span>optim <span class="token keyword">as</span> optim
+<span class="token keyword">import</span> time
+
+<span class="token keyword">class</span> <span class="token class-name">SimpleNet</span><span class="token punctuation">(</span>nn<span class="token punctuation">.</span>Module<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        super<span class="token punctuation">(</span>SimpleNet<span class="token punctuation">,</span> self<span class="token punctuation">)</span><span class="token punctuation">.</span>__init__<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>fc1 <span class="token operator">=</span> nn<span class="token punctuation">.</span>Linear<span class="token punctuation">(</span><span class="token number">784</span><span class="token punctuation">,</span> <span class="token number">1000</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>fc2 <span class="token operator">=</span> nn<span class="token punctuation">.</span>Linear<span class="token punctuation">(</span><span class="token number">1000</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">def</span> <span class="token function">forward</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> x<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        x <span class="token operator">=</span> torch<span class="token punctuation">.</span>relu<span class="token punctuation">(</span>self<span class="token punctuation">.</span>fc1<span class="token punctuation">(</span>x<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        x <span class="token operator">=</span> self<span class="token punctuation">.</span>fc2<span class="token punctuation">(</span>x<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> x
+
+<span class="token keyword">def</span> <span class="token function">gpu_task</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true"># 使用GPU</span>
+    device <span class="token operator">=</span> torch<span class="token punctuation">.</span>device<span class="token punctuation">(</span><span class="token string">'cuda'</span> <span class="token keyword">if</span> torch<span class="token punctuation">.</span>cuda<span class="token punctuation">.</span>is_available<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">else</span> <span class="token string">'cpu'</span><span class="token punctuation">)</span>
+    model <span class="token operator">=</span> SimpleNet<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>to<span class="token punctuation">(</span>device<span class="token punctuation">)</span>
+    criterion <span class="token operator">=</span> nn<span class="token punctuation">.</span>CrossEntropyLoss<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    optimizer <span class="token operator">=</span> optim<span class="token punctuation">.</span>SGD<span class="token punctuation">(</span>model<span class="token punctuation">.</span>parameters<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> lr<span class="token operator">=</span><span class="token number">0.01</span><span class="token punctuation">)</span>
+
+    <span class="token comment" spellcheck="true"># 生成随机数据</span>
+    inputs <span class="token operator">=</span> torch<span class="token punctuation">.</span>randn<span class="token punctuation">(</span><span class="token number">64</span><span class="token punctuation">,</span> <span class="token number">784</span><span class="token punctuation">)</span><span class="token punctuation">.</span>to<span class="token punctuation">(</span>device<span class="token punctuation">)</span>
+    targets <span class="token operator">=</span> torch<span class="token punctuation">.</span>randint<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token number">64</span><span class="token punctuation">,</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span>to<span class="token punctuation">(</span>device<span class="token punctuation">)</span>
+
+    start_time <span class="token operator">=</span> time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    optimizer<span class="token punctuation">.</span>zero_grad<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    outputs <span class="token operator">=</span> model<span class="token punctuation">(</span>inputs<span class="token punctuation">)</span>
+    loss <span class="token operator">=</span> criterion<span class="token punctuation">(</span>outputs<span class="token punctuation">,</span> targets<span class="token punctuation">)</span>
+    loss<span class="token punctuation">.</span>backward<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    optimizer<span class="token punctuation">.</span>step<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    end_time <span class="token operator">=</span> time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"GPU Training Time:"</span><span class="token punctuation">,</span> end_time <span class="token operator">-</span> start_time<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 执行GPU任务</span>
+gpu_task<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>CPU适合计算复杂，需要快速计算出来的任务（低时延），数据量没有很大。</p>
+<p>GPU适合计算量大，可以高度并行的任务（高吞吐量），数据量比较大的任务。</p>
+
+</article>
+    
+    
+
+</div>
+<div class="trm-post-next-prev row">
+    <div class="col-lg-12">
+        <!-- title -->
+        <h5 class="trm-title-with-divider">
+            其他文章
+            <span data-number="02"></span>
+        </h5>
+    </div>
+    
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/07/14/C%E8%AF%AD%E8%A8%80%E8%A7%A3%E5%86%B3AOC-2023-day6/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" #.">
+                    未分类
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/07/14/C%E8%AF%AD%E8%A8%80%E8%A7%A3%E5%86%B3AOC-2023-day6/" class="trm-anima-link">
+                    C语言解决AOC-2023-day6
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/07/14</li>
+                <li>17:16</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+</div>
+
+    
+
+
+
+                    <div class="trm-divider footer-divider"></div>
+
+                    <!-- footer -->
+                    <footer class="trm-scroll-animation">
+
+    
+
+    
+
+    
+        <div class="trm-footer-item">
+            <span>
+                由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v7.0.0
+            </span>
+            <span class="footer-separator" data-separator=" | "></span>
+            <span> 
+                主题 - 
+                <a rel="noopener" href='https://github.com/MaLuns/hexo-theme-async' target='_blank'>Async</a>
+                v2.1.8
+            </span>
+        </div>
+      
+
+     
+
+     
+</footer>
+ 
+                    <!-- footer end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- body end -->
+
+            
+
+            
+<div class="trm-fixed-container">
+    
+    
+        <div class="trm-fixed-btn" data-title="阅读模式" onclick="asyncFun.switchReadMode()">
+            <i class="iconfont fas fa-book-reader"></i>
+        </div>
+    
+    
+    <div id="trm-back-top" class="trm-fixed-btn" data-title="回到顶部">
+        <i class="iconfont fas fa-arrow-up"></i>
+    </div>
+</div>
+        </div>
+      </div>
+      <!-- scroll container end -->
+  </div>
+  <!-- app wrapper end -->
+
+  
+  <!-- Plugin -->
+
+
+
+
+    
+    
+<script src="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+
+    
+
+    
+
+    
+
+    <!-- 数学公式 -->
+    
+
+    <!-- 评论插件 -->
+    
+        
+
+        
+    
+
+
+
+<!-- CDN -->
+
+
+    
+
+    
+
+    
+
+
+
+
+    <!-- Service Worker -->
+    
+    <!-- baidu push -->
+    
+
+
+<script id="async-script" src="/js/main.js?v=2.1.8"></script>
+
+</body>
+
+</html>
