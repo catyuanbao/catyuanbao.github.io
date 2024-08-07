@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="x5-fullscreen" content="true">
+<meta name="full-screen" content="yes">
+<meta name="theme-color" content="#317EFB" />
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
+<meta name="description" content="背景最近工作的需求，使用Python实现TCP长连接服务，给Java Netty的客户端调用，同时Python的Web服务还需要对Java的TCP客户端发送数据。 这里使用Twisted实现一个长连接服务，以及一个HTTP服务，HTTP服务作为通道，连接Django的后端工程，通过管道发数据给Java的客户端。 如果Java客户端发送了数据给twisted，twisted服务还有处理业务逻辑，这部">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Twisted长连接服务实例">
+<meta property="og:url" content="http://example.com/2024/08/07/Twisted%E9%95%BF%E8%BF%9E%E6%8E%A5%E6%9C%8D%E5%8A%A1%E5%AE%9E%E4%BE%8B/index.html">
+<meta property="og:site_name" content="Cat YuanBao">
+<meta property="og:description" content="背景最近工作的需求，使用Python实现TCP长连接服务，给Java Netty的客户端调用，同时Python的Web服务还需要对Java的TCP客户端发送数据。 这里使用Twisted实现一个长连接服务，以及一个HTTP服务，HTTP服务作为通道，连接Django的后端工程，通过管道发数据给Java的客户端。 如果Java客户端发送了数据给twisted，twisted服务还有处理业务逻辑，这部">
+<meta property="og:locale">
+<meta property="article:published_time" content="2024-08-07T11:54:45.000Z">
+<meta property="article:modified_time" content="2024-08-07T11:54:58.723Z">
+<meta property="article:author" content="橘猫元宝">
+<meta property="article:tag" content="cat">
+<meta name="twitter:card" content="summary">
+
+    <meta name="keywords" content="cat">
+
+
+<title >Twisted长连接服务实例</title>
+
+<!-- Favicon -->
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='16x16' ></link>
+
+
+    <link href='/img/favicon.svg?v=2.1.8' rel='icon' type='image/png' sizes='32x32' ></link>
+
+
+
+
+<!-- Plugin -->
+
+
+
+
+    
+<link rel="stylesheet" href="/css/plugins/bootstrap.row.css">
+
+    
+<link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.css">
+
+    
+    
+
+
+
+
+<!-- Icon -->
+
+    
+<link rel="stylesheet" href="/css/plugins/font-awesome.min.css">
+
+
+
+
+<!-- Variable -->
+<script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"橘猫元宝","root":"/","typed_text":null,"theme_version":"2.1.8","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/favicon.svg","icon16":"/img/favicon.svg","icon32":"/img/favicon.svg","appleTouchIcon":null,"webmanifest":null,"visibilitychange":false,"hidden":"/failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://unpkg.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"prismjs","theme":true,"copy":true,"lang":true,"title":"default","height_limit":false},"toc":{"post_title":true}};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-08-07 19:54:58"};</script>
+
+<!-- Theme mode css -->
+<link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.8" id="trm-switch-style">
+<script>
+    let defaultMode = ASYNC_CONFIG.theme.default !=='auto' ?  ASYNC_CONFIG.theme.default : (window.matchMedia("(prefers-color-scheme: light)").matches ? 'style-light' : 'style-dark')
+    let catchMode = localStorage.getItem('theme-mode') || defaultMode;
+    let type = catchMode === 'style-dark' ? 'add' : 'remove';
+    document.documentElement.classList[type]('dark')
+</script>
+
+<!-- CDN -->
+
+
+    
+    
+
+
+
+<!-- Site Analytics -->
+ 
+<meta name="generator" content="Hexo 7.0.0"><link rel="stylesheet" href="/css/prism.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+<body>
+
+  <!-- app wrapper -->
+  <div class="trm-app-frame">
+
+    <!-- page preloader -->
+    <div class="trm-preloader">
+    <div class="trm-holder">
+        <div class="preloader">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+    <!-- page preloader end -->
+
+    <!-- change mode preloader -->
+    <div class="trm-mode-swich-animation-frame">
+    <div class="trm-mode-swich-animation">
+        <i class="i-sun"><i class="iconfont far fa-sun"></i></i>
+        <div class="trm-horizon"></div>
+        <i class="i-moon"><i class="iconfont far fa-moon"></i></i>
+    </div>
+</div>
+    <!-- change mode preloader end -->
+
+      <!-- scroll container -->
+      <div id="trm-dynamic-content" class="trm-swup-animation">
+        <div id="trm-scroll-container" class="trm-scroll-container" style="opacity: 0">
+            <!-- top bar -->
+            <header class="trm-top-bar">
+	<div class="container">
+		<div class="trm-left-side">
+			<!-- logo -->
+<a href="/" class="trm-logo-frame trm-anima-link">
+    
+        <img alt="logo" src="/img/favicon.svg">
+    
+    
+        <div class="trm-logo-text">
+            元宝<span>橘猫</span>
+        </div>
+    
+</a>
+<!-- logo end -->
+		</div>
+		<div class="trm-right-side">
+			<!-- menu -->
+<div class="trm-menu">
+    <nav>
+        <ul>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/" target="">
+                    首页
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/archives/" target="">
+                    归档
+                </a>
+                
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+<!-- menu end -->
+			
+    <!-- mode switcher place -->
+    <div class="trm-mode-switcher-place">
+        <div class="trm-mode-switcher">
+            <i class="iconfont far fa-sun"></i>
+            <input class="tgl tgl-light" id="trm-swich" type="checkbox">
+            <label class="trm-swich" for="trm-swich"></label>
+            <i class="iconfont far fa-moon"></i>
+        </div>
+    </div>
+    <!-- mode switcher place end -->
+
+			
+		</div>
+		<div class="trm-menu-btn">
+			<span></span>
+		</div>
+	</div>
+</header>
+            <!-- top bar end -->
+
+            <!-- body -->
+            
+<div class="trm-content-start">
+    <!-- banner -->
+    <div class="trm-banner">
+    
+    <!-- banner cover -->
+    <img style="object-position:top;object-fit:cover;" alt="banner" class="trm-banner-cover" src="/img/banner.png">
+    <!-- banner cover end -->
+    
+
+    <!-- banner content -->
+    <div class="trm-banner-content trm-overlay">
+        <div class="container">
+            <div class="row">
+                
+                <div class="col-lg-4"></div>
+                
+                <div class="col-lg-8">
+
+                    <!-- banner title -->
+                    <div class="trm-banner-text ">
+                        <div class="trm-label trm-mb-20">
+                            NEWS LETTER
+                        </div>
+                        <h1 class="trm-mb-30 trm-hsmb-font">
+                            Twisted长连接服务实例
+                        </h1>
+
+                        
+                            <ul class="trm-breadcrumbs trm-label">
+                                <li>
+                                    <a href="/" class="trm-anima-link">Home</a>
+                                </li>
+                                <li>
+                                    <span>
+                                        2024
+                                    </span>
+                                </li>
+                            </ul>
+                        
+                    </div>
+                    <!-- banner title end -->
+
+                    <!-- scroll hint -->
+                    <span id="scroll-triger" class="trm-scroll-hint-frame">
+                        <div class="trm-scroll-hint"></div>
+                        <span class="trm-label">Scroll down</span>
+                    </span>
+                    <!-- scroll hint end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- banner content end -->
+</div>
+    <!-- banner end -->
+    <div class="container">
+        <div class="row">
+            
+                <div class="trm-page-sidebar col-lg-4 hidden-sm">
+                    <!-- main card -->
+                    <div class="trm-main-card-frame trm-sidebar">
+    <div class="trm-main-card"> 
+        <!-- card header -->
+<div class="trm-mc-header">
+    <div class="trm-avatar-frame trm-mb-20">
+        <img alt="Avatar" class="trm-avatar" src="/img/cat.jpg">
+    </div>
+    <h5 class="trm-name trm-mb-15">
+        橘猫元宝
+    </h5>
+    
+</div>
+<!-- card header end -->
+        <!-- sidebar social -->
+
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<div class="trm-social">
+    
+        <a href="https://github.com" title="Github" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-github"></i>
+        </a>
+    
+</div>
+
+<!-- sidebar social end -->
+        <!-- info -->
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<ul class="trm-table trm-mb-20">
+    
+        <li>
+            <div class="trm-label">
+                Residence:
+            </div>
+            <div class="trm-label trm-label-light">
+                Mars
+            </div>
+        </li>
+    
+</ul>
+<!-- info end -->
+
+        
+    </div>
+</div>
+                    <!-- main card end -->
+                </div>
+            
+            <div class="trm-page-content col-lg-8">
+                <div id="trm-content" class="trm-content">
+                    <div class="trm-post-info row hidden-sm">
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-calendar-alt trm-icon"></i><br>
+            08/07
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-clock trm-icon"></i><br>
+            19:54
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div id="post-author" class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-user trm-icon"></i><br>
+            橘猫元宝
+        </div>
+    </div>
+</div>
+<div class="trm-card ">
+    <article id="article-container" class="trm-publication">
+    <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>最近工作的需求，使用Python实现TCP长连接服务，给Java Netty的客户端调用，同时Python的Web服务还需要对Java的TCP客户端发送数据。</p>
+<p>这里使用Twisted实现一个长连接服务，以及一个HTTP服务，HTTP服务作为通道，连接Django的后端工程，通过管道发数据给Java的客户端。</p>
+<p>如果Java客户端发送了数据给twisted，twisted服务还有处理业务逻辑，这部分需要使用后端的异步线程去处理。</p>
+<h2 id="实例代码"><a href="#实例代码" class="headerlink" title="实例代码"></a>实例代码</h2><pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">from</span> twisted<span class="token punctuation">.</span>internet <span class="token keyword">import</span> protocol<span class="token punctuation">,</span> reactor<span class="token punctuation">,</span> threads
+<span class="token keyword">from</span> twisted<span class="token punctuation">.</span>web <span class="token keyword">import</span> server<span class="token punctuation">,</span> resource
+<span class="token keyword">from</span> twisted<span class="token punctuation">.</span>internet<span class="token punctuation">.</span>task <span class="token keyword">import</span> LoopingCall
+<span class="token keyword">from</span> twisted<span class="token punctuation">.</span>python<span class="token punctuation">.</span>threadpool <span class="token keyword">import</span> ThreadPool
+<span class="token keyword">from</span> threading <span class="token keyword">import</span> Lock
+<span class="token keyword">import</span> time
+
+<span class="token keyword">def</span> <span class="token function">slow_function</span><span class="token punctuation">(</span>param<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">"""
+    这是一个模拟耗时任务的函数。
+    """</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">"Starting slow function with param: {param}"</span><span class="token punctuation">)</span>
+    time<span class="token punctuation">.</span>sleep<span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 模拟耗时操作</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Slow function finished"</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> f<span class="token string">"Processed {param}"</span>
+
+<span class="token keyword">def</span> <span class="token function">on_success</span><span class="token punctuation">(</span>arg<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>arg<span class="token punctuation">)</span>
+
+
+<span class="token keyword">def</span> <span class="token function">on_failure</span><span class="token punctuation">(</span>arg<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>arg<span class="token punctuation">)</span>
+
+
+<span class="token keyword">class</span> <span class="token class-name">HeartbeatProtocol</span><span class="token punctuation">(</span>protocol<span class="token punctuation">.</span>Protocol<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>last_heartbeat <span class="token operator">=</span> None
+        self<span class="token punctuation">.</span>peer_ip <span class="token operator">=</span> None
+
+    <span class="token keyword">def</span> <span class="token function">connectionMade</span><span class="token punctuation">(</span>self<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>peer_ip <span class="token operator">=</span> self<span class="token punctuation">.</span>transport<span class="token punctuation">.</span>getPeer<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>host
+        self<span class="token punctuation">.</span>factory<span class="token punctuation">.</span>add_connection<span class="token punctuation">(</span>self<span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>last_heartbeat <span class="token operator">=</span> reactor<span class="token punctuation">.</span>seconds<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">"Connection made: {self.peer_ip}"</span><span class="token punctuation">)</span>
+
+        param <span class="token operator">=</span> <span class="token string">'message to function'</span>
+        d <span class="token operator">=</span> threads<span class="token punctuation">.</span>deferToThread<span class="token punctuation">(</span>slow_function<span class="token punctuation">,</span> param<span class="token punctuation">)</span>
+        d<span class="token punctuation">.</span>addCallbacks<span class="token punctuation">(</span>on_success<span class="token punctuation">,</span> on_failure<span class="token punctuation">)</span>
+
+
+    <span class="token keyword">def</span> <span class="token function">connectionLost</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> reason<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>factory<span class="token punctuation">.</span>remove_connection<span class="token punctuation">(</span>self<span class="token punctuation">)</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">"Connection lost: {self.peer_ip}. Reason: {reason.getErrorMessage()}"</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">def</span> <span class="token function">dataReceived</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> data<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">if</span> data<span class="token punctuation">.</span>strip<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">==</span> b<span class="token string">'heartbeat'</span><span class="token punctuation">:</span>
+            self<span class="token punctuation">.</span>last_heartbeat <span class="token operator">=</span> reactor<span class="token punctuation">.</span>seconds<span class="token punctuation">(</span><span class="token punctuation">)</span>
+            self<span class="token punctuation">.</span>transport<span class="token punctuation">.</span>write<span class="token punctuation">(</span>b<span class="token string">'heartbeat acknowledged\n'</span><span class="token punctuation">)</span>
+        <span class="token keyword">else</span><span class="token punctuation">:</span>
+            <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">"Received data: {data.decode()}"</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">def</span> <span class="token function">send_message</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> message<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>transport<span class="token punctuation">.</span>write<span class="token punctuation">(</span>message<span class="token punctuation">.</span>encode<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">+</span> b<span class="token string">'\n'</span><span class="token punctuation">)</span>
+
+<span class="token keyword">class</span> <span class="token class-name">HeartbeatFactory</span><span class="token punctuation">(</span>protocol<span class="token punctuation">.</span>Factory<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>connections <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+        self<span class="token punctuation">.</span>connection_map <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>  <span class="token comment" spellcheck="true"># Mapping from IP address to protocol instance</span>
+        self<span class="token punctuation">.</span>heartbeat_timeout <span class="token operator">=</span> <span class="token number">10</span>  <span class="token comment" spellcheck="true"># seconds</span>
+        self<span class="token punctuation">.</span>lock <span class="token operator">=</span> Lock<span class="token punctuation">(</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># Create a lock for thread safety</span>
+
+    <span class="token keyword">def</span> <span class="token function">buildProtocol</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> addr<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        protocol <span class="token operator">=</span> HeartbeatProtocol<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        protocol<span class="token punctuation">.</span>factory <span class="token operator">=</span> self
+        <span class="token keyword">return</span> protocol
+
+    <span class="token keyword">def</span> <span class="token function">check_heartbeats</span><span class="token punctuation">(</span>self<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">def</span> <span class="token function">worker</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            <span class="token keyword">with</span> self<span class="token punctuation">.</span>lock<span class="token punctuation">:</span>  <span class="token comment" spellcheck="true"># Ensure exclusive access to connections and connection_map</span>
+                <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'CHECK'</span><span class="token punctuation">)</span>
+                current_time <span class="token operator">=</span> reactor<span class="token punctuation">.</span>seconds<span class="token punctuation">(</span><span class="token punctuation">)</span>
+                <span class="token keyword">for</span> conn <span class="token keyword">in</span> self<span class="token punctuation">.</span>connections<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">]</span><span class="token punctuation">:</span>
+                    <span class="token keyword">if</span> current_time <span class="token operator">-</span> conn<span class="token punctuation">.</span>last_heartbeat <span class="token operator">></span> self<span class="token punctuation">.</span>heartbeat_timeout<span class="token punctuation">:</span>
+                        <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">"Connection timed out: {conn.peer_ip}"</span><span class="token punctuation">)</span>
+                        conn<span class="token punctuation">.</span>transport<span class="token punctuation">.</span>loseConnection<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true">#threads.deferToThread(worker)</span>
+        d <span class="token operator">=</span> threads<span class="token punctuation">.</span>deferToThread<span class="token punctuation">(</span>worker<span class="token punctuation">)</span>
+        d<span class="token punctuation">.</span>addErrback<span class="token punctuation">(</span><span class="token keyword">lambda</span> failure<span class="token punctuation">:</span> <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">"Error in heartbeat check: {failure.getErrorMessage()}"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">def</span> <span class="token function">send_to_ip</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> ip<span class="token punctuation">,</span> message<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">"Trying to send message to IP: {ip}"</span><span class="token punctuation">)</span>
+        <span class="token keyword">with</span> self<span class="token punctuation">.</span>lock<span class="token punctuation">:</span>  <span class="token comment" spellcheck="true"># Ensure exclusive access to connection_map</span>
+            <span class="token keyword">if</span> ip <span class="token keyword">in</span> self<span class="token punctuation">.</span>connection_map<span class="token punctuation">:</span>
+                self<span class="token punctuation">.</span>connection_map<span class="token punctuation">[</span>ip<span class="token punctuation">]</span><span class="token punctuation">.</span>send_message<span class="token punctuation">(</span>message<span class="token punctuation">)</span>
+            <span class="token keyword">else</span><span class="token punctuation">:</span>
+                <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">"IP {ip} not found in connection map."</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">def</span> <span class="token function">add_connection</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> protocol<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">if</span> protocol<span class="token punctuation">.</span>peer_ip <span class="token keyword">is</span> <span class="token operator">not</span> None<span class="token punctuation">:</span>
+            <span class="token keyword">with</span> self<span class="token punctuation">.</span>lock<span class="token punctuation">:</span>  <span class="token comment" spellcheck="true"># Ensure exclusive access to connections and connection_map</span>
+                self<span class="token punctuation">.</span>connections<span class="token punctuation">.</span>append<span class="token punctuation">(</span>protocol<span class="token punctuation">)</span>
+                self<span class="token punctuation">.</span>connection_map<span class="token punctuation">[</span>protocol<span class="token punctuation">.</span>peer_ip<span class="token punctuation">]</span> <span class="token operator">=</span> protocol
+                <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">"Connection added: {protocol.peer_ip}"</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">def</span> <span class="token function">remove_connection</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> protocol<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">if</span> protocol<span class="token punctuation">.</span>peer_ip <span class="token keyword">in</span> self<span class="token punctuation">.</span>connection_map<span class="token punctuation">:</span>
+            <span class="token keyword">with</span> self<span class="token punctuation">.</span>lock<span class="token punctuation">:</span>  <span class="token comment" spellcheck="true"># Ensure exclusive access to connections and connection_map</span>
+                self<span class="token punctuation">.</span>connections<span class="token punctuation">.</span>remove<span class="token punctuation">(</span>protocol<span class="token punctuation">)</span>
+                <span class="token keyword">del</span> self<span class="token punctuation">.</span>connection_map<span class="token punctuation">[</span>protocol<span class="token punctuation">.</span>peer_ip<span class="token punctuation">]</span>
+                <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">"Connection removed: {protocol.peer_ip}"</span><span class="token punctuation">)</span>
+
+<span class="token keyword">class</span> <span class="token class-name">MessageResource</span><span class="token punctuation">(</span>resource<span class="token punctuation">.</span>Resource<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    isLeaf <span class="token operator">=</span> <span class="token boolean">True</span>
+
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> factory<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>factory <span class="token operator">=</span> factory
+
+    <span class="token keyword">def</span> <span class="token function">render_POST</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> request<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        ip <span class="token operator">=</span> request<span class="token punctuation">.</span>args<span class="token punctuation">.</span>get<span class="token punctuation">(</span>b<span class="token string">'ip'</span><span class="token punctuation">,</span> <span class="token punctuation">[</span>b<span class="token string">''</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span>decode<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        message <span class="token operator">=</span> request<span class="token punctuation">.</span>args<span class="token punctuation">.</span>get<span class="token punctuation">(</span>b<span class="token string">'message'</span><span class="token punctuation">,</span> <span class="token punctuation">[</span>b<span class="token string">''</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span>decode<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'Request received:'</span><span class="token punctuation">,</span> ip<span class="token punctuation">,</span> message<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> ip<span class="token punctuation">:</span>
+            self<span class="token punctuation">.</span>factory<span class="token punctuation">.</span>send_to_ip<span class="token punctuation">(</span>ip<span class="token punctuation">,</span> message<span class="token punctuation">)</span>
+            <span class="token keyword">return</span> b<span class="token string">"Message sent to specific IP."</span>
+        <span class="token keyword">else</span><span class="token punctuation">:</span>
+            <span class="token keyword">return</span> b<span class="token string">"IP address not provided."</span>
+
+<span class="token keyword">if</span> __name__ <span class="token operator">==</span> <span class="token string">'__main__'</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true"># Configure the thread pool</span>
+    thread_pool <span class="token operator">=</span> ThreadPool<span class="token punctuation">(</span>minthreads<span class="token operator">=</span><span class="token number">4</span><span class="token punctuation">,</span> maxthreads<span class="token operator">=</span><span class="token number">16</span><span class="token punctuation">)</span>
+    thread_pool<span class="token punctuation">.</span>start<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    reactor<span class="token punctuation">.</span>threadpool <span class="token operator">=</span> thread_pool
+
+    factory <span class="token operator">=</span> HeartbeatFactory<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    reactor<span class="token punctuation">.</span>listenTCP<span class="token punctuation">(</span><span class="token number">12345</span><span class="token punctuation">,</span> factory<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># TCP service for Java clients</span>
+
+    <span class="token comment" spellcheck="true"># HTTP service to receive messages from Django</span>
+    site <span class="token operator">=</span> server<span class="token punctuation">.</span>Site<span class="token punctuation">(</span>MessageResource<span class="token punctuation">(</span>factory<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    reactor<span class="token punctuation">.</span>listenTCP<span class="token punctuation">(</span><span class="token number">12346</span><span class="token punctuation">,</span> site<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># HTTP service on port 12346</span>
+
+    heartbeat_check <span class="token operator">=</span> LoopingCall<span class="token punctuation">(</span>factory<span class="token punctuation">.</span>check_heartbeats<span class="token punctuation">)</span>
+    heartbeat_check<span class="token punctuation">.</span>start<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># Check every 1 second</span>
+
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Twisted server started."</span><span class="token punctuation">)</span>
+    reactor<span class="token punctuation">.</span>run<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>twisted实现长连接很方便，提供了很多内置功能，比如心跳检查等功能，只要在对应的回调函数实现具体的业务逻辑即可。</p>
+
+</article>
+    
+    
+
+</div>
+<div class="trm-post-next-prev row">
+    <div class="col-lg-12">
+        <!-- title -->
+        <h5 class="trm-title-with-divider">
+            其他文章
+            <span data-number="02"></span>
+        </h5>
+    </div>
+    
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2024/07/31/CPU%E4%B8%8EGPU%E7%9A%84%E6%9C%80%E4%BD%B3%E4%BB%BB%E5%8A%A1%E7%B1%BB%E5%9E%8B/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/img/block.jpg">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" #.">
+                    未分类
+                </a>
+            </div>
+            <h5>
+                <a href="/2024/07/31/CPU%E4%B8%8EGPU%E7%9A%84%E6%9C%80%E4%BD%B3%E4%BB%BB%E5%8A%A1%E7%B1%BB%E5%9E%8B/" class="trm-anima-link">
+                    CPU与GPU的最佳任务类型
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/07/31</li>
+                <li>20:44</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+</div>
+
+    
+
+
+
+                    <div class="trm-divider footer-divider"></div>
+
+                    <!-- footer -->
+                    <footer class="trm-scroll-animation">
+
+    
+
+    
+
+    
+        <div class="trm-footer-item">
+            <span>
+                由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v7.0.0
+            </span>
+            <span class="footer-separator" data-separator=" | "></span>
+            <span> 
+                主题 - 
+                <a rel="noopener" href='https://github.com/MaLuns/hexo-theme-async' target='_blank'>Async</a>
+                v2.1.8
+            </span>
+        </div>
+      
+
+     
+
+     
+</footer>
+ 
+                    <!-- footer end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- body end -->
+
+            
+
+            
+<div class="trm-fixed-container">
+    
+    
+        <div class="trm-fixed-btn" data-title="阅读模式" onclick="asyncFun.switchReadMode()">
+            <i class="iconfont fas fa-book-reader"></i>
+        </div>
+    
+    
+    <div id="trm-back-top" class="trm-fixed-btn" data-title="回到顶部">
+        <i class="iconfont fas fa-arrow-up"></i>
+    </div>
+</div>
+        </div>
+      </div>
+      <!-- scroll container end -->
+  </div>
+  <!-- app wrapper end -->
+
+  
+  <!-- Plugin -->
+
+
+
+
+    
+    
+<script src="https://unpkg.com/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+
+    
+
+    
+
+    
+
+    <!-- 数学公式 -->
+    
+
+    <!-- 评论插件 -->
+    
+        
+
+        
+    
+
+
+
+<!-- CDN -->
+
+
+    
+
+    
+
+    
+
+
+
+
+    <!-- Service Worker -->
+    
+    <!-- baidu push -->
+    
+
+
+<script id="async-script" src="/js/main.js?v=2.1.8"></script>
+
+</body>
+
+</html>
